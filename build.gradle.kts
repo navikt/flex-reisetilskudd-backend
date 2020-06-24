@@ -58,7 +58,6 @@ repositories {
     }
 }
 
-
 dependencies {
     implementation(kotlin("stdlib"))
 
@@ -82,13 +81,13 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
-    testImplementation("org.amshove.kluent:kluent:$kluentVersion") 
+    testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:$nimbusdsVersion")
     testImplementation("org.testcontainers:kafka:$testContainerKafkaVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
-        exclude(group = "org.eclipse.jetty") 
+        exclude(group = "org.eclipse.jetty")
     }
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
@@ -105,7 +104,6 @@ tasks.jacocoTestReport {
     }
 }
 
-
 tasks {
 
     create("printVersion") {
@@ -118,11 +116,10 @@ tasks {
 
     withType<JacocoReport> {
         classDirectories.setFrom(
-                sourceSets.main.get().output.asFileTree.matching {
-                    exclude()
-                }
+            sourceSets.main.get().output.asFileTree.matching {
+                exclude()
+            }
         )
-
     }
     withType<ShadowJar> {
         transform(ServiceFileTransformer::class.java) {
