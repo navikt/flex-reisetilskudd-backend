@@ -4,8 +4,7 @@ on:
     branches:
       - '*'
 env:
-  IMAGE: docker.pkg.github.com/${{ github.repository }}/flex-reisetilskudd-backend:${{ github.sha }}
-
+  APP: flex-reisetilskudd-backend
 jobs:
   build:
     name: Checkout code and create docker tag
@@ -43,6 +42,19 @@ jobs:
           ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew shadowJar -x test
+      - name: Generer versjon og image navn
+        run: |
+          TIME=$(TZ="Europe/Oslo" date +%Y.%m.%d-%H.%M)
+          COMMIT=$(git rev-parse --short=8 HEAD)
+          VERSION=$TIME-$COMMIT
+          echo "::set-env name=IMAGE::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:$VERSION""
+          echo "::set-env name=VERSION::"$VERSION""
+      - run: echo $VERSION > VERSION.txt
+      - name: Last opp VERSION til neste job
+        uses: actions/upload-artifact@v1
+        with:
+          name: VERSION.txt
+          path: VERSION.txt
       - name: Build and publish Docker image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,9 +62,45 @@ jobs:
           docker build --tag ${IMAGE} .
           docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
           docker push ${IMAGE}
+  deploy:
+    name: Deploy til dev-fss (Q1)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Last ned versjon
+        uses: actions/download-artifact@v1
+        with:
+          name: VERSION.txt
+          path: .
+      - run: echo "::set-env name=VERSION::"`cat VERSION.txt`""
+      - run: echo "::set-env name=IMAGE::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:$VERSION""
       - name: Deploy to Preprod
         uses: nais/deploy/actions/deploy@master
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-fss
           RESOURCE: naiserator-dev.yaml
+  tag-image-as-latest:
+    if: github.ref == 'refs/heads/master'
+    name: Tag dockerimage as latest
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Last ned versjon
+        uses: actions/download-artifact@v1
+        with:
+          name: VERSION.txt
+          path: .
+      - run: echo "::set-env name=VERSION::"`cat VERSION.txt`""
+      - run: echo "::set-env name=IMAGE::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:$VERSION""
+      - run: echo "::set-env name=LATEST::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:latest""
+      - name: Tag and push docker image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
+          docker pull ${IMAGE}
+          docker tag ${IMAGE} ${LATEST}
+          docker push ${LATEST}
