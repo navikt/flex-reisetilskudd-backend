@@ -2,7 +2,7 @@ apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
   name: flex-reisetilskudd-backend
-  namespace: default
+  namespace: flex
   labels:
     team: flex
 spec:
