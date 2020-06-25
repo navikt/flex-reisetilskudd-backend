@@ -15,8 +15,8 @@ data class Environment(
 ) : KafkaConfig
 
 data class VaultSecrets (
-    override val kafkaUsername: String = getFileAsString("/secrets/serviceuser/username"),
-    override val kafkaPassword: String = getFileAsString("/secrets/serviceuser/password")
+    override val kafkaUsername: String = getFileAsString("/secrets/serviceuser/username").trim(),
+    override val kafkaPassword: String = getFileAsString("/secrets/serviceuser/password").trim()
 ) : KafkaCredentials
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
