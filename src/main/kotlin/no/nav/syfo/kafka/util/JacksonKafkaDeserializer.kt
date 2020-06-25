@@ -9,7 +9,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
 import org.apache.kafka.common.serialization.Deserializer
 
-class JacksonKafkaDeserializer: Deserializer<EnkelSykmelding> {
+class JacksonKafkaDeserializer : Deserializer<EnkelSykmelding> {
     private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(JavaTimeModule())
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)

@@ -8,7 +8,7 @@ import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import java.time.Duration
 
-class SykmeldingKafkaService (
+class SykmeldingKafkaService(
     val kafkaConsumer: KafkaConsumer<String, EnkelSykmelding>,
     val env: Environment,
     val applicationState: ApplicationState

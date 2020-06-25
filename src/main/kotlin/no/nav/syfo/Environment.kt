@@ -14,12 +14,12 @@ data class Environment(
     override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL")
 ) : KafkaConfig
 
-data class VaultSecrets (
-    override val kafkaUsername: String = getFileAsString("/secrets/serviceuser/username").trim(),
-    override val kafkaPassword: String = getFileAsString("/secrets/serviceuser/password").trim()
+data class VaultSecrets(
+    override val kafkaUsername: String = getFileAsString("/secrets/serviceuser/username"),
+    override val kafkaPassword: String = getFileAsString("/secrets/serviceuser/password")
 ) : KafkaCredentials
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
     System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")
 
-fun getFileAsString(filePath: String) = String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8)
+fun getFileAsString(filePath: String) = String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8).trim()
