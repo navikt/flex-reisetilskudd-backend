@@ -19,7 +19,11 @@ class SykmeldingKafkaService(
             val records = kafkaConsumer.poll(Duration.ofMillis(1000))
             records.forEach {
                 val sykmelding = it.value()
-                log.info("Mottok sykmelding: ${sykmelding.id}")
+                if (sykmelding.sykmeldingsperioder.any { it.reisetilskudd }) {
+                    log.info("Mottok sykmelding som vi bryr oss om ${sykmelding.id}")
+                } else {
+                    log.info("Mottok sykmelding som vi ikke bryr oss om: ${sykmelding.id}")
+                }
             }
             delay(1)
         }
