@@ -51,7 +51,8 @@ fun createListener(applicationState: ApplicationState, action: suspend Coroutine
         try {
             action()
         } catch (ex: Exception) {
-            log.error("Noe gikk galt", ex.cause)
+            log.error("Noe gikk galt $ex")
+            ex.printStackTrace()
         } finally {
             applicationState.alive = false
             applicationState.ready = false
