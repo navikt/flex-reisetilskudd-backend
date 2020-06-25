@@ -23,7 +23,7 @@ class KafkaConsumerTest : Spek({
                 JacksonKafkaDeserializer::class
             )
             consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
-            assertFailsWith<KafkaException> {  KafkaConsumer<String, EnkelSykmelding>(consumerProperties) }
+            assertFailsWith<KafkaException> { KafkaConsumer<String, EnkelSykmelding>(consumerProperties) }
         }
         it("Should create kafkaConsumer without failure") {
             val env = Environment(kafkaBootstrapServers = "localhost:8080")
