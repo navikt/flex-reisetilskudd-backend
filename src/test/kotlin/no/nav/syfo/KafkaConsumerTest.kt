@@ -1,5 +1,6 @@
 package no.nav.syfo
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
@@ -10,13 +11,15 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.KafkaException
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.nio.file.Paths
 import kotlin.test.assertFailsWith
 
 class KafkaConsumerTest : Spek({
     describe("Test kafkaconsumer") {
         it("Should fail on creating KafkaConsumer") {
             val env = Environment(kafkaBootstrapServers = "localhost:8080")
-            val vaultSecrets = VaultSecrets("test\n", "test\n")
+            val vaultSecrets =
+                objectMapper.readValue<VaultSecrets>(Paths.get("/secrets/credentials.json").toFile())
             val kafkaBaseConfig = loadBaseConfig(env, vaultSecrets).envOverrides()
             val consumerProperties = kafkaBaseConfig.toConsumerConfig(
                 "${env.applicationName}-consumer",
@@ -27,7 +30,8 @@ class KafkaConsumerTest : Spek({
         }
         it("Should create kafkaConsumer without failure") {
             val env = Environment(kafkaBootstrapServers = "localhost:8080")
-            val vaultSecrets = VaultSecrets("test", "test")
+            val vaultSecrets =
+                objectMapper.readValue<VaultSecrets>(Paths.get("/secrets/credentials.json").toFile())
             val kafkaBaseConfig = loadBaseConfig(env, vaultSecrets).envOverrides()
             val consumerProperties = kafkaBaseConfig.toConsumerConfig(
                 "${env.applicationName}-consumer",
