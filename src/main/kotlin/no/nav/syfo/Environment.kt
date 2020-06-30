@@ -11,13 +11,31 @@ data class Environment(
     val applicationName: String = getEnvVar("NAIS_APP_NAME", "flex-reisetilskudd-backend"),
     val sendtSykmeldingTopic: String = getEnvVar("SENDT_SYKMELDING_TOPIC", "syfo-sendt-sykmelding"),
     val bekreftetSykmeldingTopic: String = getEnvVar("BEKREFTET_SYKMELDING_TOPIC", "syfo-bekreftet-sykmelding"),
+    val mountPathVault: String = getEnvVar("MOUNT_PATH_VAULT"),
+    val databaseName: String = getEnvVar("DATABASE_NAME", "reisetilskudd"),
+    val flexreisetilskuddDBURL: String = getEnvVar("REISETILSKUDD_DB_URL"),
+    val jwtIssuer: String = getEnvVar("JWT_ISSUER"),
+    val appIds: List<String> = getEnvVar("ALLOWED_APP_IDS")
+        .split(",")
+        .map { it.trim() },
     override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL")
+
 ) : KafkaConfig
 
 data class VaultSecrets(
-    override val kafkaUsername: String = getFileAsString("/secrets/serviceuser/username"),
-    override val kafkaPassword: String = getFileAsString("/secrets/serviceuser/password")
-) : KafkaCredentials
+    val serviceuserUsername: String,
+    val serviceuserPassword: String,
+    val syfomockUsername: String,
+    val syfomockPassword: String,
+    val oidcWellKnownUri: String,
+    val loginserviceClientId: String,
+    val internalJwtIssuer: String,
+    val internalJwtWellKnownUri: String,
+    val internalLoginServiceClientId: String
+) : KafkaCredentials {
+    override val kafkaUsername: String = serviceuserUsername
+    override val kafkaPassword: String = serviceuserPassword
+}
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
     System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")

@@ -25,6 +25,13 @@ fun Routing.registerNaisApi(
             call.respondText("I'm dead x_x", status = HttpStatusCode.InternalServerError)
         }
     }
+    get("/test") {
+        if (alivenessCheck()) {
+            call.respondText("TEST")
+        } else {
+            call.respondText("I'm dead x_x", status = HttpStatusCode.InternalServerError)
+        }
+    }
     get("/is_ready") {
         if (readynessCheck()) {
             call.respondText("I'm ready! :)")
