@@ -70,7 +70,8 @@ fun main() {
     val database = Database(env, vaultCredentialService)
     val applicationEngine = createApplicationEngine(
         env,
-        applicationState
+        applicationState,
+        database
     )
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     applicationServer.start()
