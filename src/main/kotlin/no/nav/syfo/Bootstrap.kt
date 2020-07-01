@@ -24,6 +24,7 @@ import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.util.JacksonKafkaDeserializer
 import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
+import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
@@ -65,13 +66,16 @@ fun main() {
     )
     consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
     val kafkaConsumer = KafkaConsumer<String, EnkelSykmelding>(consumerProperties)
-    val sykmeldingKafkaService = SykmeldingKafkaService(kafkaConsumer, env, applicationState)
     val vaultCredentialService = VaultCredentialService()
     val database = Database(env, vaultCredentialService)
+
+    val reisetilskuddService = ReisetilskuddService(database)
+
+    val sykmeldingKafkaService = SykmeldingKafkaService(kafkaConsumer, env, applicationState, reisetilskuddService)
     val applicationEngine = createApplicationEngine(
         env,
         applicationState,
-        database
+        reisetilskuddService
     )
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     applicationServer.start()

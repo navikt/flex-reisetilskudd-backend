@@ -22,7 +22,6 @@ import io.ktor.util.KtorExperimentalAPI
 import no.nav.syfo.Environment
 import no.nav.syfo.application.api.registerNaisApi
 import no.nav.syfo.application.metrics.monitorHttpRequests
-import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.log
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.reisetilskudd.api.setupReisetilskuddApi
@@ -32,7 +31,7 @@ import java.util.UUID
 fun createApplicationEngine(
     env: Environment,
     applicationState: ApplicationState,
-    database: DatabaseInterface
+    reisetilskuddService: ReisetilskuddService
 ): ApplicationEngine =
     embeddedServer(Netty, env.applicationPort) {
         install(ContentNegotiation) {
@@ -55,8 +54,6 @@ fun createApplicationEngine(
                 call.respond(HttpStatusCode.InternalServerError, cause.message ?: "Unknown error")
             }
         }
-
-        val reisetilskuddService = ReisetilskuddService(database)
 
         routing {
             registerNaisApi(applicationState)
