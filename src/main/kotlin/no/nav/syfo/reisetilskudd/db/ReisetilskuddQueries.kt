@@ -24,8 +24,7 @@ private fun Connection.hentReisetilskudd(fnr: String) : List<ReisetilskuddModel>
 
 fun ResultSet.toReisetilskuddModel () : ReisetilskuddModel{
     return ReisetilskuddModel(
-        sykmeldingId = objectMapper.readValue(getString("sykmelding_id")),
-        fnr = objectMapper.readValue(getString("fnr"))
+        sykmeldingId = getString("sykmelding_id"),
+        fnr = getString("fnr")
     )
 }
-
