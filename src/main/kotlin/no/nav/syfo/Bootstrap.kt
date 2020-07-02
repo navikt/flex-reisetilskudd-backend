@@ -75,7 +75,15 @@ fun main() {
     val applicationEngine = createApplicationEngine(
         env,
         applicationState,
-        reisetilskuddService
+        reisetilskuddService,
+        vaultSecrets = vaultSecrets,
+        jwkProvider = jwkProvider,
+        issuer = wellKnown.issuer,
+        cluster = env.cluster,
+        jwkProviderInternal = jwkProviderInternal,
+        issuerServiceuser = env.jwtIssuer,
+        clientId = env.clientId,
+        appIds = env.appIds
     )
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     applicationServer.start()

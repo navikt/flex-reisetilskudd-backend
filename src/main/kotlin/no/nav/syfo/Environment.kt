@@ -15,6 +15,8 @@ data class Environment(
     val databaseName: String = getEnvVar("DATABASE_NAME", "reisetilskudd"),
     val flexreisetilskuddDBURL: String = getEnvVar("REISETILSKUDD_DB_URL"),
     val jwtIssuer: String = getEnvVar("JWT_ISSUER"),
+    val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
+    val clientId: String = getEnvVar("CLIENT_ID"),
     val appIds: List<String> = getEnvVar("ALLOWED_APP_IDS")
         .split(",")
         .map { it.trim() },
