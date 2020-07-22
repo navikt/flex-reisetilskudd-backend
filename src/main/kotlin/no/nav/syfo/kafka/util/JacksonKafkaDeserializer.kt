@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
+import no.nav.syfo.domain.SykmeldingMessage
 import org.apache.kafka.common.serialization.Deserializer
 
-class JacksonKafkaDeserializer : Deserializer<EnkelSykmelding> {
+class JacksonKafkaDeserializer : Deserializer<SykmeldingMessage> {
     private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(JavaTimeModule())
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -18,10 +18,9 @@ class JacksonKafkaDeserializer : Deserializer<EnkelSykmelding> {
     }
 
     override fun configure(configs: MutableMap<String, *>, isKey: Boolean) {}
-    override fun deserialize(topic: String?, data: ByteArray): EnkelSykmelding {
-        return objectMapper.readValue<SykmeldingKafkaMessage>(data).sykmelding
+    override fun deserialize(topic: String?, data: ByteArray): SykmeldingMessage {
+        return objectMapper.readValue(data)
     }
     override fun close() {}
 }
 
-data class SykmeldingKafkaMessage(val sykmelding: EnkelSykmelding)

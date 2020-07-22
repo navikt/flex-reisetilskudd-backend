@@ -18,12 +18,12 @@ import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.getWellKnown
 import no.nav.syfo.db.Database
 import no.nav.syfo.db.VaultCredentialService
+import no.nav.syfo.domain.SykmeldingMessage
 import no.nav.syfo.kafka.SykmeldingKafkaService
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.kafka.util.JacksonKafkaDeserializer
-import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -65,7 +65,7 @@ fun main() {
         JacksonKafkaDeserializer::class
     )
     consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
-    val kafkaConsumer = KafkaConsumer<String, EnkelSykmelding>(consumerProperties)
+    val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage>(consumerProperties)
     val vaultCredentialService = VaultCredentialService()
     val database = Database(env, vaultCredentialService)
 
