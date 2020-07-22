@@ -12,7 +12,9 @@ CREATE TABLE reisetilskudd (
 CREATE TABLE kvitteringer (
     kvittering_id varchar(36) primary key,
     reisetilskudd_id varchar (36) references reisetilskudd(reisetilskudd_id) not null,
-    belop int not null,
-    dato date not null
+    belop double precision not null,
+    fom date not null,
+    tom date,
+    transportmiddel text not null
 );
 

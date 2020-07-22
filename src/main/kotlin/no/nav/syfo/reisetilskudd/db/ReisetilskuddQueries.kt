@@ -2,6 +2,7 @@ package no.nav.syfo.reisetilskudd.db
 
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.db.toList
+import no.nav.syfo.domain.KvitteringJson
 import no.nav.syfo.domain.ReisetilskuddDTO
 import java.sql.Connection
 import java.sql.Date
@@ -16,6 +17,14 @@ fun DatabaseInterface.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
     connection.use { it.lagreReisetilskudd(reisetilskuddDTO) }
 }
 
+fun DatabaseInterface.lagreKvittering(kvitteringJson: KvitteringJson) {
+    connection.use { it.lagreKvittering(kvitteringJson) }
+}
+
+fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
+    connection.use { return it.eierReisetilskudd(fnr, id) }
+}
+
 private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
     this.prepareStatement(
         """
@@ -25,6 +34,18 @@ private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
     ).use {
         it.setString(1, fnr)
         it.executeQuery().toList { toReisetilskuddDTO() }
+    }
+
+private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
+    this.prepareStatement(
+        """
+                   SELECT exists(select 1 FROM reisetilskudd
+                    WHERE fnr = ? AND reisetilskudd_id = ?)
+                """
+    ).use {
+        it.setString(1, fnr)
+        it.setString(2, id)
+        it.executeQuery().next()
     }
 
 private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
@@ -42,6 +63,25 @@ private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
         it.setDate(5, Date.valueOf(reisetilskuddDTO.tom))
         it.setString(6, reisetilskuddDTO.orgNummer)
         it.setString(7, reisetilskuddDTO.orgNavn)
+        it.executeUpdate()
+    }
+    this.commit()
+}
+
+private fun Connection.lagreKvittering(kvitteringJson: KvitteringJson) {
+    this.prepareStatement(
+        """
+                INSERT INTO kvitteringer
+                (kvittering_id, reisetilskudd_id, belop, fom, tom, transportmiddel)
+                VALUES(?, ?, ?, ?, ?, ?)
+            """
+    ).use {
+        it.setString(1, kvitteringJson.kvitteringId)
+        it.setString(2, kvitteringJson.reisetilskuddId)
+        it.setDouble(3, kvitteringJson.belop)
+        it.setDate(4, Date.valueOf(kvitteringJson.fom))
+        it.setDate(5, if (kvitteringJson.tom != null) Date.valueOf(kvitteringJson.tom) else null)
+        it.setString(6, kvitteringJson.transportmiddel.name)
         it.executeUpdate()
     }
     this.commit()
