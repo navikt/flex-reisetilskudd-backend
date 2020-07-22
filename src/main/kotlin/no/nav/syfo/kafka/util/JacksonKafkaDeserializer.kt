@@ -23,4 +23,3 @@ class JacksonKafkaDeserializer : Deserializer<SykmeldingMessage> {
     }
     override fun close() {}
 }
-
