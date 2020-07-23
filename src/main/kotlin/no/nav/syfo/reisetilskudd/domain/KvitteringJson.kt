@@ -1,4 +1,4 @@
-package no.nav.syfo.domain
+package no.nav.syfo.reisetilskudd.domain
 
 import java.time.LocalDate
 
@@ -13,6 +13,10 @@ data class KvitteringJson(
     val tom: LocalDate?,
     val belop: Double,
     val transportmiddel: Transportmiddel
+)
+
+data class DeleteKvittering(
+    val kvitteringId: String
 )
 
 /*

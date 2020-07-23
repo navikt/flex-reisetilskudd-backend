@@ -18,7 +18,7 @@ import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.getWellKnown
 import no.nav.syfo.db.Database
 import no.nav.syfo.db.VaultCredentialService
-import no.nav.syfo.domain.SykmeldingMessage
+import no.nav.syfo.kafka.SykmeldingMessage
 import no.nav.syfo.kafka.SykmeldingKafkaService
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig

@@ -1,4 +1,4 @@
-package no.nav.syfo.domain
+package no.nav.syfo.reisetilskudd.domain
 
 import java.time.LocalDate
 

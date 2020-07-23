@@ -9,11 +9,15 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.put
-import no.nav.syfo.domain.KvitteringJson
+import no.nav.syfo.reisetilskudd.domain.KvitteringJson
 import no.nav.syfo.log
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
+import no.nav.syfo.reisetilskudd.api.utils.Respons
+import no.nav.syfo.reisetilskudd.api.utils.toTextContent
+import no.nav.syfo.reisetilskudd.domain.DeleteKvittering
 
 fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
     get("/reisetilskudd") {
@@ -29,9 +33,21 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         val kvitteringJson = call.receive<KvitteringJson>()
         if (reisetilskuddService.eierReisetilskudd(fnr, kvitteringJson.reisetilskuddId)) {
             reisetilskuddService.lagreKvittering(kvitteringJson)
-            call.respond(TextContent("{\"message\": \"${kvitteringJson.reisetilskuddId} ble lagret i databasen\"}", ContentType.Application.Json))
+            call.respond(Respons("${kvitteringJson.kvitteringId} ble lagret i databasen").toTextContent())
         } else {
-            call.respond(TextContent("{\"message\": \"Bruker eier ikke søknaden\"}", ContentType.Application.Json, HttpStatusCode.Unauthorized))
+            call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.Forbidden))
+        }
+    }
+
+    delete("/kvittering") {
+        val principal: JWTPrincipal = call.authentication.principal()!!
+        val fnr = principal.payload.subject
+        val kvittering = call.receive<DeleteKvittering>()
+        if (reisetilskuddService.eierKvittering(fnr, kvittering.kvitteringId)) {
+            reisetilskuddService.slettKvittering(kvittering.kvitteringId)
+            call.respond(Respons("${kvittering.kvitteringId} ble slettet fra databasen").toTextContent())
+        } else {
+            call.respond(Respons("Bruker eier ikke kvitteringen").toTextContent(HttpStatusCode.Forbidden))
         }
     }
 }

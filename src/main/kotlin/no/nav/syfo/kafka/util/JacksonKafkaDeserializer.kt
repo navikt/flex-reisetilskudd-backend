@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.syfo.domain.SykmeldingMessage
+import no.nav.syfo.kafka.SykmeldingMessage
 import org.apache.kafka.common.serialization.Deserializer
 
 class JacksonKafkaDeserializer : Deserializer<SykmeldingMessage> {
