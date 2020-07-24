@@ -1,14 +1,19 @@
 package no.nav.syfo
 
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.syfo.reisetilskudd.db.*
+import no.nav.syfo.reisetilskudd.db.eierKvittering
+import no.nav.syfo.reisetilskudd.db.eierReisetilskudd
+import no.nav.syfo.reisetilskudd.db.hentReisetilskudd
+import no.nav.syfo.reisetilskudd.db.lagreKvittering
+import no.nav.syfo.reisetilskudd.db.lagreReisetilskudd
+import no.nav.syfo.reisetilskudd.db.slettKvittering
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.syfo.reisetilskudd.domain.Transportmiddel
-import org.spekframework.spek2.style.specification.describe
 import no.nav.syfo.utils.TestDB
 import org.amshove.kluent.shouldBe
 import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.time.LocalDate
 import java.util.UUID
 

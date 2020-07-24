@@ -2,7 +2,6 @@ package no.nav.syfo.reisetilskudd.db
 
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.db.toList
-import no.nav.syfo.log
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.syfo.reisetilskudd.domain.Transportmiddel

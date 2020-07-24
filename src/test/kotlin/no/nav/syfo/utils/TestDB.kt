@@ -5,7 +5,6 @@ import no.nav.syfo.db.DatabaseInterface
 import org.flywaydb.core.Flyway
 import java.sql.Connection
 
-
 class TestDB : DatabaseInterface {
     private var pg: EmbeddedPostgres? = null
     override val connection: Connection
