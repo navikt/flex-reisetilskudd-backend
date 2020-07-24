@@ -6,7 +6,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.withCharset
 
-data class Respons (
+data class Respons(
     val message: String
 )
 

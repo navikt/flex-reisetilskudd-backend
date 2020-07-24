@@ -3,8 +3,6 @@ package no.nav.syfo.reisetilskudd.api
 import io.ktor.application.call
 import io.ktor.auth.authentication
 import io.ktor.auth.jwt.JWTPrincipal
-import io.ktor.content.TextContent
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -12,12 +10,12 @@ import io.ktor.routing.Route
 import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.put
-import no.nav.syfo.reisetilskudd.domain.KvitteringJson
 import no.nav.syfo.log
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.reisetilskudd.api.utils.Respons
 import no.nav.syfo.reisetilskudd.api.utils.toTextContent
 import no.nav.syfo.reisetilskudd.domain.DeleteKvittering
+import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 
 fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
     get("/reisetilskudd") {
@@ -30,7 +28,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
     put("/kvittering") {
         val principal: JWTPrincipal = call.authentication.principal()!!
         val fnr = principal.payload.subject
-        val kvitteringJson = call.receive<KvitteringJson>()
+        val kvitteringJson = call.receive<KvitteringDTO>()
         if (reisetilskuddService.eierReisetilskudd(fnr, kvitteringJson.reisetilskuddId)) {
             reisetilskuddService.lagreKvittering(kvitteringJson)
             call.respond(Respons("${kvitteringJson.kvitteringId} ble lagret i databasen").toTextContent())
