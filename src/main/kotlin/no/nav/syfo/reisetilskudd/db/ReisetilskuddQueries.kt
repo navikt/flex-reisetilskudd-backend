@@ -2,6 +2,7 @@ package no.nav.syfo.reisetilskudd.db
 
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.db.toList
+import no.nav.syfo.log
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.syfo.reisetilskudd.domain.Transportmiddel
@@ -55,8 +56,8 @@ private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
         it.setString(1, fnr)
         it.setString(2, id)
         it.executeQuery().toList {
-            toReisetilskuddDTO()
-        }.size > 0
+            getString("reisetilskudd_id")
+        }.isNotEmpty()
     }
 
 private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
@@ -111,21 +112,22 @@ private fun Connection.slettKvittering(id: String) {
     this.commit()
 }
 
-private fun Connection.eierKvittering(fnr: String, id: String): Boolean =
-    this.prepareStatement(
+private fun Connection.eierKvittering(fnr: String, id: String): Boolean {
+    return this.prepareStatement(
         """
             SELECT * FROM kvitteringer kv, reisetilskudd re
-            WHERE kv.kvittering_id = ? 
-            AND kv.reisetilskudd_id = re.reisetilskudd_id 
+            WHERE kv.kvittering_id = ?
+            AND kv.reisetilskudd_id = re.reisetilskudd_id
             AND re.fnr = ?
         """
     ).use {
         it.setString(1, id)
         it.setString(2, fnr)
         it.executeQuery().toList {
-            toKvitteringDTO()
-        }.size > 0
+            getString("kvittering_id")
+        }.isNotEmpty()
     }
+}
 
 fun ResultSet.toReisetilskuddDTO(): ReisetilskuddDTO {
     return ReisetilskuddDTO(
