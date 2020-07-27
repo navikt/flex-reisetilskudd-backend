@@ -22,6 +22,7 @@ val postgresVersion = "42.2.5"
 val flywayVersion = "5.2.4"
 val hikariVersion = "3.3.0"
 val vaultJavaDriverVersion = "3.1.0"
+val postgresEmbeddedVersion = "0.13.1"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
@@ -105,6 +106,7 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
+    testImplementation("com.opentable.components:otj-pg-embedded:$postgresEmbeddedVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
@@ -145,7 +147,6 @@ tasks {
         useJUnitPlatform {
             includeEngines("spek2")
         }
-        testLogging.showStandardStreams = true
     }
 
     "check" {

@@ -2,8 +2,9 @@ package no.nav.syfo.reisetilskudd.db
 
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.db.toList
-import no.nav.syfo.domain.KvitteringJson
-import no.nav.syfo.domain.ReisetilskuddDTO
+import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
+import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
+import no.nav.syfo.reisetilskudd.domain.Transportmiddel
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
@@ -17,12 +18,20 @@ fun DatabaseInterface.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
     connection.use { it.lagreReisetilskudd(reisetilskuddDTO) }
 }
 
-fun DatabaseInterface.lagreKvittering(kvitteringJson: KvitteringJson) {
-    connection.use { it.lagreKvittering(kvitteringJson) }
+fun DatabaseInterface.lagreKvittering(kvitteringDTO: KvitteringDTO) {
+    connection.use { it.lagreKvittering(kvitteringDTO) }
 }
 
 fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
     connection.use { return it.eierReisetilskudd(fnr, id) }
+}
+
+fun DatabaseInterface.eierKvittering(fnr: String, id: String): Boolean {
+    connection.use { return it.eierKvittering(fnr, id) }
+}
+
+fun DatabaseInterface.slettKvittering(id: String) {
+    connection.use { it.slettKvittering(id) }
 }
 
 private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
@@ -39,13 +48,15 @@ private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
 private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
     this.prepareStatement(
         """
-                   SELECT exists(select 1 FROM reisetilskudd
-                    WHERE fnr = ? AND reisetilskudd_id = ?)
-                """
+            select * FROM reisetilskudd
+            WHERE fnr = ? AND reisetilskudd_id = ?
+    """
     ).use {
         it.setString(1, fnr)
         it.setString(2, id)
-        it.executeQuery().next()
+        it.executeQuery().toList {
+            getString("reisetilskudd_id")
+        }.isNotEmpty()
     }
 
 private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
@@ -68,7 +79,7 @@ private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
     this.commit()
 }
 
-private fun Connection.lagreKvittering(kvitteringJson: KvitteringJson) {
+private fun Connection.lagreKvittering(kvitteringDTO: KvitteringDTO) {
     this.prepareStatement(
         """
                 INSERT INTO kvitteringer
@@ -76,15 +87,45 @@ private fun Connection.lagreKvittering(kvitteringJson: KvitteringJson) {
                 VALUES(?, ?, ?, ?, ?, ?)
             """
     ).use {
-        it.setString(1, kvitteringJson.kvitteringId)
-        it.setString(2, kvitteringJson.reisetilskuddId)
-        it.setDouble(3, kvitteringJson.belop)
-        it.setDate(4, Date.valueOf(kvitteringJson.fom))
-        it.setDate(5, if (kvitteringJson.tom != null) Date.valueOf(kvitteringJson.tom) else null)
-        it.setString(6, kvitteringJson.transportmiddel.name)
+        it.setString(1, kvitteringDTO.kvitteringId)
+        it.setString(2, kvitteringDTO.reisetilskuddId)
+        it.setDouble(3, kvitteringDTO.belop)
+        it.setDate(4, Date.valueOf(kvitteringDTO.fom))
+        it.setDate(5, if (kvitteringDTO.tom != null) Date.valueOf(kvitteringDTO.tom) else null)
+        it.setString(6, kvitteringDTO.transportmiddel.name)
         it.executeUpdate()
     }
     this.commit()
+}
+
+private fun Connection.slettKvittering(id: String) {
+    this.prepareStatement(
+        """
+            DELETE FROM kvitteringer
+            WHERE kvittering_id = ?
+        """
+    ).use {
+        it.setString(1, id)
+        it.executeUpdate()
+    }
+    this.commit()
+}
+
+private fun Connection.eierKvittering(fnr: String, id: String): Boolean {
+    return this.prepareStatement(
+        """
+            SELECT * FROM kvitteringer kv, reisetilskudd re
+            WHERE kv.kvittering_id = ?
+            AND kv.reisetilskudd_id = re.reisetilskudd_id
+            AND re.fnr = ?
+        """
+    ).use {
+        it.setString(1, id)
+        it.setString(2, fnr)
+        it.executeQuery().toList {
+            getString("kvittering_id")
+        }.isNotEmpty()
+    }
 }
 
 fun ResultSet.toReisetilskuddDTO(): ReisetilskuddDTO {
@@ -96,5 +137,16 @@ fun ResultSet.toReisetilskuddDTO(): ReisetilskuddDTO {
         tom = getObject("tom", LocalDate::class.java),
         orgNummer = getString("arbeidsgiver_orgnummer"),
         orgNavn = getString("arbeidsgiver_navn")
+    )
+}
+
+fun ResultSet.toKvitteringDTO(): KvitteringDTO {
+    return KvitteringDTO(
+        reisetilskuddId = getString("reisetilskudd_id"),
+        kvitteringId = getString("kvittering_id"),
+        fom = getObject("fom", LocalDate::class.java),
+        tom = getObject("tom", LocalDate::class.java),
+        belop = getDouble("belop"),
+        transportmiddel = Transportmiddel.valueOf(getString("transportmiddel"))
     )
 }
