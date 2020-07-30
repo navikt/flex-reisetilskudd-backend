@@ -1,17 +1,12 @@
 package no.nav.syfo
 
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.syfo.reisetilskudd.db.eierKvittering
-import no.nav.syfo.reisetilskudd.db.eierReisetilskudd
-import no.nav.syfo.reisetilskudd.db.hentReisetilskudd
-import no.nav.syfo.reisetilskudd.db.lagreKvittering
-import no.nav.syfo.reisetilskudd.db.lagreReisetilskudd
-import no.nav.syfo.reisetilskudd.db.slettKvittering
+import no.nav.syfo.reisetilskudd.db.*
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.syfo.reisetilskudd.domain.Transportmiddel
 import no.nav.syfo.utils.TestDB
-import org.amshove.kluent.shouldBe
+import org.amshove.kluent.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.time.LocalDate
@@ -49,6 +44,43 @@ object DatabaseTest : Spek({
         db.eierKvittering(fnr, kv.kvitteringId) shouldBe true
         db.slettKvittering(kv.kvitteringId)
         db.eierKvittering(fnr, kv.kvitteringId) shouldBe false
+    }
+
+    describe("oppdater reisetilskudd"){
+        val fnr = "01010111111"
+        val rt = reisetilskudd(fnr)
+        db.lagreReisetilskudd(rt)
+        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        rtFraDB.shouldNotBeNull()
+        rtFraDB.egenBil.shouldBeNull()
+        val svar = ReisetilskuddDTO(rt.reisetilskuddId, "abc", "abc", LocalDate.MAX, LocalDate.MAX,
+            "abc", "abc", false, true, true, null,
+            37.0 )
+        db.oppdaterReisetilskudd(svar)
+        val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        nyRtFraDB.shouldNotBeNull()
+        nyRtFraDB.also {
+            log.info("""
+                ${it.reisetilskuddId}
+                ${it.sykmeldingId}
+                ${it.fnr}
+                ${it.fom}
+                ${it.tom}
+                ${it.orgNummer}
+                ${it.orgNavn}
+                ${it.utbetalingTilArbeidsgiver}
+                ${it.går}
+                ${it.sykler}
+                ${it.egenBil}
+                ${it.kollektivtransport}
+            """.trimIndent())
+        }
+        nyRtFraDB.fnr shouldBeEqualTo fnr
+        nyRtFraDB.utbetalingTilArbeidsgiver?.shouldBeFalse()
+        nyRtFraDB.går?.shouldBeTrue()
+        nyRtFraDB.sykler?.shouldBeTrue()
+        log.info(nyRtFraDB.kollektivtransport.toString() + "hallo")
+        nyRtFraDB.egenBil.shouldBeNull()
     }
 })
 

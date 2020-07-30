@@ -9,5 +9,10 @@ data class ReisetilskuddDTO(
     val fom: LocalDate,
     val tom: LocalDate,
     val orgNummer: String?,
-    val orgNavn: String?
+    val orgNavn: String?,
+    var utbetalingTilArbeidsgiver: Boolean? = null,
+    var går: Boolean? = null,
+    var sykler: Boolean? = null,
+    var egenBil: Double? = null,
+    var kollektivtransport: Double? = null
 )
