@@ -49,7 +49,12 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
                 reisetilskudd.kollektivtransport = svarJson.kollektivtransport
             }
             reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
-            call.respond(Respons("${svarJson.reisetilskuddId} ble oppdatert").toTextContent())
+            val reisetilskuddFraDb = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
+            if (reisetilskuddFraDb != null) {
+                call.respond(reisetilskuddFraDb)
+            } else {
+                call.respond(Respons("Noe gikk galt i henting fra databasen!").toTextContent(HttpStatusCode.InternalServerError))
+            }
         } else {
             call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.Forbidden))
         }
