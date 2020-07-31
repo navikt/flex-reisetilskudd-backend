@@ -52,35 +52,19 @@ object DatabaseTest : Spek({
         db.lagreReisetilskudd(rt)
         val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
-        rtFraDB.egenBil.shouldBeNull()
+        rtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
         val svar = ReisetilskuddDTO(rt.reisetilskuddId, "abc", "abc", LocalDate.MAX, LocalDate.MAX,
-            "abc", "abc", false, true, true, null,
+            "abc", "abc", false, true, true, 0.0,
             37.0 )
         db.oppdaterReisetilskudd(svar)
         val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
-        nyRtFraDB.also {
-            log.info("""
-                ${it.reisetilskuddId}
-                ${it.sykmeldingId}
-                ${it.fnr}
-                ${it.fom}
-                ${it.tom}
-                ${it.orgNummer}
-                ${it.orgNavn}
-                ${it.utbetalingTilArbeidsgiver}
-                ${it.går}
-                ${it.sykler}
-                ${it.egenBil}
-                ${it.kollektivtransport}
-            """.trimIndent())
-        }
         nyRtFraDB.fnr shouldBeEqualTo fnr
         nyRtFraDB.utbetalingTilArbeidsgiver?.shouldBeFalse()
         nyRtFraDB.går?.shouldBeTrue()
         nyRtFraDB.sykler?.shouldBeTrue()
-        log.info(nyRtFraDB.kollektivtransport.toString() + "hallo")
-        nyRtFraDB.egenBil.shouldBeNull()
+        nyRtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
+        nyRtFraDB.kollektivtransport.shouldBeInRange(37.0, 37.0)
     }
 })
 

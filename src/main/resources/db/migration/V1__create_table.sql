@@ -7,11 +7,11 @@ CREATE TABLE reisetilskudd (
     tom date not null,
     arbeidsgiver_orgnummer varchar(9),
     arbeidsgiver_navn text,
-    utbetaling_til_arbeidsgiver boolean,
-    gar boolean,
-    sykler boolean,
-    egen_bil double precision,
-    kollektivtransport double precision
+    utbetaling_til_arbeidsgiver integer default 0 not null,
+    gar integer default 0 not null,
+    sykler integer default 0 not null,
+    egen_bil double precision default 0.0 not null,
+    kollektivtransport double precision default 0.0 not null
 );
 
 CREATE TABLE kvitteringer (

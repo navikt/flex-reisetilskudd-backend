@@ -2,10 +2,7 @@ package no.nav.syfo.reisetilskudd.db
 
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.db.toList
-import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
-import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
-import no.nav.syfo.reisetilskudd.domain.SvarDTO
-import no.nav.syfo.reisetilskudd.domain.Transportmiddel
+import no.nav.syfo.reisetilskudd.domain.*
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
@@ -114,12 +111,13 @@ private fun Connection.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO)
             WHERE reisetilskudd_id = ?
         """
     ).use {
-        it.setObject(1, reisetilskuddDTO.utbetalingTilArbeidsgiver , BOOLEAN)
-        it.setObject(2, reisetilskuddDTO.går, BOOLEAN)
-        it.setObject(3, reisetilskuddDTO.sykler, BOOLEAN)
-        if (reisetilskuddDTO.egenBil != null) it.setDouble(4, reisetilskuddDTO.egenBil!!) else it.setNull(4, DOUBLE)
-        if (reisetilskuddDTO.kollektivtransport != null) it.setDouble(5, reisetilskuddDTO.kollektivtransport!!) else it.setNull(5, DOUBLE)
+        it.setInt(1, reisetilskuddDTO.utbetalingTilArbeidsgiver.toInt())
+        it.setInt(2, reisetilskuddDTO.går.toInt())
+        it.setInt(3, reisetilskuddDTO.sykler.toInt())
+        it.setDouble(4, reisetilskuddDTO.egenBil)
+        it.setDouble(5, reisetilskuddDTO.kollektivtransport)
         it.setString(6, reisetilskuddDTO.reisetilskuddId)
+        it.executeUpdate()
     }
     this.commit()
 }
@@ -182,28 +180,12 @@ fun ResultSet.toReisetilskuddDTO(): ReisetilskuddDTO {
         tom = getObject("tom", LocalDate::class.java),
         orgNummer = getString("arbeidsgiver_orgnummer"),
         orgNavn = getString("arbeidsgiver_navn"),
-        utbetalingTilArbeidsgiver = getBooleanOrNull("utbetaling_til_arbeidsgiver"),
-        går = getBooleanOrNull("gar"),
-        sykler = getBooleanOrNull("sykler"),
-        egenBil = getDoubleOrNull("egen_bil"),
-        kollektivtransport = getDoubleOrNull("kollektivtransport")
+        utbetalingTilArbeidsgiver = getInt("utbetaling_til_arbeidsgiver").toOptionalBoolean(),
+        går = getInt("gar").toOptionalBoolean(),
+        sykler = getInt("sykler").toOptionalBoolean(),
+        egenBil = getDouble("egen_bil"),
+        kollektivtransport = getDouble("kollektivtransport")
     )
-}
-
-fun ResultSet.getBooleanOrNull(columnLabel: String): Boolean? {
-    var result: Boolean? = getBoolean(columnLabel)
-    if (wasNull()) {
-        result = null
-    }
-    return result
-}
-
-fun ResultSet.getDoubleOrNull(columnLabel: String): Double? {
-    var result: Double? = getDouble(columnLabel)
-    if (wasNull()) {
-        result = null
-    }
-    return result
 }
 
 fun ResultSet.toKvitteringDTO(): KvitteringDTO {
