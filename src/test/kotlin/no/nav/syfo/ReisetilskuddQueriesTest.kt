@@ -1,12 +1,23 @@
 package no.nav.syfo
 
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.syfo.reisetilskudd.db.*
+import no.nav.syfo.reisetilskudd.db.eierKvittering
+import no.nav.syfo.reisetilskudd.db.eierReisetilskudd
+import no.nav.syfo.reisetilskudd.db.hentReisetilskudd
+import no.nav.syfo.reisetilskudd.db.lagreKvittering
+import no.nav.syfo.reisetilskudd.db.lagreReisetilskudd
+import no.nav.syfo.reisetilskudd.db.oppdaterReisetilskudd
+import no.nav.syfo.reisetilskudd.db.slettKvittering
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.syfo.reisetilskudd.domain.Transportmiddel
 import no.nav.syfo.utils.TestDB
-import org.amshove.kluent.*
+import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldBeFalse
+import org.amshove.kluent.shouldBeInRange
+import org.amshove.kluent.shouldBeTrue
+import org.amshove.kluent.shouldNotBeNull
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.time.LocalDate
@@ -46,16 +57,27 @@ object DatabaseTest : Spek({
         db.eierKvittering(fnr, kv.kvitteringId) shouldBe false
     }
 
-    describe("oppdater reisetilskudd"){
+    describe("oppdater reisetilskudd") {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
         val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
-        val svar = ReisetilskuddDTO(rt.reisetilskuddId, "abc", "abc", LocalDate.MAX, LocalDate.MAX,
-            "abc", "abc", false, true, true, 0.0,
-            37.0 )
+        val svar = ReisetilskuddDTO(
+            rt.reisetilskuddId,
+            sykmeldingId = "abc",
+            fnr = "abc",
+            fom = LocalDate.MAX,
+            tom = LocalDate.MAX,
+            orgNummer = "abc",
+            orgNavn = "abc",
+            utbetalingTilArbeidsgiver = false,
+            går = true,
+            sykler = true,
+            egenBil = 0.0,
+            kollektivtransport = 37.0
+        )
         db.oppdaterReisetilskudd(svar)
         val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()

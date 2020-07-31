@@ -16,19 +16,20 @@ data class ReisetilskuddDTO(
     var egenBil: Double = 0.0,
     var kollektivtransport: Double = 0.0
 ) {
-    override fun toString() = """
+    override fun toString() =
+        """
        ReisetilskuddDTO(
-        reisetilskuddId = ${reisetilskuddId},
-        sykmeldingId = ${sykmeldingId},
-        fnr = ${fnr},
-        fom = ${fom},
-        tom = ${tom},
-        orgNummer = ${orgNummer},
-        orgNavn = ${orgNavn},
-        utbetalingTilArbeidsgiver = ${utbetalingTilArbeidsgiver},
-        går = ${går},
-        sykler = ${sykler},
-        egenBil = ${egenBil},
+        reisetilskuddId = $reisetilskuddId,
+        sykmeldingId = $sykmeldingId,
+        fnr = $fnr,
+        fom = $fom,
+        tom = $tom,
+        orgNummer = $orgNummer,
+        orgNavn = $orgNavn,
+        utbetalingTilArbeidsgiver = $utbetalingTilArbeidsgiver,
+        går = $går,
+        sykler = $sykler,
+        egenBil = $egenBil,
         kollektivtransport = $kollektivtransport
        ) 
     """

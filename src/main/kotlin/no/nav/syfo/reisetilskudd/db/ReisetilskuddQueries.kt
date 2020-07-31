@@ -2,12 +2,14 @@ package no.nav.syfo.reisetilskudd.db
 
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.db.toList
-import no.nav.syfo.reisetilskudd.domain.*
+import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
+import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
+import no.nav.syfo.reisetilskudd.domain.Transportmiddel
+import no.nav.syfo.reisetilskudd.domain.toInt
+import no.nav.syfo.reisetilskudd.domain.toOptionalBoolean
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
-import java.sql.Types.BOOLEAN
-import java.sql.Types.DOUBLE
 import java.time.LocalDate
 
 fun DatabaseInterface.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
@@ -52,7 +54,6 @@ private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
         it.setString(1, fnr)
         it.executeQuery().toList { toReisetilskuddDTO() }
     }
-
 
 private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddDTO? =
     this.prepareStatement(

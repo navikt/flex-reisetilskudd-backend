@@ -3,10 +3,15 @@ package no.nav.syfo.reisetilskudd
 import no.nav.syfo.db.DatabaseInterface
 import no.nav.syfo.kafka.SykmeldingMessage
 import no.nav.syfo.kafka.toReisetilskuddDTO
-import no.nav.syfo.reisetilskudd.db.*
+import no.nav.syfo.reisetilskudd.db.eierKvittering
+import no.nav.syfo.reisetilskudd.db.eierReisetilskudd
+import no.nav.syfo.reisetilskudd.db.hentReisetilskudd
+import no.nav.syfo.reisetilskudd.db.lagreKvittering
+import no.nav.syfo.reisetilskudd.db.lagreReisetilskudd
+import no.nav.syfo.reisetilskudd.db.oppdaterReisetilskudd
+import no.nav.syfo.reisetilskudd.db.slettKvittering
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
-import no.nav.syfo.reisetilskudd.domain.SvarDTO
 
 class ReisetilskuddService(private val database: DatabaseInterface) {
 

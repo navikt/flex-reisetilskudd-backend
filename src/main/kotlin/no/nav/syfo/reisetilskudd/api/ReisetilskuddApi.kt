@@ -6,7 +6,11 @@ import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.routing.*
+import io.ktor.routing.Route
+import io.ktor.routing.delete
+import io.ktor.routing.get
+import io.ktor.routing.post
+import io.ktor.routing.put
 import no.nav.syfo.log
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.reisetilskudd.api.utils.Respons
@@ -28,8 +32,8 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         val fnr = principal.payload.subject
         val svarJson = call.receive<SvarDTO>()
         if (reisetilskuddService.eierReisetilskudd(fnr, svarJson.reisetilskuddId)) {
-            var reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId);
-            if (reisetilskudd == null){
+            var reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
+            if (reisetilskudd == null) {
                 call.respond(Respons("${svarJson.reisetilskuddId} finnes ikke").toTextContent(HttpStatusCode.NotFound))
                 return@post
             }
