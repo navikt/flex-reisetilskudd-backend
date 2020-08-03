@@ -108,5 +108,6 @@ fun kvittering(id: String): KvitteringDTO =
         fom = LocalDate.of(2020, 7, 1),
         tom = null,
         belop = 250.0,
-        transportmiddel = Transportmiddel.TAXI
+        transportmiddel = Transportmiddel.TAXI,
+        storrelse = 1000*1000
     )

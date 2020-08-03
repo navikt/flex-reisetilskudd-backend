@@ -20,6 +20,7 @@ CREATE TABLE kvitteringer (
     belop double precision not null,
     fom date not null,
     tom date,
+    storrelse bigint not null,
     transportmiddel text not null
 );
 
