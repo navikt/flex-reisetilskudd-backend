@@ -109,5 +109,5 @@ fun kvittering(id: String): KvitteringDTO =
         tom = null,
         belop = 250.0,
         transportmiddel = Transportmiddel.TAXI,
-        storrelse = 1000*1000
+        storrelse = 1000 * 1000
     )
