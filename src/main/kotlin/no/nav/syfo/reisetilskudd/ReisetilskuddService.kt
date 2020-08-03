@@ -8,6 +8,7 @@ import no.nav.syfo.reisetilskudd.db.eierReisetilskudd
 import no.nav.syfo.reisetilskudd.db.hentReisetilskudd
 import no.nav.syfo.reisetilskudd.db.lagreKvittering
 import no.nav.syfo.reisetilskudd.db.lagreReisetilskudd
+import no.nav.syfo.reisetilskudd.db.oppdaterReisetilskudd
 import no.nav.syfo.reisetilskudd.db.slettKvittering
 import no.nav.syfo.reisetilskudd.domain.KvitteringDTO
 import no.nav.syfo.reisetilskudd.domain.ReisetilskuddDTO
@@ -23,8 +24,15 @@ class ReisetilskuddService(private val database: DatabaseInterface) {
     fun hentReisetilskudd(fnr: String) =
         database.hentReisetilskudd(fnr)
 
+    fun hentReisetilskudd(fnr: String, reisetilskuddId: String) =
+        database.hentReisetilskudd(fnr, reisetilskuddId)
+
     private fun lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
         database.lagreReisetilskudd(reisetilskuddDTO)
+    }
+
+    fun oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
+        database.oppdaterReisetilskudd(reisetilskuddDTO)
     }
 
     fun lagreKvittering(kvitteringDTO: KvitteringDTO) {

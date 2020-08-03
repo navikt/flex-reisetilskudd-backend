@@ -11,6 +11,7 @@ data class KvitteringDTO(
     val kvitteringId: String,
     val fom: LocalDate,
     val tom: LocalDate?,
+    val storrelse: Long,
     val belop: Double,
     val transportmiddel: Transportmiddel
 )
@@ -26,7 +27,8 @@ Forventet payload fra frontend:
     "reisetilskuddId": "en-uuid-her",
     "kvitteringId": "en-uuid-til",
     "fom": "2020-07-22",
-    "tom": null
+    "tom": null,
+    "storrelse": 988987123,
     "belop": 180.40,
     "transportmiddel": "TAXI",
 }
