@@ -6,7 +6,12 @@ CREATE TABLE reisetilskudd (
     fom date not null,
     tom date not null,
     arbeidsgiver_orgnummer varchar(9),
-    arbeidsgiver_navn text
+    arbeidsgiver_navn text,
+    utbetaling_til_arbeidsgiver integer default 0 not null,
+    gar integer default 0 not null,
+    sykler integer default 0 not null,
+    egen_bil double precision default 0.0 not null,
+    kollektivtransport double precision default 0.0 not null
 );
 
 CREATE TABLE kvitteringer (
@@ -15,6 +20,8 @@ CREATE TABLE kvitteringer (
     belop double precision not null,
     fom date not null,
     tom date,
+    storrelse bigint not null,
     transportmiddel text not null
 );
+
 
