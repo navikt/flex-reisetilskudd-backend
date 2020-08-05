@@ -9,6 +9,7 @@ enum class Transportmiddel {
 data class KvitteringDTO(
     val reisetilskuddId: String,
     val kvitteringId: String,
+    val navn: String,
     val fom: LocalDate,
     val tom: LocalDate?,
     val storrelse: Long,
@@ -26,6 +27,7 @@ Forventet payload fra frontend:
 {
     "reisetilskuddId": "en-uuid-her",
     "kvitteringId": "en-uuid-til",
+    "navn": "foo.jpg",
     "fom": "2020-07-22",
     "tom": null,
     "storrelse": 988987123,

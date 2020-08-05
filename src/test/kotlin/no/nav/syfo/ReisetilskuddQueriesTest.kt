@@ -105,6 +105,7 @@ fun kvittering(id: String): KvitteringDTO =
     KvitteringDTO(
         kvitteringId = UUID.randomUUID().toString(),
         reisetilskuddId = id,
+        navn = "test.jpg",
         fom = LocalDate.of(2020, 7, 1),
         tom = null,
         belop = 250.0,

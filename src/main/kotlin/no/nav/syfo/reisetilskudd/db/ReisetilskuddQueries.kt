@@ -134,17 +134,18 @@ private fun Connection.lagreKvittering(kvitteringDTO: KvitteringDTO) {
     this.prepareStatement(
         """
                 INSERT INTO kvitteringer
-                (kvittering_id, reisetilskudd_id, belop, fom, tom, transportmiddel, storrelse)
-                VALUES(?, ?, ?, ?, ?, ?, ?)
+                (kvittering_id, reisetilskudd_id, navn, belop, fom, tom, transportmiddel, storrelse)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?)
             """
     ).use {
         it.setString(1, kvitteringDTO.kvitteringId)
         it.setString(2, kvitteringDTO.reisetilskuddId)
-        it.setDouble(3, kvitteringDTO.belop)
-        it.setDate(4, Date.valueOf(kvitteringDTO.fom))
-        it.setDate(5, if (kvitteringDTO.tom != null) Date.valueOf(kvitteringDTO.tom) else null)
-        it.setString(6, kvitteringDTO.transportmiddel.name)
-        it.setLong(7, kvitteringDTO.storrelse)
+        it.setString(3, kvitteringDTO.navn)
+        it.setDouble(4, kvitteringDTO.belop)
+        it.setDate(5, Date.valueOf(kvitteringDTO.fom))
+        it.setDate(6, if (kvitteringDTO.tom != null) Date.valueOf(kvitteringDTO.tom) else null)
+        it.setString(7, kvitteringDTO.transportmiddel.name)
+        it.setLong(8, kvitteringDTO.storrelse)
         it.executeUpdate()
     }
     this.commit()
@@ -216,6 +217,7 @@ fun ResultSet.toKvitteringDTO(): KvitteringDTO {
     return KvitteringDTO(
         reisetilskuddId = getString("reisetilskudd_id"),
         kvitteringId = getString("kvittering_id"),
+        navn = getString("navn"),
         fom = getObject("fom", LocalDate::class.java),
         tom = getObject("tom", LocalDate::class.java),
         belop = getDouble("belop"),
