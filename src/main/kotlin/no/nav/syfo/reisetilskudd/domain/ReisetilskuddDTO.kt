@@ -14,7 +14,8 @@ data class ReisetilskuddDTO(
     var går: Boolean? = null,
     var sykler: Boolean? = null,
     var egenBil: Double = 0.0,
-    var kollektivtransport: Double = 0.0
+    var kollektivtransport: Double = 0.0,
+    var kvitteringer: List<KvitteringDTO> = emptyList()
 ) {
     override fun toString() =
         """
@@ -31,6 +32,7 @@ data class ReisetilskuddDTO(
         sykler = $sykler,
         egenBil = $egenBil,
         kollektivtransport = $kollektivtransport
+        
        ) 
     """
 }

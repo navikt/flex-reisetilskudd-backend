@@ -44,8 +44,8 @@ fun DatabaseInterface.slettKvittering(id: String) {
     connection.use { it.slettKvittering(id) }
 }
 
-private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
-    this.prepareStatement(
+private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
+    val reisetilskudd = this.prepareStatement(
         """
             SELECT * FROM reisetilskudd
             WHERE fnr = ?
@@ -54,9 +54,15 @@ private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> =
         it.setString(1, fnr)
         it.executeQuery().toList { toReisetilskuddDTO() }
     }
+    reisetilskudd.forEach {
+        it.kvitteringer = hentKvitteringer(it.reisetilskuddId)
+    }
+    return reisetilskudd
+}
 
-private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddDTO? =
-    this.prepareStatement(
+private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddDTO? {
+    val kvitteringer = hentKvitteringer(reisetilskuddId)
+    return this.prepareStatement(
         """
             SELECT * FROM reisetilskudd
             WHERE fnr = ?
@@ -65,8 +71,9 @@ private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): 
     ).use {
         it.setString(1, fnr)
         it.setString(2, reisetilskuddId)
-        it.executeQuery().toList { toReisetilskuddDTO() }.firstOrNull()
+        it.executeQuery().toList { toReisetilskuddDTO(kvitteringer) }.firstOrNull()
     }
+}
 
 private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
     this.prepareStatement(
@@ -173,7 +180,21 @@ private fun Connection.eierKvittering(fnr: String, id: String): Boolean {
     }
 }
 
-fun ResultSet.toReisetilskuddDTO(): ReisetilskuddDTO {
+private fun Connection.hentKvitteringer(reisetilskuddId: String): List<KvitteringDTO> {
+    return this.prepareStatement(
+        """
+            SELECT * FROM kvitteringer
+            WHERE reisetilskudd_id = ?
+        """
+    ).use {
+        it.setString(1, reisetilskuddId)
+        it.executeQuery().toList {
+            toKvitteringDTO()
+        }
+    }
+}
+
+fun ResultSet.toReisetilskuddDTO(kvitteringer: List<KvitteringDTO> = emptyList()): ReisetilskuddDTO {
     return ReisetilskuddDTO(
         sykmeldingId = getString("sykmelding_id"),
         fnr = getString("fnr"),
@@ -186,7 +207,8 @@ fun ResultSet.toReisetilskuddDTO(): ReisetilskuddDTO {
         går = getInt("gar").toOptionalBoolean(),
         sykler = getInt("sykler").toOptionalBoolean(),
         egenBil = getDouble("egen_bil"),
-        kollektivtransport = getDouble("kollektivtransport")
+        kollektivtransport = getDouble("kollektivtransport"),
+        kvitteringer = kvitteringer
     )
 }
 
