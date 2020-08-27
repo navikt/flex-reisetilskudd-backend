@@ -30,7 +30,12 @@ val log: Logger = LoggerFactory.getLogger("no.nav.syfo.flex-reisetilskudd-backen
 
 @KtorExperimentalAPI
 fun main() {
+    log.info("Starter flex-reisetilskudd-backend")
     val env = Environment()
+
+    // Sov litt slik at sidecars er klare
+    Thread.sleep(env.sidecarInitialDelay)
+    log.info("Sov i ${env.sidecarInitialDelay} ms i håp om at sidecars er klare")
 
     val wellKnown = getWellKnown(env.oidcWellKnownUri)
     val jwkProvider = JwkProviderBuilder(URL(wellKnown.jwks_uri))
