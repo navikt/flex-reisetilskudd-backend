@@ -7,13 +7,8 @@ import org.flywaydb.core.Flyway
 import java.sql.Connection
 import java.sql.ResultSet
 
-enum class Role {
-    ADMIN, USER, READONLY;
-
-    override fun toString() = name.toLowerCase()
-}
-
-class Database(private val env: Environment, private val vaultCredentialService: VaultCredentialService) : DatabaseInterface {
+class Database(private val env: Environment) :
+    DatabaseInterface {
     private val dataSource: HikariDataSource
 
     override val connection: Connection
@@ -22,16 +17,11 @@ class Database(private val env: Environment, private val vaultCredentialService:
     init {
         runFlywayMigrations()
 
-        val initialCredentials = vaultCredentialService.getNewCredentials(
-            mountPath = env.mountPathVault,
-            databaseName = env.databaseName,
-            role = Role.USER
-        )
         dataSource = HikariDataSource(
             HikariConfig().apply {
-                jdbcUrl = env.flexreisetilskuddDBURL
-                username = initialCredentials.username
-                password = initialCredentials.password
+                jdbcUrl = env.jdbcUrl()
+                username = env.dbUsername
+                password = env.dbPwd
                 maximumPoolSize = 3
                 minimumIdle = 1
                 idleTimeout = 10001
@@ -41,23 +31,11 @@ class Database(private val env: Environment, private val vaultCredentialService:
                 validate()
             }
         )
-
-        vaultCredentialService.renewCredentialsTaskData = RenewCredentialsTaskData(
-            dataSource = dataSource,
-            mountPath = env.mountPathVault,
-            databaseName = env.databaseName,
-            role = Role.USER
-        )
     }
 
     private fun runFlywayMigrations() = Flyway.configure().run {
-        val credentials = vaultCredentialService.getNewCredentials(
-            mountPath = env.mountPathVault,
-            databaseName = env.databaseName,
-            role = Role.ADMIN
-        )
-        dataSource(env.flexreisetilskuddDBURL, credentials.username, credentials.password)
-        initSql("SET ROLE \"${env.databaseName}-${Role.ADMIN}\"") // required for assigning proper owners for the tables
+        dataSource(env.jdbcUrl(), env.dbUsername, env.dbPwd)
+
         load().migrate()
     }
 }

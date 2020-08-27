@@ -1,8 +1,5 @@
-name: Deploy to dev
-on:
-  push:
-    branches:
-      - '*'
+name: "Build, publish and deploy"
+on: push
 env:
   APP: flex-reisetilskudd-backend
 jobs:
@@ -13,11 +10,22 @@ jobs:
       - name: Setup java
         uses: actions/setup-java@v1
         with:
-          java-version: '12.0.2'
+          java-version: '14'
       - name: Checkout code
         uses: actions/checkout@master
-      - name: LintCode
-        uses: docker://github/super-linter:v2.2.0
+      - name: Generate version and image name
+        run: |
+          TIME=$(TZ="Europe/Oslo" date +%Y.%m.%d-%H.%m)
+          COMMIT=$(git rev-parse --short=8 HEAD)
+          VERSION=$TIME-$COMMIT
+          echo "::set-env name=IMAGE::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:$VERSION""
+          echo "::set-env name=VERSION::"$VERSION""
+          echo $VERSION > VERSION.txt
+      - name: Store VERSION for subsequent jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: VERSION.txt
+          path: VERSION.txt
       - name: Gradle wrapper validation
         uses: gradle/wrapper-validation-action@v1
       - uses: actions/cache@v1
@@ -32,6 +40,12 @@ jobs:
           key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-wrapper-
+      - name: Lint koden
+        env:
+          ORG_GRADLE_PROJECT_githubUser: x-access-token
+          ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew ktlintCheck
       - name: Run tests
         env:
           ORG_GRADLE_PROJECT_githubUser: x-access-token
@@ -44,19 +58,6 @@ jobs:
           ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew shadowJar -x test
-      - name: Generer versjon og image navn
-        run: |
-          TIME=$(TZ="Europe/Oslo" date +%Y.%m.%d-%H.%M)
-          COMMIT=$(git rev-parse --short=8 HEAD)
-          VERSION=$TIME-$COMMIT
-          echo "::set-env name=IMAGE::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:$VERSION""
-          echo "::set-env name=VERSION::"$VERSION""
-      - run: echo $VERSION > VERSION.txt
-      - name: Last opp VERSION til neste job
-        uses: actions/upload-artifact@v1
-        with:
-          name: VERSION.txt
-          path: VERSION.txt
       - name: Build and publish Docker image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,34 +65,36 @@ jobs:
           docker build --tag ${IMAGE} .
           docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
           docker push ${IMAGE}
-#  deploy:
-#    name: Deploy til dev-fss (Q1)
+
+#  deploy-to-dev:
+#    name: Deploy to dev-gcp
 #    runs-on: ubuntu-latest
 #    needs: build
 #    steps:
 #      - name: Checkout code
-#        uses: actions/checkout@v1
-#      - name: Last ned versjon
-#        uses: actions/download-artifact@v1
+#        uses: actions/checkout@master
+#      - name: Download VERSION-artifact
+#        uses: actions/download-artifact@v2
 #        with:
 #          name: VERSION.txt
 #          path: .
 #      - run: echo "::set-env name=VERSION::"`cat VERSION.txt`""
 #      - run: echo "::set-env name=IMAGE::"docker.pkg.github.com/${GITHUB_REPOSITORY}/$APP:$VERSION""
-#      - name: Deploy to Preprod
+#      - name: Deploy to dev-gcp
 #        uses: nais/deploy/actions/deploy@master
 #        env:
 #          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: dev-fss
+#          CLUSTER: dev-gcp
 #          RESOURCE: naiserator-dev.yaml
+
   tag-image-as-latest:
     if: github.ref == 'refs/heads/master'
     name: Tag dockerimage as latest
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Last ned versjon
-        uses: actions/download-artifact@v1
+      - name: Download VERSION-artifact
+        uses: actions/download-artifact@v2
         with:
           name: VERSION.txt
           path: .

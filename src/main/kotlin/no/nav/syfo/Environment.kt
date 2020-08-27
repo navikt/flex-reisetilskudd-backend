@@ -2,44 +2,36 @@ package no.nav.syfo
 
 import no.nav.syfo.kafka.KafkaConfig
 import no.nav.syfo.kafka.KafkaCredentials
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
 
 data class Environment(
     val applicationPort: Int = getEnvVar("APPLICATION_PORT", "8080").toInt(),
-    val applicationName: String = getEnvVar("NAIS_APP_NAME", "flex-reisetilskudd-backend"),
-    val sendtSykmeldingTopic: String = getEnvVar("SENDT_SYKMELDING_TOPIC", "syfo-sendt-sykmelding"),
-    val bekreftetSykmeldingTopic: String = getEnvVar("BEKREFTET_SYKMELDING_TOPIC", "syfo-bekreftet-sykmelding"),
-    val mountPathVault: String = getEnvVar("MOUNT_PATH_VAULT"),
-    val databaseName: String = getEnvVar("DATABASE_NAME", "reisetilskudd"),
-    val flexreisetilskuddDBURL: String = getEnvVar("REISETILSKUDD_DB_URL"),
-    val jwtIssuer: String = getEnvVar("JWT_ISSUER"),
+    val applicationName: String = getEnvVar("NAIS_APP_NAME"),
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
-    val clientId: String = getEnvVar("CLIENT_ID"),
-    val appIds: List<String> = getEnvVar("ALLOWED_APP_IDS")
-        .split(",")
-        .map { it.trim() },
-    override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL")
+    override val kafkaBootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS_URL"),
+    val dbHost: String = getEnvVar("NAIS_DATABASE_REISETILSKUDDBACKEND_REISETILSKUDDDB_HOST"),
+    val dbPort: String = getEnvVar("NAIS_DATABASE_REISETILSKUDDBACKEND_REISETILSKUDDDB_PORT"),
+    val dbName: String = getEnvVar("NAIS_DATABASE_REISETILSKUDDBACKEND_REISETILSKUDDDB_DATABASE"),
+    val dbUsername: String = getEnvVar("NAIS_DATABASE_REISETILSKUDDBACKEND_REISETILSKUDDDB_USERNAME"),
+    val dbPwd: String = getEnvVar("NAIS_DATABASE_REISETILSKUDDBACKEND_REISETILSKUDDDB_PASSWORD"),
+    val serviceuserUsername: String = getEnvVar("SERVICEUSER_USERNAME"),
+    val serviceuserPassword: String = getEnvVar("SERVICEUSER_PASSWORD"),
+    val oidcWellKnownUri: String = getEnvVar("OIDC_WELLKNOWN_URI"),
+    val loginserviceClientId: String = getEnvVar("LOGINSERVICE_CLIENTID")
+) : KafkaConfig {
 
-) : KafkaConfig
+    fun hentKafkaCredentials(): KafkaCredentials {
+        return object : KafkaCredentials {
+            override val kafkaPassword: String
+                get() = serviceuserPassword
+            override val kafkaUsername: String
+                get() = serviceuserUsername
+        }
+    }
 
-data class VaultSecrets(
-    val serviceuserUsername: String,
-    val serviceuserPassword: String,
-    val syfomockUsername: String,
-    val syfomockPassword: String,
-    val oidcWellKnownUri: String,
-    val loginserviceClientId: String,
-    val internalJwtIssuer: String,
-    val internalJwtWellKnownUri: String,
-    val internalLoginServiceClientId: String
-) : KafkaCredentials {
-    override val kafkaUsername: String = serviceuserUsername
-    override val kafkaPassword: String = serviceuserPassword
+    fun jdbcUrl(): String {
+        return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
+    }
 }
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
     System.getenv(varName) ?: defaultValue ?: throw RuntimeException("Missing required variable \"$varName\"")
-
-fun getFileAsString(filePath: String) = String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8).trim()

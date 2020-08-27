@@ -1,28 +1,35 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 group = "no.nav.syfo"
 version = "1.0.0"
 
 val coroutinesVersion = "1.3.3"
+val jacksonVersion = "2.11.2"
 val javaxActivationVersion = "1.1.1"
-val jacksonVersion = "2.9.7"
+val kafkaEmbeddedVersion = "2.4.0"
+val postgresEmbeddedVersion = "0.13.3"
 val kluentVersion = "1.49"
-val ktorVersion = "1.3.0"
+val ktorVersion = "1.3.2"
 val logbackVersion = "1.2.3"
 val logstashEncoderVersion = "5.1"
-val prometheusVersion = "0.6.0"
-val spekVersion = "2.0.9"
-val smCommonVersion = "1.c22544d"
-val mockkVersion = "1.9.3"
+val mockkVersion = "1.10.0"
 val nimbusdsVersion = "7.5.1"
+val prometheusVersion = "0.6.0"
+val smCommonVersion = "1.c22544d"
+val spekVersion = "2.0.9"
 val testContainerKafkaVersion = "1.12.5"
-val postgresVersion = "42.2.5"
-val flywayVersion = "5.2.4"
-val hikariVersion = "3.3.0"
-val vaultJavaDriverVersion = "3.1.0"
-val postgresEmbeddedVersion = "0.13.1"
+
+val postgresVersion = "42.2.15"
+val flywayVersion = "6.5.4"
+val hikariVersion = "3.4.5"
+
+val ktlint by configurations.creating
+
+val outputDir = "${project.buildDir}/reports/ktlint/"
+val inputFiles = project.fileTree(mapOf("dir" to "src", "include" to "**/*.kt"))
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
@@ -33,6 +40,7 @@ plugins {
     kotlin("jvm") version "1.3.70"
     id("com.diffplug.gradle.spotless") version "3.23.1"
     id("com.github.johnrengelman.shadow") version "4.0.4"
+    id("com.github.ben-manes.versions") version "0.29.0"
     jacoco
 }
 
@@ -54,6 +62,7 @@ repositories {
     maven(url = "https://dl.bintray.com/spekframework/spek-dev")
     maven(url = "https://packages.confluent.io/maven/")
     maven(url = "https://kotlin.bintray.com/kotlinx")
+    maven(url = "https://jitpack.io" )
     maven {
         url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
         credentials {
@@ -65,6 +74,8 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
+
+    ktlint("com.pinterest:ktlint:0.37.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:$coroutinesVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
@@ -78,22 +89,22 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
 
+    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
+
+    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
+    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
+
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
+
+    implementation("org.postgresql:postgresql:$postgresVersion")
+    implementation("com.zaxxer:HikariCP:$hikariVersion")
+    implementation("org.flywaydb:flyway-core:$flywayVersion")
 
     implementation("com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
-
-    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
-    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
-
-    // Database
-    implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.zaxxer:HikariCP:$hikariVersion")
-    implementation("org.flywaydb:flyway-core:$flywayVersion")
-    implementation("com.bettercloud:vault-java-driver:$vaultJavaDriverVersion")
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
@@ -106,10 +117,32 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
-    testImplementation("com.opentable.components:otj-pg-embedded:$postgresEmbeddedVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
+
+    testImplementation("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
+    testImplementation("com.opentable.components:otj-pg-embedded:$postgresEmbeddedVersion")
+}
+
+val ktlintCheck by tasks.creating(JavaExec::class) {
+    inputs.files(inputFiles)
+    outputs.dir(outputDir)
+
+    description = "Check Kotlin code style."
+    classpath = ktlint
+    main = "com.pinterest.ktlint.Main"
+    args = listOf("src/**/*.kt")
+}
+
+val ktlintFormat by tasks.creating(JavaExec::class) {
+    inputs.files(inputFiles)
+    outputs.dir(outputDir)
+
+    description = "Fix Kotlin code style deviations."
+    classpath = ktlint
+    main = "com.pinterest.ktlint.Main"
+    args = listOf("-F", "src/**/*.kt")
 }
 
 tasks.jacocoTestReport {
@@ -118,6 +151,7 @@ tasks.jacocoTestReport {
         html.isEnabled = true
     }
 }
+
 
 tasks {
 
@@ -131,9 +165,9 @@ tasks {
 
     withType<JacocoReport> {
         classDirectories.setFrom(
-            sourceSets.main.get().output.asFileTree.matching {
-                exclude()
-            }
+                sourceSets.main.get().output.asFileTree.matching {
+                    exclude()
+                }
         )
     }
     withType<ShadowJar> {
@@ -147,9 +181,18 @@ tasks {
         useJUnitPlatform {
             includeEngines("spek2")
         }
+        testLogging.showStandardStreams = true
     }
 
     "check" {
         dependsOn("formatKotlin")
     }
+}
+
+tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
+    // optional parameters
+    checkForGradleUpdate = true
+    outputFormatter = "json"
+    outputDir = "build/dependencyUpdates"
+    reportfileName = "report"
 }
