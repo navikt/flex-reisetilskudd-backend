@@ -10,6 +10,8 @@ import no.nav.syfo.reisetilskudd.domain.toOptionalBoolean
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
+import java.sql.Timestamp
+import java.time.Instant
 import java.time.LocalDate
 
 fun DatabaseInterface.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
@@ -90,11 +92,13 @@ private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
     }
 
 private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
+    val now = Instant.now()
+
     this.prepareStatement(
         """
            INSERT INTO reisetilskudd 
-           (reisetilskudd_id, sykmelding_id, fnr, aktor_id, fom, tom, arbeidsgiver_orgnummer, arbeidsgiver_navn) 
-           VALUES(?,?,?,'01010112345',?,?,?,?)
+           (reisetilskudd_id, sykmelding_id, fnr, fom, tom, arbeidsgiver_orgnummer, arbeidsgiver_navn, opprettet, endret) 
+           VALUES(?,?,?,?,?,?,?,?,?)
         """
     ).use {
         it.setString(1, reisetilskuddDTO.reisetilskuddId)
@@ -104,18 +108,21 @@ private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
         it.setDate(5, Date.valueOf(reisetilskuddDTO.tom))
         it.setString(6, reisetilskuddDTO.orgNummer)
         it.setString(7, reisetilskuddDTO.orgNavn)
+        it.setTimestamp(8, Timestamp.from(now))
+        it.setTimestamp(9, Timestamp.from(now))
         it.executeUpdate()
     }
     this.commit()
 }
 
 private fun Connection.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
+    val now = Instant.now()
 
     this.prepareStatement(
         """
             UPDATE reisetilskudd
-            SET (utbetaling_til_arbeidsgiver, gar, sykler, egen_bil, kollektivtransport) = 
-                (?, ?, ?, ?, ?)                                
+            SET (utbetaling_til_arbeidsgiver, gar, sykler, egen_bil, kollektivtransport, endret) = 
+                (?, ?, ?, ?, ?, ?)                                
             WHERE reisetilskudd_id = ?
         """
     ).use {
@@ -124,18 +131,21 @@ private fun Connection.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO)
         it.setInt(3, reisetilskuddDTO.sykler.toInt())
         it.setDouble(4, reisetilskuddDTO.egenBil)
         it.setDouble(5, reisetilskuddDTO.kollektivtransport)
-        it.setString(6, reisetilskuddDTO.reisetilskuddId)
+        it.setTimestamp(6, Timestamp.from(now))
+        it.setString(7, reisetilskuddDTO.reisetilskuddId)
         it.executeUpdate()
     }
     this.commit()
 }
 
 private fun Connection.lagreKvittering(kvitteringDTO: KvitteringDTO) {
+    val now = Instant.now()
+
     this.prepareStatement(
         """
                 INSERT INTO kvitteringer
-                (kvittering_id, reisetilskudd_id, navn, belop, fom, tom, transportmiddel, storrelse)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+                (kvittering_id, reisetilskudd_id, navn, belop, fom, tom, transportmiddel, storrelse, opprettet)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
     ).use {
         it.setString(1, kvitteringDTO.kvitteringId)
@@ -146,6 +156,7 @@ private fun Connection.lagreKvittering(kvitteringDTO: KvitteringDTO) {
         it.setDate(6, if (kvitteringDTO.tom != null) Date.valueOf(kvitteringDTO.tom) else null)
         it.setString(7, kvitteringDTO.transportmiddel.name)
         it.setLong(8, kvitteringDTO.storrelse)
+        it.setTimestamp(9, Timestamp.from(now))
         it.executeUpdate()
     }
     this.commit()

@@ -1,28 +1,35 @@
-CREATE TABLE reisetilskudd (
-    reisetilskudd_id varchar(36) primary key,
-    sykmelding_id varchar(36) not null,
-    fnr varchar(11) not null,
-    aktor_id varchar(13) not null,
-    fom date not null,
-    tom date not null,
-    arbeidsgiver_orgnummer varchar(9),
-    arbeidsgiver_navn text,
-    utbetaling_til_arbeidsgiver integer default 0 not null,
-    gar integer default 0 not null,
-    sykler integer default 0 not null,
-    egen_bil double precision default 0.0 not null,
-    kollektivtransport double precision default 0.0 not null
+CREATE TABLE REISETILSKUDD
+(
+    REISETILSKUDD_ID            VARCHAR(36) PRIMARY KEY,
+    SYKMELDING_ID               VARCHAR(36)                  NOT NULL,
+    FNR                         VARCHAR(11)                  NOT NULL,
+    OPPRETTET                   TIMESTAMP                    NOT NULL,
+    ENDRET                      TIMESTAMP                    NOT NULL,
+    FOM                         DATE                         NOT NULL,
+    TOM                         DATE                         NOT NULL,
+    ARBEIDSGIVER_ORGNUMMER      VARCHAR(9),
+    ARBEIDSGIVER_NAVN           TEXT,
+    UTBETALING_TIL_ARBEIDSGIVER INTEGER          DEFAULT 0   NOT NULL,
+    GAR                         INTEGER          DEFAULT 0   NOT NULL,
+    SYKLER                      INTEGER          DEFAULT 0   NOT NULL,
+    EGEN_BIL                    DOUBLE PRECISION DEFAULT 0.0 NOT NULL,
+    KOLLEKTIVTRANSPORT          DOUBLE PRECISION DEFAULT 0.0 NOT NULL
 );
 
-CREATE TABLE kvitteringer (
-    kvittering_id varchar(36) primary key,
-    reisetilskudd_id varchar (36) references reisetilskudd(reisetilskudd_id) not null,
-    navn varchar(256) not null,
-    belop double precision not null,
-    fom date not null,
-    tom date,
-    storrelse bigint not null,
-    transportmiddel text not null
+
+CREATE INDEX REISETILSKUDD_FNR_IDX ON REISETILSKUDD (FNR);
+
+CREATE TABLE KVITTERINGER
+(
+    KVITTERING_ID    VARCHAR(36) PRIMARY KEY,
+    REISETILSKUDD_ID VARCHAR(36) REFERENCES REISETILSKUDD (REISETILSKUDD_ID) NOT NULL,
+    NAVN             VARCHAR(256)                                            NOT NULL,
+    BELOP            DOUBLE PRECISION                                        NOT NULL,
+    FOM              DATE                                                    NOT NULL,
+    TOM              DATE,
+    STORRELSE        BIGINT                                                  NOT NULL,
+    TRANSPORTMIDDEL  TEXT                                                    NOT NULL,
+    OPPRETTET        TIMESTAMP                                               NOT NULL
 );
 
 
