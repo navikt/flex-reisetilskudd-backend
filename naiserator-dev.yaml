@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: flex-reisetilskudd-backend
+  name: reisetilskuddbackend
   namespace: flex
   labels:
     team: flex
@@ -33,8 +33,38 @@ spec:
     requests:
       cpu: 400m
       memory: 768Mi
-  vault:
-    enabled: false
-  ingresses:
-    - "https://flex-reisetilskudd-backend.nais.preprod.local"
-  webproxy: true
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_11
+        databases:
+          - name: reisetilskudddb
+            diskAutoresize: true
+  accessPolicy:
+    outbound:
+      external:
+        - host: login.microsoftonline.com
+        - host: b27apvl00045.preprod.local
+          ports:
+            - port: 8443
+              name: kafka
+              protocol: TLS
+        - host: b27apvl00046.preprod.local
+          ports:
+            - port: 8443
+              name: kafka
+              protocol: TLS
+        - host: b27apvl00047.preprod.local
+          ports:
+            - port: 8443
+              name: kafka
+              protocol: TLS
+
+  envFrom:
+    - secret: reisetilskuddbackend-serviceuser
+  env:
+    - name: KAFKA_BOOTSTRAP_SERVERS_URL
+      value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443
+    - name: OIDC_WELLKNOWN_URI
+      value: "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
+    - name: LOGINSERVICE_CLIENTID
+      value: "0090b6e1-ffcc-4c37-bc21-049f7d1f0fe5"
