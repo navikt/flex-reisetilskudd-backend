@@ -28,13 +28,6 @@ val log: Logger = LoggerFactory.getLogger("no.nav.syfo.flex-reisetilskudd-backen
 fun main() {
     log.info("Starter flex-reisetilskudd-backend")
 
-    val envs = System.getenv()
-
-    log.info("Fant ${envs.size} envs")
-    for (envName in envs.keys) {
-        log.info("Envname: $envName")
-    }
-
     val env = Environment()
 
     // Sov litt slik at sidecars er klare
