@@ -1,7 +1,7 @@
 package no.nav.syfo
 
 import com.auth0.jwk.JwkProviderBuilder
-import io.ktor.util.*
+import io.ktor.util.* // ktlint-disable no-wildcard-imports
 import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -12,7 +12,7 @@ import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.getWellKnown
 import no.nav.syfo.db.Database
-import no.nav.syfo.kafka.*
+import no.nav.syfo.kafka.* // ktlint-disable no-wildcard-imports
 import no.nav.syfo.kafka.util.JacksonKafkaDeserializer
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import org.apache.kafka.clients.consumer.ConsumerConfig
