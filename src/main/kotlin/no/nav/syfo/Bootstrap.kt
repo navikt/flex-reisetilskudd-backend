@@ -1,7 +1,7 @@
 package no.nav.syfo
 
 import com.auth0.jwk.JwkProviderBuilder
-import io.ktor.util.* // ktlint-disable no-wildcard-imports
+import io.ktor.util.*
 import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -12,11 +12,7 @@ import no.nav.syfo.application.ApplicationState
 import no.nav.syfo.application.createApplicationEngine
 import no.nav.syfo.application.getWellKnown
 import no.nav.syfo.db.Database
-import no.nav.syfo.kafka.SykmeldingKafkaService
-import no.nav.syfo.kafka.SykmeldingMessage
-import no.nav.syfo.kafka.envOverrides
-import no.nav.syfo.kafka.loadBaseConfig
-import no.nav.syfo.kafka.toConsumerConfig
+import no.nav.syfo.kafka.*
 import no.nav.syfo.kafka.util.JacksonKafkaDeserializer
 import no.nav.syfo.reisetilskudd.ReisetilskuddService
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -31,6 +27,13 @@ val log: Logger = LoggerFactory.getLogger("no.nav.syfo.flex-reisetilskudd-backen
 @KtorExperimentalAPI
 fun main() {
     log.info("Starter flex-reisetilskudd-backend")
+
+    val envs = System.getenv()
+
+    for (envName in envs.keys) {
+        log.info("Envname: $envName")
+    }
+
     val env = Environment()
 
     // Sov litt slik at sidecars er klare

@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: reisetilskuddbackend
+  name: flex-reisetilskudd-backend
   namespace: flex
   labels:
     team: flex
@@ -37,7 +37,7 @@ spec:
     sqlInstances:
       - type: POSTGRES_11
         databases:
-          - name: reisetilskudddb
+          - name: flex-reisetilskudd-db
             diskAutoresize: true
   accessPolicy:
     outbound:
@@ -45,7 +45,7 @@ spec:
         - host: login.microsoftonline.com
 
   envFrom:
-    - secret: reisetilskuddbackend-serviceuser
+    - secret: flex-reisetilskudd-backend-serviceuser
   env:
     - name: KAFKA_BOOTSTRAP_SERVERS_URL
       value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443
