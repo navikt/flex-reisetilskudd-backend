@@ -37,7 +37,7 @@ spec:
     sqlInstances:
       - type: POSTGRES_11
         databases:
-          - name: flex-reisetilskudd-db
+          - name: reisetilskudd
             diskAutoresize: true
   accessPolicy:
     outbound:
