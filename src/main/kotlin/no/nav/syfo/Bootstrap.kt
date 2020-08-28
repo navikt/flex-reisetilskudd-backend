@@ -30,6 +30,7 @@ fun main() {
 
     val envs = System.getenv()
 
+    log.info("Fant ${envs.size} envs")
     for (envName in envs.keys) {
         log.info("Envname: $envName")
     }
