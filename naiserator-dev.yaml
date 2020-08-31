@@ -43,6 +43,9 @@ spec:
     outbound:
       external:
         - host: login.microsoftonline.com
+    inbound:
+      rules:
+        - application: flex-reisetilskudd-backend-proxy
 
   envFrom:
     - secret: flex-reisetilskudd-backend-serviceuser
