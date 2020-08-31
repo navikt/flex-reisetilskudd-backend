@@ -55,7 +55,7 @@ fun main() {
         JacksonKafkaDeserializer::class
     )
     consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
-    val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage>(consumerProperties)
+    val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage?>(consumerProperties)
     val database = Database(env)
 
     val reisetilskuddService = ReisetilskuddService(database)
