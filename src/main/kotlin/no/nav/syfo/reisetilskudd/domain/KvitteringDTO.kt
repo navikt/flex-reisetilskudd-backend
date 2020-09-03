@@ -17,10 +17,6 @@ data class KvitteringDTO(
     val transportmiddel: Transportmiddel
 )
 
-data class DeleteKvittering(
-    val kvitteringId: String
-)
-
 /*
 Forventet payload fra frontend:
 
