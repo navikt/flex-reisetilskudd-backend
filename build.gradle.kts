@@ -32,7 +32,7 @@ val outputDir = "${project.buildDir}/reports/ktlint/"
 val inputFiles = project.fileTree(mapOf("dir" to "src", "include" to "**/*.kt"))
 
 tasks.withType<Jar> {
-    manifest.attributes["Main-Class"] = "no.nav.syfo.BootstrapKt"
+    manifest.attributes["Main-Class"] = "no.nav.helse.flex.BootstrapKt"
 }
 
 plugins {
