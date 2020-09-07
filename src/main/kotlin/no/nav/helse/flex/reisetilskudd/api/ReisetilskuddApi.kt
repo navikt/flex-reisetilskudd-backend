@@ -63,6 +63,17 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
             }
         }
 
+        post("/reisetilskudd/{reisetilskuddId}/send") {
+            val fnr = call.fnr()
+            val reisetilskuddId = call.parameters["reisetilskuddId"]!!
+            if (reisetilskuddService.eierReisetilskudd(fnr, reisetilskuddId)) {
+                reisetilskuddService.sendReisetilskudd(fnr, reisetilskuddId)
+                call.respond(Respons("Reisetilskudd $reisetilskuddId har blitt sendt").toTextContent())
+            } else {
+                call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.Forbidden))
+            }
+        }
+
         post("/kvittering") {
             val fnr = call.fnr()
 

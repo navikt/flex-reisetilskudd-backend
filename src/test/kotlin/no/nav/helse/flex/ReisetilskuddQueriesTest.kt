@@ -1,13 +1,7 @@
 package no.nav.helse.flex
 
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.helse.flex.reisetilskudd.db.eierKvittering
-import no.nav.helse.flex.reisetilskudd.db.eierReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.lagreKvittering
-import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.oppdaterReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.slettKvittering
+import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
@@ -83,6 +77,17 @@ object DatabaseTest : Spek({
         nyRtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
         nyRtFraDB.kollektivtransport.shouldBeInRange(37.0, 37.0)
     }
+
+    describe("sende reisetilskudd") {
+        val fnr = "01010111111"
+        val rt = reisetilskudd(fnr)
+        db.lagreReisetilskudd(rt)
+        db.sendReisetilskudd(fnr, rt.reisetilskuddId)
+        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        rtFraDB.shouldNotBeNull()
+        rtFraDB.sendt.shouldNotBeNull()
+    }
+
 })
 
 fun reisetilskudd(fnr: String): ReisetilskuddDTO =

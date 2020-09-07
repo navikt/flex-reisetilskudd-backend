@@ -13,6 +13,7 @@ import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 fun DatabaseInterface.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
     connection.use { return it.hentReisetilskudd(fnr) }
@@ -28,6 +29,10 @@ fun DatabaseInterface.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
 
 fun DatabaseInterface.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
     connection.use { it.oppdaterReisetilskudd(reisetilskuddDTO) }
+}
+
+fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
+    connection.use { it.sendReisetilskudd(fnr, reisetilskuddId) }
 }
 
 fun DatabaseInterface.lagreKvittering(kvitteringDTO: KvitteringDTO) {
@@ -90,6 +95,25 @@ private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
             getString("reisetilskudd_id")
         }.isNotEmpty()
     }
+
+private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
+    val now = Instant.now()
+
+    this.prepareStatement(
+        """
+           UPDATE reisetilskudd 
+           SET sendt = ?
+           WHERE reisetilskudd_id = ?
+           AND fnr = ?
+        """
+    ).use {
+        it.setTimestamp(1, Timestamp.from(now))
+        it.setString(2, reisetilskuddId)
+        it.setString(3, fnr)
+        it.executeUpdate()
+    }
+    this.commit()
+}
 
 private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
     val now = Instant.now()
@@ -215,6 +239,7 @@ fun ResultSet.toReisetilskuddDTO(kvitteringer: List<KvitteringDTO> = emptyList()
         tom = getObject("tom", LocalDate::class.java),
         orgNummer = getString("arbeidsgiver_orgnummer"),
         orgNavn = getString("arbeidsgiver_navn"),
+        sendt = getObject("sendt", LocalDateTime::class.java),
         utbetalingTilArbeidsgiver = getInt("utbetaling_til_arbeidsgiver").toOptionalBoolean(),
         går = getInt("gar").toOptionalBoolean(),
         sykler = getInt("sykler").toOptionalBoolean(),

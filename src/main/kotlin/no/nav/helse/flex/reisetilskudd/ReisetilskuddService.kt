@@ -3,13 +3,7 @@ package no.nav.helse.flex.reisetilskudd
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
-import no.nav.helse.flex.reisetilskudd.db.eierKvittering
-import no.nav.helse.flex.reisetilskudd.db.eierReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.lagreKvittering
-import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.oppdaterReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.slettKvittering
+import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
 
@@ -34,6 +28,9 @@ class ReisetilskuddService(private val database: DatabaseInterface) {
     fun oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
         database.oppdaterReisetilskudd(reisetilskuddDTO)
     }
+
+    fun sendReisetilskudd(fnr: String, reisetilskuddId: String) =
+        database.sendReisetilskudd(fnr, reisetilskuddId)
 
     fun lagreKvittering(kvitteringDTO: KvitteringDTO) {
         database.lagreKvittering(kvitteringDTO)
