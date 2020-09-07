@@ -1,7 +1,7 @@
 package no.nav.helse.flex
 
 import io.ktor.util.KtorExperimentalAPI
-import no.nav.helse.flex.reisetilskudd.db.*
+import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
@@ -87,7 +87,6 @@ object DatabaseTest : Spek({
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldNotBeNull()
     }
-
 })
 
 fun reisetilskudd(fnr: String): ReisetilskuddDTO =
