@@ -105,6 +105,7 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
            SET sendt = ?
            WHERE reisetilskudd_id = ?
            AND fnr = ?
+           AND sendt is null
         """
     ).use {
         it.setTimestamp(1, Timestamp.from(now))

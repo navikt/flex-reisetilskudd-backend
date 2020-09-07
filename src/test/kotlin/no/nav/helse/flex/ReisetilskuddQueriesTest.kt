@@ -81,11 +81,22 @@ object DatabaseTest : Spek({
     describe("sende reisetilskudd") {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
+
         db.lagreReisetilskudd(rt)
-        db.sendReisetilskudd(fnr, rt.reisetilskuddId)
         val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
-        rtFraDB.sendt.shouldNotBeNull()
+        rtFraDB.sendt.shouldBeNull()
+
+        db.sendReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        nyRtFraDB.shouldNotBeNull()
+        nyRtFraDB.sendt.shouldNotBeNull()
+
+        db.sendReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyereRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        nyereRtFraDB.shouldNotBeNull()
+        nyereRtFraDB.shouldNotBeNull()
+        nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
     }
 })
 
