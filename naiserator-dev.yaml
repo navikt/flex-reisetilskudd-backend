@@ -46,7 +46,6 @@ spec:
     inbound:
       rules:
         - application: flex-reisetilskudd-backend-proxy
-        - application: flex-reisetilskudd-cronjob-starter
 
   envFrom:
     - secret: flex-reisetilskudd-backend-serviceuser
