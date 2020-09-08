@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import no.nav.helse.flex.application.ApplicationServer
 import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.application.createApplicationEngine
+import no.nav.helse.flex.application.cronjob.setUpCronJob
 import no.nav.helse.flex.application.getWellKnown
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.kafka.* // ktlint-disable no-wildcard-imports
@@ -30,13 +31,6 @@ val log: Logger = LoggerFactory.getLogger("no.nav.helse.flex.flex-reisetilskudd-
 @KtorExperimentalAPI
 fun main() {
     log.info("Starter flex-reisetilskudd-backend")
-
-    val envs = System.getenv()
-
-    log.info("Fant ${envs.size} envs")
-    for (envName in envs.keys) {
-        log.info("Envname: $envName")
-    }
 
     val env = Environment()
 
@@ -77,6 +71,7 @@ fun main() {
     createListener(applicationState) {
         sykmeldingKafkaService.run()
     }
+    setUpCronJob(env = env)
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
