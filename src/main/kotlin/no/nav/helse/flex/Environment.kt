@@ -16,6 +16,7 @@ data class Environment(
     val serviceuserUsername: String = getEnvVar("SERVICEUSER_USERNAME"),
     val serviceuserPassword: String = getEnvVar("SERVICEUSER_PASSWORD"),
     val oidcWellKnownUri: String = getEnvVar("OIDC_WELLKNOWN_URI"),
+    val electorPath: String = getEnvVar("ELECTOR_PATH"),
     val sidecarInitialDelay: Long = getEnvVar("SIDECAR_INITIAL_DELAY", "15000").toLong(),
     val loginserviceClientId: String = getEnvVar("LOGINSERVICE_CLIENTID")
 ) : KafkaConfig {
