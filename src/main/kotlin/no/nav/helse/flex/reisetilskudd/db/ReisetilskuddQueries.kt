@@ -2,11 +2,10 @@ package no.nav.helse.flex.reisetilskudd.db
 
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.db.toList
-import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
-import no.nav.helse.flex.reisetilskudd.domain.toInt
-import no.nav.helse.flex.reisetilskudd.domain.toOptionalBoolean
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
@@ -15,28 +14,28 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-fun DatabaseInterface.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
+fun DatabaseInterface.hentReisetilskudd(fnr: String): List<Reisetilskudd> {
     connection.use { return it.hentReisetilskudd(fnr) }
 }
 
-fun DatabaseInterface.hentReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddDTO? {
+fun DatabaseInterface.hentReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd? {
     connection.use { return it.hentReisetilskudd(fnr, reisetilskuddId) }
 }
 
-fun DatabaseInterface.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
-    connection.use { it.lagreReisetilskudd(reisetilskuddDTO) }
+fun DatabaseInterface.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
+    connection.use { it.lagreReisetilskudd(reisetilskudd) }
 }
 
-fun DatabaseInterface.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
-    connection.use { it.oppdaterReisetilskudd(reisetilskuddDTO) }
+fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
+    connection.use { it.oppdaterReisetilskudd(reisetilskudd) }
 }
 
 fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
     connection.use { it.sendReisetilskudd(fnr, reisetilskuddId) }
 }
 
-fun DatabaseInterface.lagreKvittering(kvitteringDTO: KvitteringDTO) {
-    connection.use { it.lagreKvittering(kvitteringDTO) }
+fun DatabaseInterface.lagreKvittering(kvittering: Kvittering) {
+    connection.use { it.lagreKvittering(kvittering) }
 }
 
 fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
@@ -51,7 +50,7 @@ fun DatabaseInterface.slettKvittering(id: String) {
     connection.use { it.slettKvittering(id) }
 }
 
-private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
+private fun Connection.hentReisetilskudd(fnr: String): List<Reisetilskudd> {
     val reisetilskudd = this.prepareStatement(
         """
             SELECT * FROM reisetilskudd
@@ -59,15 +58,14 @@ private fun Connection.hentReisetilskudd(fnr: String): List<ReisetilskuddDTO> {
         """
     ).use {
         it.setString(1, fnr)
-        it.executeQuery().toList { toReisetilskuddDTO() }
+        it.executeQuery().toList { toReisetilskudd() }
     }
-    reisetilskudd.forEach {
-        it.kvitteringer = hentKvitteringer(it.reisetilskuddId)
+    return reisetilskudd.map {
+        it.copy(kvitteringer = hentKvitteringer(it.reisetilskuddId))
     }
-    return reisetilskudd
 }
 
-private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddDTO? {
+private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd? {
     val kvitteringer = hentKvitteringer(reisetilskuddId)
     return this.prepareStatement(
         """
@@ -78,7 +76,7 @@ private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): 
     ).use {
         it.setString(1, fnr)
         it.setString(2, reisetilskuddId)
-        it.executeQuery().toList { toReisetilskuddDTO(kvitteringer) }.firstOrNull()
+        it.executeQuery().toList { toReisetilskudd(kvitteringer) }.firstOrNull()
     }
 }
 
@@ -102,10 +100,11 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
     this.prepareStatement(
         """
            UPDATE reisetilskudd 
-           SET sendt = ?
+           SET (sendt, status) = (?,'SENDT')
            WHERE reisetilskudd_id = ?
            AND fnr = ?
            AND sendt is null
+           AND status = 'ÅPEN'
         """
     ).use {
         it.setTimestamp(1, Timestamp.from(now))
@@ -116,31 +115,44 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
     this.commit()
 }
 
-private fun Connection.lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
+private fun Connection.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
     val now = Instant.now()
 
     this.prepareStatement(
         """
-           INSERT INTO reisetilskudd 
-           (reisetilskudd_id, sykmelding_id, fnr, fom, tom, arbeidsgiver_orgnummer, arbeidsgiver_navn, opprettet, endret) 
-           VALUES(?,?,?,?,?,?,?,?,?)
+           INSERT INTO reisetilskudd (
+           reisetilskudd_id, 
+           sykmelding_id, 
+           fnr, 
+           fom, 
+           tom, 
+           arbeidsgiver_orgnummer, 
+           arbeidsgiver_navn, 
+           opprettet, 
+           endret, 
+           status, 
+           oppfolgende) 
+           VALUES(
+           ?,?,?,?,?,?,?,?,?,?,?)
         """
     ).use {
-        it.setString(1, reisetilskuddDTO.reisetilskuddId)
-        it.setString(2, reisetilskuddDTO.sykmeldingId)
-        it.setString(3, reisetilskuddDTO.fnr)
-        it.setDate(4, Date.valueOf(reisetilskuddDTO.fom))
-        it.setDate(5, Date.valueOf(reisetilskuddDTO.tom))
-        it.setString(6, reisetilskuddDTO.orgNummer)
-        it.setString(7, reisetilskuddDTO.orgNavn)
+        it.setString(1, reisetilskudd.reisetilskuddId)
+        it.setString(2, reisetilskudd.sykmeldingId)
+        it.setString(3, reisetilskudd.fnr)
+        it.setDate(4, Date.valueOf(reisetilskudd.fom))
+        it.setDate(5, Date.valueOf(reisetilskudd.tom))
+        it.setString(6, reisetilskudd.orgNummer)
+        it.setString(7, reisetilskudd.orgNavn)
         it.setTimestamp(8, Timestamp.from(now))
         it.setTimestamp(9, Timestamp.from(now))
+        it.setString(10, reisetilskudd.status.name)
+        it.setInt(11, reisetilskudd.oppfølgende.toInt())
         it.executeUpdate()
     }
     this.commit()
 }
 
-private fun Connection.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
+private fun Connection.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
     val now = Instant.now()
 
     this.prepareStatement(
@@ -151,19 +163,19 @@ private fun Connection.oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO)
             WHERE reisetilskudd_id = ?
         """
     ).use {
-        it.setInt(1, reisetilskuddDTO.utbetalingTilArbeidsgiver.toInt())
-        it.setInt(2, reisetilskuddDTO.går.toInt())
-        it.setInt(3, reisetilskuddDTO.sykler.toInt())
-        it.setDouble(4, reisetilskuddDTO.egenBil)
-        it.setDouble(5, reisetilskuddDTO.kollektivtransport)
+        it.setInt(1, reisetilskudd.utbetalingTilArbeidsgiver.toInt())
+        it.setInt(2, reisetilskudd.går.toInt())
+        it.setInt(3, reisetilskudd.sykler.toInt())
+        it.setDouble(4, reisetilskudd.egenBil)
+        it.setDouble(5, reisetilskudd.kollektivtransport)
         it.setTimestamp(6, Timestamp.from(now))
-        it.setString(7, reisetilskuddDTO.reisetilskuddId)
+        it.setString(7, reisetilskudd.reisetilskuddId)
         it.executeUpdate()
     }
     this.commit()
 }
 
-private fun Connection.lagreKvittering(kvitteringDTO: KvitteringDTO) {
+private fun Connection.lagreKvittering(kvittering: Kvittering) {
     val now = Instant.now()
 
     this.prepareStatement(
@@ -173,14 +185,14 @@ private fun Connection.lagreKvittering(kvitteringDTO: KvitteringDTO) {
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
     ).use {
-        it.setString(1, kvitteringDTO.kvitteringId)
-        it.setString(2, kvitteringDTO.reisetilskuddId)
-        it.setString(3, kvitteringDTO.navn)
-        it.setDouble(4, kvitteringDTO.belop)
-        it.setDate(5, Date.valueOf(kvitteringDTO.fom))
-        it.setDate(6, if (kvitteringDTO.tom != null) Date.valueOf(kvitteringDTO.tom) else null)
-        it.setString(7, kvitteringDTO.transportmiddel.name)
-        it.setLong(8, kvitteringDTO.storrelse)
+        it.setString(1, kvittering.kvitteringId)
+        it.setString(2, kvittering.reisetilskuddId)
+        it.setString(3, kvittering.navn)
+        it.setDouble(4, kvittering.belop)
+        it.setDate(5, Date.valueOf(kvittering.fom))
+        it.setDate(6, if (kvittering.tom != null) Date.valueOf(kvittering.tom) else null)
+        it.setString(7, kvittering.transportmiddel.name)
+        it.setLong(8, kvittering.storrelse)
         it.setTimestamp(9, Timestamp.from(now))
         it.executeUpdate()
     }
@@ -217,7 +229,7 @@ private fun Connection.eierKvittering(fnr: String, id: String): Boolean {
     }
 }
 
-private fun Connection.hentKvitteringer(reisetilskuddId: String): List<KvitteringDTO> {
+private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvittering> {
     return this.prepareStatement(
         """
             SELECT * FROM kvitteringer
@@ -231,8 +243,8 @@ private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvitterin
     }
 }
 
-fun ResultSet.toReisetilskuddDTO(kvitteringer: List<KvitteringDTO> = emptyList()): ReisetilskuddDTO {
-    return ReisetilskuddDTO(
+fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Reisetilskudd {
+    return Reisetilskudd(
         sykmeldingId = getString("sykmelding_id"),
         fnr = getString("fnr"),
         reisetilskuddId = getString("reisetilskudd_id"),
@@ -246,12 +258,14 @@ fun ResultSet.toReisetilskuddDTO(kvitteringer: List<KvitteringDTO> = emptyList()
         sykler = getInt("sykler").toOptionalBoolean(),
         egenBil = getDouble("egen_bil"),
         kollektivtransport = getDouble("kollektivtransport"),
-        kvitteringer = kvitteringer
+        kvitteringer = kvitteringer,
+        oppfølgende = getInt("oppfolgende").toBoolean(),
+        status = ReisetilskuddStatus.valueOf(getString("status"))
     )
 }
 
-fun ResultSet.toKvitteringDTO(): KvitteringDTO {
-    return KvitteringDTO(
+fun ResultSet.toKvitteringDTO(): Kvittering {
+    return Kvittering(
         reisetilskuddId = getString("reisetilskudd_id"),
         kvitteringId = getString("kvittering_id"),
         navn = getString("navn"),
@@ -261,4 +275,28 @@ fun ResultSet.toKvitteringDTO(): KvitteringDTO {
         storrelse = getLong("storrelse"),
         transportmiddel = Transportmiddel.valueOf(getString("transportmiddel"))
     )
+}
+
+fun Boolean?.toInt(): Int {
+    return when {
+        this == true -> 1
+        this == false -> -1
+        else -> 0
+    }
+}
+
+fun Int.toOptionalBoolean(): Boolean? {
+    return when {
+        this == 1 -> true
+        this == -1 -> false
+        else -> null
+    }
+}
+
+fun Int.toBoolean(): Boolean {
+    return when {
+        this == 1 -> true
+        this == -1 -> false
+        else -> throw IllegalArgumentException("$this må være -1 eller 1")
+    }
 }

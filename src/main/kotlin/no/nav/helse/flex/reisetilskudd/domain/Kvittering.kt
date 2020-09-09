@@ -6,7 +6,7 @@ enum class Transportmiddel {
     KOLLEKTIVT, TAXI, EGEN_BIL
 }
 
-data class KvitteringDTO(
+data class Kvittering(
     val reisetilskuddId: String,
     val kvitteringId: String,
     val navn: String,

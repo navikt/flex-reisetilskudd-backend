@@ -10,8 +10,8 @@ import io.ktor.routing.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.api.utils.Respons
 import no.nav.helse.flex.reisetilskudd.api.utils.toTextContent
-import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
-import no.nav.helse.flex.reisetilskudd.domain.SvarDTO
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
+import no.nav.helse.flex.reisetilskudd.domain.Svar
 
 fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
     route("/api/v1") {
@@ -25,31 +25,31 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
             val fnr = call.fnr()
             val reisetilskuddId = call.parameters["reisetilskuddId"]!!
 
-            val svarJson = call.receive<SvarDTO>()
+            val svarJson = call.receive<Svar>()
             if (reisetilskuddId != svarJson.reisetilskuddId) {
                 call.respond(Respons("ID i url matcher ikke ID i body").toTextContent(HttpStatusCode.BadRequest))
                 return@put
             }
             if (reisetilskuddService.eierReisetilskudd(fnr, svarJson.reisetilskuddId)) {
-                val reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
+                var reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
                 if (reisetilskudd == null) {
                     call.respond(Respons("${svarJson.reisetilskuddId} finnes ikke").toTextContent(HttpStatusCode.NotFound))
                     return@put
                 }
                 if (svarJson.går != null) {
-                    reisetilskudd.går = svarJson.går
+                    reisetilskudd = reisetilskudd.copy(går = svarJson.går)
                 }
                 if (svarJson.sykler != null) {
-                    reisetilskudd.sykler = svarJson.sykler
+                    reisetilskudd = reisetilskudd.copy(sykler = svarJson.sykler)
                 }
                 if (svarJson.utbetalingTilArbeidsgiver != null) {
-                    reisetilskudd.utbetalingTilArbeidsgiver = svarJson.utbetalingTilArbeidsgiver
+                    reisetilskudd = reisetilskudd.copy(utbetalingTilArbeidsgiver = svarJson.utbetalingTilArbeidsgiver)
                 }
                 if (svarJson.egenBil != null) {
-                    reisetilskudd.egenBil = svarJson.egenBil
+                    reisetilskudd = reisetilskudd.copy(egenBil = svarJson.egenBil)
                 }
                 if (svarJson.kollektivtransport != null) {
-                    reisetilskudd.kollektivtransport = svarJson.kollektivtransport
+                    reisetilskudd = reisetilskudd.copy(kollektivtransport = svarJson.kollektivtransport)
                 }
                 reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
                 val reisetilskuddFraDb = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
@@ -77,7 +77,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         post("/kvittering") {
             val fnr = call.fnr()
 
-            val kvitteringJson = call.receive<KvitteringDTO>()
+            val kvitteringJson = call.receive<Kvittering>()
             if (reisetilskuddService.eierReisetilskudd(fnr, kvitteringJson.reisetilskuddId)) {
                 reisetilskuddService.lagreKvittering(kvitteringJson)
                 call.respond(Respons("${kvitteringJson.kvitteringId} ble lagret i databasen").toTextContent())
