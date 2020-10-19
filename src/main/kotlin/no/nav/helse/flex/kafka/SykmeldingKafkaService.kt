@@ -5,14 +5,28 @@ import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import java.lang.Exception
 import java.time.Duration
 
 class SykmeldingKafkaService(
     val kafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>,
     val applicationState: ApplicationState,
-    val reisetilskuddService: ReisetilskuddService
+    val reisetilskuddService: ReisetilskuddService,
+    private val delayStart: Long = 10_000L
 ) {
-    suspend fun run() {
+    suspend fun start() {
+        while (applicationState.alive) {
+            try {
+                run()
+            } catch (ex: Exception) {
+                log.error("Feil ved konsumering fra kafka, restarter om $delayStart ms", ex)
+                kafkaConsumer.unsubscribe()
+            }
+            delay(delayStart)
+        }
+    }
+
+    fun run() {
         kafkaConsumer.subscribe(listOf("syfo-sendt-sykmelding", "syfo-bekreftet-sykmelding"))
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofMillis(1000))
@@ -27,7 +41,6 @@ class SykmeldingKafkaService(
                     log.info("Mottok sykmelding som vi ikke bryr oss om: ${sykmeldingMessage.sykmelding.id}")
                 }
             }
-            delay(1)
         }
     }
 }

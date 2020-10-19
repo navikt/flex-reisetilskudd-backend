@@ -69,7 +69,7 @@ fun main() {
     applicationServer.start()
     applicationState.ready = true
     createListener(applicationState) {
-        sykmeldingKafkaService.run()
+        sykmeldingKafkaService.start()
     }
     setUpCronJob(env = env)
 }
