@@ -15,10 +15,10 @@ data class Environment(
     val dbPwd: String = getEnvVar("NAIS_DATABASE_FLEX_REISETILSKUDD_BACKEND_FLEX_REISETILSKUDD_DB_PASSWORD"),
     val serviceuserUsername: String = getEnvVar("SERVICEUSER_USERNAME"),
     val serviceuserPassword: String = getEnvVar("SERVICEUSER_PASSWORD"),
-    val oidcWellKnownUri: String = getEnvVar("OIDC_WELLKNOWN_URI"),
+    val loginserviceIdportenDiscoveryUrl: String = getEnvVar("LOGINSERVICE_IDPORTEN_DISCOVERY_URL"),
     val electorPath: String = getEnvVar("ELECTOR_PATH"),
     val sidecarInitialDelay: Long = getEnvVar("SIDECAR_INITIAL_DELAY", "15000").toLong(),
-    val loginserviceClientId: String = getEnvVar("LOGINSERVICE_CLIENTID")
+    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE")
 ) : KafkaConfig {
 
     fun hentKafkaCredentials(): KafkaCredentials {
