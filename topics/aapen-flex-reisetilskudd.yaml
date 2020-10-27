@@ -1,0 +1,20 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: aapen-flex-reisetilskudd
+  namespace: flex
+  labels:
+    team: flex
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 3
+    replication: 3
+    retentionBytes: -1    # Messages will never get deleted because of disk space
+    retentionHours: 2192  # Messages are stored for 3 months
+  acl:
+    - team: flex
+      application: flex-reisetilskudd-backend
+      access: write
