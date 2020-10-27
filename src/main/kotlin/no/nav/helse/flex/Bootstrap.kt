@@ -15,12 +15,14 @@ import no.nav.helse.flex.application.getWellKnown
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.kafka.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.kafka.util.JacksonKafkaDeserializer
+import no.nav.helse.flex.kafka.util.KafkaConfig
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
@@ -72,6 +74,17 @@ fun main() {
         sykmeldingKafkaService.start()
     }
     setUpCronJob(env = env)
+
+    // TEST
+    runCatching {
+        val kafkaAivenConfig = KafkaConfig(environment = env)
+        val producer = kafkaAivenConfig.producer()
+        producer.send(ProducerRecord("aapen-flex-reisetilskudd", "1", "test")).get()
+    }.onFailure {
+        log.info("Aiven kafka:", it)
+    }.onSuccess {
+        log.info("Melding sendt til aiven")
+    }
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =

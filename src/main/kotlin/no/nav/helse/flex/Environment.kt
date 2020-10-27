@@ -18,7 +18,15 @@ data class Environment(
     val loginserviceIdportenDiscoveryUrl: String = getEnvVar("LOGINSERVICE_IDPORTEN_DISCOVERY_URL"),
     val electorPath: String = getEnvVar("ELECTOR_PATH"),
     val sidecarInitialDelay: Long = getEnvVar("SIDECAR_INITIAL_DELAY", "15000").toLong(),
-    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE")
+    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE"),
+
+    // Aiven kafka
+    val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"), // TODO: Denne bruker vi ikke
+    val bootstrapServers: String = getEnvVar("KAFKA_BROKERS"),
+    val sslKeystoreLocation: String = getEnvVar("KAFKA_KEYSTORE_PATH"),
+    val sslKeystorePassword: String = getEnvVar("KAFKA_CREDSTORE_PASSWORD"),
+    val sslTruststoreLocation: String = getEnvVar("KAFKA_TRUSTSTORE_PATH"),
+    val sslTruststorePassword: String = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
 ) : KafkaConfig {
 
     fun hentKafkaCredentials(): KafkaCredentials {
