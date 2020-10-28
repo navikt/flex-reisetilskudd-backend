@@ -22,7 +22,6 @@ import no.nav.syfo.kafka.loadBaseConfig
 import no.nav.syfo.kafka.toConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
@@ -37,8 +36,8 @@ fun main() {
     val env = Environment()
 
     // Sov litt slik at sidecars er klare
+    log.info("Sover i ${env.sidecarInitialDelay} ms i håp om at sidecars er klare")
     Thread.sleep(env.sidecarInitialDelay)
-    log.info("Sov i ${env.sidecarInitialDelay} ms i håp om at sidecars er klare")
 
     val wellKnown = getWellKnown(env.loginserviceIdportenDiscoveryUrl)
     val jwkProvider = JwkProviderBuilder(URL(wellKnown.jwks_uri))
@@ -55,9 +54,13 @@ fun main() {
     )
     consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
     val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage?>(consumerProperties)
+
+    val kafkaAivenConfig = KafkaConfig(environment = env)
+    val kafkaProducer = kafkaAivenConfig.producer()
+
     val database = Database(env)
 
-    val reisetilskuddService = ReisetilskuddService(database)
+    val reisetilskuddService = ReisetilskuddService(database, kafkaProducer)
 
     val sykmeldingKafkaService = SykmeldingKafkaService(kafkaConsumer, applicationState, reisetilskuddService)
     val applicationEngine = createApplicationEngine(
@@ -74,17 +77,6 @@ fun main() {
         sykmeldingKafkaService.start()
     }
     setUpCronJob(env = env)
-
-    // TEST
-    runCatching {
-        val kafkaAivenConfig = KafkaConfig(environment = env)
-        val producer = kafkaAivenConfig.producer()
-        producer.send(ProducerRecord("aapen-flex-reisetilskudd", "1", "test")).get()
-    }.onFailure {
-        log.info("Aiven kafka:", it)
-    }.onSuccess {
-        log.info("Melding sendt til aiven")
-    }
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =

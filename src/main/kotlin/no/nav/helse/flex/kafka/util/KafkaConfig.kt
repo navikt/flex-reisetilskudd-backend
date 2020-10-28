@@ -1,6 +1,7 @@
 package no.nav.helse.flex.kafka.util
 
 import no.nav.helse.flex.Environment
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs.RETRY_BACKOFF_MS_CONFIG
@@ -17,11 +18,11 @@ class KafkaConfig(val environment: Environment) {
     private val JAVA_KEYSTORE = "jks"
     private val PKCS12 = "PKCS12"
 
-    fun producer() = KafkaProducer<String, String>(producerConfig())
+    fun producer() = KafkaProducer<String, ReisetilskuddDTO>(producerConfig())
 
     private fun producerConfig() = mapOf(
         KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-        VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class,
+        VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java,
         ACKS_CONFIG to "all",
         RETRIES_CONFIG to MAX_VALUE,
         RETRY_BACKOFF_MS_CONFIG to 100
@@ -42,4 +43,8 @@ class KafkaConfig(val environment: Environment) {
         SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG to environment.sslKeystorePassword,
         SslConfigs.SSL_KEY_PASSWORD_CONFIG to environment.sslKeystorePassword
     )
+
+    companion object Topics {
+        val topic = "appen-flex-reisetilskudd"
+    }
 }

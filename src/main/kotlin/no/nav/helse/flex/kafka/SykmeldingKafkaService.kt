@@ -9,9 +9,9 @@ import java.lang.Exception
 import java.time.Duration
 
 class SykmeldingKafkaService(
-    val kafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>,
-    val applicationState: ApplicationState,
-    val reisetilskuddService: ReisetilskuddService,
+    private val kafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>,
+    private val applicationState: ApplicationState,
+    private val reisetilskuddService: ReisetilskuddService,
     private val delayStart: Long = 10_000L
 ) {
     suspend fun start() {
