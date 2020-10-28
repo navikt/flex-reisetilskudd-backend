@@ -21,7 +21,6 @@ data class Environment(
     val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE"),
 
     // Aiven kafka
-    val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"), // TODO: Denne bruker vi ikke
     val bootstrapServers: String = getEnvVar("KAFKA_BROKERS"),
     val sslKeystoreLocation: String = getEnvVar("KAFKA_KEYSTORE_PATH"),
     val sslKeystorePassword: String = getEnvVar("KAFKA_CREDSTORE_PASSWORD"),

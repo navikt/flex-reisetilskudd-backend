@@ -1,7 +1,7 @@
 package no.nav.helse.flex.kafka.util
 
 import no.nav.helse.flex.Environment
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs.RETRY_BACKOFF_MS_CONFIG
@@ -18,7 +18,7 @@ class KafkaConfig(val environment: Environment) {
     private val JAVA_KEYSTORE = "jks"
     private val PKCS12 = "PKCS12"
 
-    fun producer() = KafkaProducer<String, ReisetilskuddDTO>(producerConfig())
+    fun producer() = KafkaProducer<String, Reisetilskudd>(producerConfig())
 
     private fun producerConfig() = mapOf(
         KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,

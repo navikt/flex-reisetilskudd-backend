@@ -4,6 +4,7 @@ import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
 import no.nav.helse.flex.kafka.util.KafkaConfig
+import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
@@ -12,12 +13,14 @@ import org.apache.kafka.clients.producer.ProducerRecord
 
 class ReisetilskuddService(
     private val database: DatabaseInterface,
-    private val kafkaProducer: KafkaProducer<String, ReisetilskuddDTO>
+    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
 ) {
 
     fun behandleSykmelding(melding: SykmeldingMessage) {
         melding.toReisetilskuddDTO().forEach { reisetilskudd ->
             try {
+                log.info("Oppretter reisetilskudd ${reisetilskudd.reisetilskuddId}")
+
                 lagreReisetilskudd(reisetilskudd)
                 kafkaProducer.send(
                     ProducerRecord(
@@ -28,6 +31,8 @@ class ReisetilskuddService(
                 )
             } catch (e: Exception) {
                 // TODO: The NAIS platform will rotate credentials at regular intervals
+                log.info("Feiler på reisetilskudd ${reisetilskudd.reisetilskuddId}", e)
+                throw e
             }
         }
     }
