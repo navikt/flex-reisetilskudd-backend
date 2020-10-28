@@ -60,5 +60,4 @@ class ReisetilskuddService(private val database: DatabaseInterface) {
             false
         }
     }
-
 }

@@ -1,6 +1,5 @@
 package no.nav.helse.flex.reisetilskudd
 
-
 import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
 
 private const val MAX_VEDLEGG_SIZE = 8 * 1024 * 1024 // vedlegg på 8 MB
