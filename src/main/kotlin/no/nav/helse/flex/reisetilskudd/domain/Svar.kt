@@ -1,6 +1,6 @@
 package no.nav.helse.flex.reisetilskudd.domain
 
-data class SvarDTO(
+data class Svar(
     val reisetilskuddId: String,
     val utbetalingTilArbeidsgiver: Boolean?,
     val går: Boolean?,

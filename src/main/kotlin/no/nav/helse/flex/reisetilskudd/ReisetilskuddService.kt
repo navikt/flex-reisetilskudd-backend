@@ -4,8 +4,8 @@ import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
 import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
-import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 
 class ReisetilskuddService(private val database: DatabaseInterface) {
 
@@ -21,19 +21,19 @@ class ReisetilskuddService(private val database: DatabaseInterface) {
     fun hentReisetilskudd(fnr: String, reisetilskuddId: String) =
         database.hentReisetilskudd(fnr, reisetilskuddId)
 
-    private fun lagreReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
-        database.lagreReisetilskudd(reisetilskuddDTO)
+    private fun lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
+        database.lagreReisetilskudd(reisetilskudd)
     }
 
-    fun oppdaterReisetilskudd(reisetilskuddDTO: ReisetilskuddDTO) {
-        database.oppdaterReisetilskudd(reisetilskuddDTO)
+    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
+        database.oppdaterReisetilskudd(reisetilskudd)
     }
 
     fun sendReisetilskudd(fnr: String, reisetilskuddId: String) =
         database.sendReisetilskudd(fnr, reisetilskuddId)
 
-    fun lagreKvittering(kvitteringDTO: KvitteringDTO) {
-        database.lagreKvittering(kvitteringDTO)
+    fun lagreKvittering(kvittering: Kvittering) {
+        database.lagreKvittering(kvittering)
     }
 
     fun eierReisetilskudd(fnr: String, id: String) =

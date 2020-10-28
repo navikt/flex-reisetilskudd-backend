@@ -2,8 +2,9 @@ package no.nav.helse.flex
 
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
-import no.nav.helse.flex.reisetilskudd.domain.KvitteringDTO
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddDTO
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
 import no.nav.helse.flex.utils.TestDB
 import org.amshove.kluent.* // ktlint-disable no-wildcard-imports
@@ -53,8 +54,10 @@ object DatabaseTest : Spek({
         val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
-        val svar = ReisetilskuddDTO(
-            rt.reisetilskuddId,
+        val svar = Reisetilskudd(
+            status = ReisetilskuddStatus.FREMTIDIG,
+            oppfølgende = false,
+            reisetilskuddId = rt.reisetilskuddId,
             sykmeldingId = "abc",
             fnr = "abc",
             fom = LocalDate.MAX,
@@ -71,9 +74,11 @@ object DatabaseTest : Spek({
         val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.fnr shouldBeEqualTo fnr
+        nyRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
         nyRtFraDB.utbetalingTilArbeidsgiver?.shouldBeFalse()
         nyRtFraDB.går?.shouldBeTrue()
         nyRtFraDB.sykler?.shouldBeTrue()
+        nyRtFraDB.oppfølgende.shouldBeFalse()
         nyRtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
         nyRtFraDB.kollektivtransport.shouldBeInRange(37.0, 37.0)
     }
@@ -86,33 +91,38 @@ object DatabaseTest : Spek({
         val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
+        rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
         val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt.shouldNotBeNull()
+        nyRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
         val nyereRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
         nyereRtFraDB.shouldNotBeNull()
         nyereRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
+        nyereRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
     }
 })
 
-fun reisetilskudd(fnr: String): ReisetilskuddDTO =
-    ReisetilskuddDTO(
+fun reisetilskudd(fnr: String): Reisetilskudd =
+    Reisetilskudd(
         reisetilskuddId = UUID.randomUUID().toString(),
         sykmeldingId = UUID.randomUUID().toString(),
         fnr = fnr,
         fom = LocalDate.of(2020, 7, 1),
         tom = LocalDate.of(2020, 7, 20),
         orgNummer = "12345",
-        orgNavn = "min arbeidsplass"
+        orgNavn = "min arbeidsplass",
+        status = ReisetilskuddStatus.ÅPEN,
+        oppfølgende = false
     )
 
-fun kvittering(id: String): KvitteringDTO =
-    KvitteringDTO(
+fun kvittering(id: String): Kvittering =
+    Kvittering(
         kvitteringId = UUID.randomUUID().toString(),
         reisetilskuddId = id,
         navn = "test.jpg",
