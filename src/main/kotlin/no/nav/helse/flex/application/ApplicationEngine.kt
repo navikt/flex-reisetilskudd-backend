@@ -44,7 +44,7 @@ fun createApplicationEngine(
             }
         }
         setupAuth(
-            loginserviceClientId = env.loginserviceClientId,
+            loginserviceClientId = env.loginserviceIdportenAudience,
             jwkProvider = jwkProvider,
             issuer = issuer
         )
