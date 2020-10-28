@@ -89,10 +89,15 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         delete("/kvittering/{kvitteringId}") {
             val fnr = call.fnr()
             val kvitteringId = call.parameters["kvitteringId"]!!
+            val brukerEierKvittering = reisetilskuddService.eierKvittering(fnr, kvitteringId)
 
-            if (reisetilskuddService.eierKvittering(fnr, kvitteringId)) {
-                reisetilskuddService.slettKvittering(kvitteringId)
-                call.respond(Respons("kvitteringId $kvitteringId ble slettet fra databasen").toTextContent())
+            if (brukerEierKvittering) {
+                val slettet = reisetilskuddService.slettKvittering(kvitteringId)
+                if (slettet) {
+                    call.respond(Respons("kvitteringId $kvitteringId ble slettet fra databasen").toTextContent())
+                } else {
+                    call.respond(Respons("Kan ikke slette kvittering med kvittering id $kvitteringId").toTextContent())
+                }
             } else {
                 call.respond(Respons("Bruker eier ikke kvitteringen").toTextContent(HttpStatusCode.Forbidden))
             }
