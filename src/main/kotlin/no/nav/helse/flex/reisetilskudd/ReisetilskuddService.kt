@@ -28,7 +28,7 @@ class ReisetilskuddService(
                         reisetilskudd.reisetilskuddId,
                         reisetilskudd
                     )
-                )
+                ).get()
             } catch (e: Exception) {
                 // TODO: The NAIS platform will rotate credentials at regular intervals
                 log.info("Feiler på reisetilskudd ${reisetilskudd.reisetilskuddId}", e)

@@ -19,14 +19,14 @@ class SykmeldingKafkaService(
             try {
                 run()
             } catch (ex: Exception) {
-                log.error("Feil ved konsumering fra kafka, restarter om $delayStart ms", ex)
+                log.error("Uhåndtert feil i SykmeldingKafkaService, restarter om $delayStart ms", ex)
                 kafkaConsumer.unsubscribe()
             }
             delay(delayStart)
         }
     }
 
-    fun run() {
+    private fun run() {
         kafkaConsumer.subscribe(listOf("syfo-sendt-sykmelding", "syfo-bekreftet-sykmelding"))
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofMillis(1000))

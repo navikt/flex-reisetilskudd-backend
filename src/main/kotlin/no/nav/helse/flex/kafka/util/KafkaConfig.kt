@@ -45,6 +45,6 @@ class KafkaConfig(val environment: Environment) {
     )
 
     companion object Topics {
-        val topic = "appen-flex-reisetilskudd"
+        val topic = "aapen-flex-reisetilskudd"
     }
 }
