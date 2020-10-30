@@ -40,6 +40,7 @@ data class Environment(
     fun sslKeystorePassword() = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
     fun sslTruststoreLocation() = getEnvVar("KAFKA_TRUSTSTORE_PATH")
     fun sslTruststorePassword() = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
+    fun securityProtocol() = getEnvVar("KAFKA_SECURITY_PROTOCOL", "SSL")
 }
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =

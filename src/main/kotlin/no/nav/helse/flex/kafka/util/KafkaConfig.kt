@@ -48,7 +48,7 @@ class KafkaConfig(val environment: Environment) {
     ) + securityConfig(environment)
 
     private fun securityConfig(environment: Environment) = mapOf(
-        CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to "SSL",
+        CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to environment.securityProtocol(),
         SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG to "", // Disable server host name verification
         SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG to JAVA_KEYSTORE,
         SslConfigs.SSL_KEYSTORE_TYPE_CONFIG to PKCS12,
