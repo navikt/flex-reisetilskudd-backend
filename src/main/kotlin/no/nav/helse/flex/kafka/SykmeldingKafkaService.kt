@@ -9,9 +9,9 @@ import java.lang.Exception
 import java.time.Duration
 
 class SykmeldingKafkaService(
-    val kafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>,
-    val applicationState: ApplicationState,
-    val reisetilskuddService: ReisetilskuddService,
+    private val kafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>,
+    private val applicationState: ApplicationState,
+    private val reisetilskuddService: ReisetilskuddService,
     private val delayStart: Long = 10_000L
 ) {
     suspend fun start() {
@@ -19,15 +19,20 @@ class SykmeldingKafkaService(
             try {
                 run()
             } catch (ex: Exception) {
-                log.error("Feil ved konsumering fra kafka, restarter om $delayStart ms", ex)
+                log.error("Uhåndtert feil i SykmeldingKafkaService, restarter om $delayStart ms", ex)
                 kafkaConsumer.unsubscribe()
+                reisetilskuddService.lukkProducer()
             }
             delay(delayStart)
         }
     }
 
-    fun run() {
+    private fun run() {
+        log.info("Starter SykmeldingKafkaService")
+
         kafkaConsumer.subscribe(listOf("syfo-sendt-sykmelding", "syfo-bekreftet-sykmelding"))
+        reisetilskuddService.settOppKafkaProducer()
+
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofMillis(1000))
             records.forEach {

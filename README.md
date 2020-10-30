@@ -58,6 +58,20 @@ Creating a docker image should be as simple as `docker build -t "no.nav.syfo" .`
 
 #### Tldr
 
+## Kafka topic
+#### Applying changes
+```
+kubectl config use-context dev-gcp
+kubectl apply -f topics/aapen-reisetilskudd.yaml -n flex
+
+TODO: Prod må opprette topic i pool nav-prod
+```
+#### Verify topic changes
+```
+kubectl get topics -n flex
+kubectl describe topic aapen-reisetilskudd -n flex
+```
+
 ## Contact us
 
 ### For NAV employees

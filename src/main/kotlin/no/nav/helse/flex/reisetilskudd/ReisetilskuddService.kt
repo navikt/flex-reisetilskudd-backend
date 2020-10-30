@@ -3,16 +3,45 @@ package no.nav.helse.flex.reisetilskudd
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
+import no.nav.helse.flex.kafka.util.KafkaConfig
+import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerRecord
 
-class ReisetilskuddService(private val database: DatabaseInterface) {
+class ReisetilskuddService(
+    private val database: DatabaseInterface,
+    private val kafkaConfig: KafkaConfig
+) {
+    private lateinit var kafkaProducer: KafkaProducer<String, Reisetilskudd>
 
     fun behandleSykmelding(melding: SykmeldingMessage) {
-        melding.toReisetilskuddDTO().forEach {
-            lagreReisetilskudd(it)
+        melding.toReisetilskuddDTO().forEach { reisetilskudd ->
+            try {
+                lagreReisetilskudd(reisetilskudd)
+                kafkaProducer.send(
+                    ProducerRecord(
+                        KafkaConfig.topic,
+                        reisetilskudd.reisetilskuddId,
+                        reisetilskudd
+                    )
+                ).get()
+                log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+            } catch (e: Exception) {
+                log.warn("Feiler på reisetilskudd ${reisetilskudd.reisetilskuddId}", e)
+                throw e
+            }
         }
+    }
+
+    fun settOppKafkaProducer() {
+        kafkaProducer = kafkaConfig.producer()
+    }
+
+    fun lukkProducer() {
+        kafkaProducer.close()
     }
 
     fun hentReisetilskudd(fnr: String) =
