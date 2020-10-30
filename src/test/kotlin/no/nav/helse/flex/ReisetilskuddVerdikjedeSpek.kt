@@ -3,6 +3,8 @@ package no.nav.helse.flex
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.util.KtorExperimentalAPI
 import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.flex.application.ApplicationState
@@ -10,9 +12,9 @@ import no.nav.helse.flex.kafka.SykmeldingKafkaService
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.util.JacksonKafkaDeserializer
 import no.nav.helse.flex.kafka.util.JacksonKafkaSerializer
+import no.nav.helse.flex.kafka.util.KafkaConfig
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
 import no.nav.helse.flex.utils.getSykmeldingDto
@@ -37,6 +39,28 @@ import java.util.Properties
 object ReisetilskuddVerdikjedeSpek : Spek({
     val applicationState = ApplicationState()
     val fnr = "12345678901"
+    val kafkaAivenConfig = mockk<KafkaConfig>()
+
+    val kafka = KafkaContainer().withNetwork(Network.newNetwork())
+    kafka.start()
+
+    val kafkaConfig = Properties()
+    kafkaConfig.let {
+        it["bootstrap.servers"] = kafka.bootstrapServers
+        it[ConsumerConfig.GROUP_ID_CONFIG] = "groupId"
+        it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
+        it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonKafkaDeserializer::class.java
+        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+    }
+
+    val consumerProperties = kafkaConfig.toConsumerConfig(
+        "consumer", valueDeserializer = JacksonKafkaDeserializer::class
+    )
+    val sykmeldingKafkaConsumer = spyk(KafkaConsumer<String, SykmeldingMessage?>(consumerProperties))
+    val producerProperties = kafkaConfig.toProducerConfig(
+        "producer", valueSerializer = JacksonKafkaSerializer::class
+    )
+    val sykmeldingKafkaProducer = KafkaProducer<String, SykmeldingMessage?>(producerProperties)
 
     fun setupEnvMock() {
         clearAllMocks()
@@ -48,34 +72,14 @@ object ReisetilskuddVerdikjedeSpek : Spek({
         setupEnvMock()
         applicationState.alive = true
         applicationState.ready = true
+        every { kafkaAivenConfig.producer() } returns KafkaProducer(producerProperties)
     }
 
     describe("Test hele verdikjeden") {
         with(TestApplicationEngine()) {
             val testDb = TestDB()
-            val kafka = KafkaContainer().withNetwork(Network.newNetwork())
-            kafka.start()
 
-            val kafkaConfig = Properties()
-            kafkaConfig.let {
-                it["bootstrap.servers"] = kafka.bootstrapServers
-                it[ConsumerConfig.GROUP_ID_CONFIG] = "groupId"
-                it[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
-                it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonKafkaDeserializer::class.java
-                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
-            }
-
-            val consumerProperties = kafkaConfig.toConsumerConfig(
-                "consumer", valueDeserializer = JacksonKafkaDeserializer::class
-            )
-            val sykmeldingKafkaConsumer = spyk(KafkaConsumer<String, SykmeldingMessage?>(consumerProperties))
-            val producerProperties = kafkaConfig.toProducerConfig(
-                "producer", valueSerializer = JacksonKafkaSerializer::class
-            )
-            val sykmeldingKafkaProducer = KafkaProducer<String, SykmeldingMessage?>(producerProperties)
-            val kafkaProducer = KafkaProducer<String, Reisetilskudd>(producerProperties)
-
-            val reisetilskuddService = ReisetilskuddService(testDb, kafkaProducer)
+            val reisetilskuddService = ReisetilskuddService(testDb, kafkaAivenConfig)
             val sykmeldingKafkaService = SykmeldingKafkaService(sykmeldingKafkaConsumer, applicationState, reisetilskuddService, delayStart = 10L)
 
             start()

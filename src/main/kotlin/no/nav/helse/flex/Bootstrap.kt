@@ -56,11 +56,10 @@ fun main() {
     val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage?>(consumerProperties)
 
     val kafkaAivenConfig = KafkaConfig(environment = env)
-    val kafkaProducer = kafkaAivenConfig.producer()
 
     val database = Database(env)
 
-    val reisetilskuddService = ReisetilskuddService(database, kafkaProducer)
+    val reisetilskuddService = ReisetilskuddService(database, kafkaAivenConfig)
 
     val sykmeldingKafkaService = SykmeldingKafkaService(kafkaConsumer, applicationState, reisetilskuddService)
     val applicationEngine = createApplicationEngine(

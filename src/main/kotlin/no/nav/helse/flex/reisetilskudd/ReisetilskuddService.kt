@@ -13,14 +13,13 @@ import org.apache.kafka.clients.producer.ProducerRecord
 
 class ReisetilskuddService(
     private val database: DatabaseInterface,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
+    private val kafkaConfig: KafkaConfig
 ) {
+    private lateinit var kafkaProducer: KafkaProducer<String, Reisetilskudd>
 
     fun behandleSykmelding(melding: SykmeldingMessage) {
         melding.toReisetilskuddDTO().forEach { reisetilskudd ->
             try {
-                log.info("Oppretter reisetilskudd ${reisetilskudd.reisetilskuddId}")
-
                 lagreReisetilskudd(reisetilskudd)
                 kafkaProducer.send(
                     ProducerRecord(
@@ -29,12 +28,20 @@ class ReisetilskuddService(
                         reisetilskudd
                     )
                 ).get()
+                log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
             } catch (e: Exception) {
-                // TODO: The NAIS platform will rotate credentials at regular intervals
-                log.info("Feiler på reisetilskudd ${reisetilskudd.reisetilskuddId}", e)
+                log.warn("Feiler på reisetilskudd ${reisetilskudd.reisetilskuddId}", e)
                 throw e
             }
         }
+    }
+
+    fun settOppKafkaProducer() {
+        kafkaProducer = kafkaConfig.producer()
+    }
+
+    fun lukkProducer() {
+        kafkaProducer.close()
     }
 
     fun hentReisetilskudd(fnr: String) =

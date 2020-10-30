@@ -21,6 +21,7 @@ val prometheusVersion = "0.6.0"
 val smCommonVersion = "1.c22544d"
 val spekVersion = "2.0.9"
 val testContainerKafkaVersion = "1.15.0-rc2"
+val kafkaVersion = "2.6.0"
 
 val postgresVersion = "42.2.15"
 val flywayVersion = "6.5.4"
@@ -100,6 +101,7 @@ dependencies {
     implementation("org.postgresql:postgresql:$postgresVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.flywaydb:flyway-core:$flywayVersion")
+    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
 
     implementation("com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")

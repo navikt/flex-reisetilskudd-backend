@@ -18,14 +18,7 @@ data class Environment(
     val loginserviceIdportenDiscoveryUrl: String = getEnvVar("LOGINSERVICE_IDPORTEN_DISCOVERY_URL"),
     val electorPath: String = getEnvVar("ELECTOR_PATH"),
     val sidecarInitialDelay: Long = getEnvVar("SIDECAR_INITIAL_DELAY", "15000").toLong(),
-    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE"),
-
-    // Aiven kafka
-    val bootstrapServers: String = getEnvVar("KAFKA_BROKERS"),
-    val sslKeystoreLocation: String = getEnvVar("KAFKA_KEYSTORE_PATH"),
-    val sslKeystorePassword: String = getEnvVar("KAFKA_CREDSTORE_PASSWORD"),
-    val sslTruststoreLocation: String = getEnvVar("KAFKA_TRUSTSTORE_PATH"),
-    val sslTruststorePassword: String = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
+    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE")
 ) : KafkaConfig {
 
     fun hentKafkaCredentials(): KafkaCredentials {
@@ -40,6 +33,13 @@ data class Environment(
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
     }
+
+    // Aiven kafka - hentes på nytt hver gang
+    fun bootstrapServers() = getEnvVar("KAFKA_BROKERS")
+    fun sslKeystoreLocation() = getEnvVar("KAFKA_KEYSTORE_PATH")
+    fun sslKeystorePassword() = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
+    fun sslTruststoreLocation() = getEnvVar("KAFKA_TRUSTSTORE_PATH")
+    fun sslTruststorePassword() = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
 }
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
