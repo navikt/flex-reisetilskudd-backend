@@ -40,7 +40,7 @@ class KafkaConfig(val environment: Environment) {
         ENABLE_AUTO_COMMIT_CONFIG to false,
         KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
         VALUE_DESERIALIZER_CLASS_CONFIG to JacksonKafkaDeserializer::class.java,
-        AUTO_OFFSET_RESET_CONFIG to "earliest"
+        AUTO_OFFSET_RESET_CONFIG to "none"
     ) + commonConfig()
 
     private fun commonConfig() = mapOf(
