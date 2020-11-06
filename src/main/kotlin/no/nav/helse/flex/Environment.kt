@@ -18,7 +18,8 @@ data class Environment(
     val loginserviceIdportenDiscoveryUrl: String = getEnvVar("LOGINSERVICE_IDPORTEN_DISCOVERY_URL"),
     val electorPath: String = getEnvVar("ELECTOR_PATH"),
     val sidecarInitialDelay: Long = getEnvVar("SIDECAR_INITIAL_DELAY", "15000").toLong(),
-    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE")
+    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE"),
+    val kafkaAutoOffsetReset: String = getEnvVar("KAFKA_AUTO_OFFSET_RESET", "none")
 ) : KafkaConfig {
 
     fun hentKafkaCredentials(): KafkaCredentials {
