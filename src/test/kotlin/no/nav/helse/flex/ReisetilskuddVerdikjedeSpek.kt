@@ -52,6 +52,7 @@ object ReisetilskuddVerdikjedeSpek : Spek({
         it[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonKafkaDeserializer::class.java
         it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
     }
+    val env = mockk<Environment>()
 
     val consumerProperties = kafkaConfig.toConsumerConfig(
         "consumer", valueDeserializer = JacksonKafkaDeserializer::class
@@ -64,6 +65,7 @@ object ReisetilskuddVerdikjedeSpek : Spek({
 
     fun setupEnvMock() {
         clearAllMocks()
+        every { env.cluster } returns "test"
     }
 
     setupEnvMock()
@@ -80,7 +82,13 @@ object ReisetilskuddVerdikjedeSpek : Spek({
             val testDb = TestDB()
 
             val reisetilskuddService = ReisetilskuddService(testDb, kafkaAivenConfig)
-            val sykmeldingKafkaService = SykmeldingKafkaService(sykmeldingKafkaConsumer, applicationState, reisetilskuddService, delayStart = 10L)
+            val sykmeldingKafkaService = SykmeldingKafkaService(
+                kafkaConsumer = sykmeldingKafkaConsumer,
+                applicationState = applicationState,
+                reisetilskuddService = reisetilskuddService,
+                delayStart = 10L,
+                environment = env
+            )
 
             start()
             // TODO: Sett opp createApplicationEngine, skjønner meg ikke helt på auth greiene
