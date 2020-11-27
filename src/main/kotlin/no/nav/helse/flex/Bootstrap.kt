@@ -61,7 +61,12 @@ fun main() {
 
     val reisetilskuddService = ReisetilskuddService(database, kafkaAivenConfig)
 
-    val sykmeldingKafkaService = SykmeldingKafkaService(kafkaConsumer, applicationState, reisetilskuddService)
+    val sykmeldingKafkaService = SykmeldingKafkaService(
+        kafkaConsumer = kafkaConsumer,
+        applicationState = applicationState,
+        reisetilskuddService = reisetilskuddService,
+        environment = env
+    )
     val applicationEngine = createApplicationEngine(
         env = env,
         reisetilskuddService = reisetilskuddService,

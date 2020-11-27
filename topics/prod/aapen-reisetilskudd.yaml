@@ -1,0 +1,23 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: aapen-reisetilskudd
+  namespace: flex
+  labels:
+    team: flex
+  annotations:
+    dcat.data.nav.no/title: "flex.aapen-reisetilskudd"
+    dcat.data.nav.no/description: "Topic for hendelser av typen reisetilskudd søknad"
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: delete
+    minimumInSyncReplicas: 1
+    partitions: 3
+    replication: 3
+    retentionBytes: -1    # Messages will never get deleted because of disk space
+    retentionHours: 2192  # Messages are stored for 3 months
+  acl:
+    - team: flex
+      application: flex-reisetilskudd-backend
+      access: write

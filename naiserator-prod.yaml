@@ -35,7 +35,7 @@ spec:
       cpu: 400m
       memory: 768Mi
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   gcp:
     sqlInstances:
       - type: POSTGRES_11
@@ -55,5 +55,5 @@ spec:
     - configmap: loginservice-idporten
   env:
     - name: KAFKA_BOOTSTRAP_SERVERS_URL
-      value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443
+      value: SASL_SSL://a01apvl00145.adeo.no:8443,SASL_SSL://a01apvl00146.adeo.no:8443,SASL_SSL://a01apvl00147.adeo.no:8443,SASL_SSL://a01apvl00149.adeo.no:8443
 
