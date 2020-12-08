@@ -18,7 +18,8 @@ data class Environment(
     val loginserviceIdportenDiscoveryUrl: String = getEnvVar("LOGINSERVICE_IDPORTEN_DISCOVERY_URL"),
     val electorPath: String = getEnvVar("ELECTOR_PATH"),
     val sidecarInitialDelay: Long = getEnvVar("SIDECAR_INITIAL_DELAY", "15000").toLong(),
-    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE")
+    val loginserviceIdportenAudience: String = getEnvVar("LOGINSERVICE_IDPORTEN_AUDIENCE"),
+    val kafkaAutoOffsetReset: String = getEnvVar("KAFKA_AUTO_OFFSET_RESET", "none")
 ) : KafkaConfig {
 
     fun hentKafkaCredentials(): KafkaCredentials {
@@ -33,6 +34,14 @@ data class Environment(
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
     }
+
+    // Aiven kafka - hentes på nytt hver gang
+    fun bootstrapServers() = getEnvVar("KAFKA_BROKERS")
+    fun sslKeystoreLocation() = getEnvVar("KAFKA_KEYSTORE_PATH")
+    fun sslKeystorePassword() = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
+    fun sslTruststoreLocation() = getEnvVar("KAFKA_TRUSTSTORE_PATH")
+    fun sslTruststorePassword() = getEnvVar("KAFKA_CREDSTORE_PASSWORD")
+    fun securityProtocol() = getEnvVar("KAFKA_SECURITY_PROTOCOL", "SSL")
 }
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =

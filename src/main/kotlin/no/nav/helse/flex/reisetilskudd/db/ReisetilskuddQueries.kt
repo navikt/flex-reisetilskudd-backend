@@ -23,7 +23,10 @@ fun DatabaseInterface.hentReisetilskudd(fnr: String, reisetilskuddId: String): R
 }
 
 fun DatabaseInterface.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-    connection.use { it.lagreReisetilskudd(reisetilskudd) }
+    connection.use {
+        it.hentReisetilskudd(reisetilskudd.fnr, reisetilskudd.reisetilskuddId)?.let { return }
+        it.lagreReisetilskudd(reisetilskudd)
+    }
 }
 
 fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {

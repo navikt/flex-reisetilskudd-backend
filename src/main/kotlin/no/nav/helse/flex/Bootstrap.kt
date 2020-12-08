@@ -15,6 +15,7 @@ import no.nav.helse.flex.application.getWellKnown
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.kafka.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.kafka.util.JacksonKafkaDeserializer
+import no.nav.helse.flex.kafka.util.KafkaConfig
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.kafka.envOverrides
 import no.nav.syfo.kafka.loadBaseConfig
@@ -35,8 +36,8 @@ fun main() {
     val env = Environment()
 
     // Sov litt slik at sidecars er klare
+    log.info("Sover i ${env.sidecarInitialDelay} ms i håp om at sidecars er klare")
     Thread.sleep(env.sidecarInitialDelay)
-    log.info("Sov i ${env.sidecarInitialDelay} ms i håp om at sidecars er klare")
 
     val wellKnown = getWellKnown(env.loginserviceIdportenDiscoveryUrl)
     val jwkProvider = JwkProviderBuilder(URL(wellKnown.jwks_uri))
@@ -53,11 +54,19 @@ fun main() {
     )
     consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
     val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage?>(consumerProperties)
+
+    val kafkaAivenConfig = KafkaConfig(environment = env)
+
     val database = Database(env)
 
-    val reisetilskuddService = ReisetilskuddService(database)
+    val reisetilskuddService = ReisetilskuddService(database, kafkaAivenConfig)
 
-    val sykmeldingKafkaService = SykmeldingKafkaService(kafkaConsumer, applicationState, reisetilskuddService)
+    val sykmeldingKafkaService = SykmeldingKafkaService(
+        kafkaConsumer = kafkaConsumer,
+        applicationState = applicationState,
+        reisetilskuddService = reisetilskuddService,
+        environment = env
+    )
     val applicationEngine = createApplicationEngine(
         env = env,
         reisetilskuddService = reisetilskuddService,
