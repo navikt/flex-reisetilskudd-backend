@@ -1,9 +1,9 @@
 package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.db.DatabaseInterface
+import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
-import no.nav.helse.flex.kafka.util.KafkaConfig
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
@@ -13,7 +13,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 
 class ReisetilskuddService(
     private val database: DatabaseInterface,
-    private val kafkaConfig: KafkaConfig
+    private val aivenKafkaConfig: AivenKafkaConfig
 ) {
     private lateinit var kafkaProducer: KafkaProducer<String, Reisetilskudd>
 
@@ -23,7 +23,7 @@ class ReisetilskuddService(
                 lagreReisetilskudd(reisetilskudd)
                 kafkaProducer.send(
                     ProducerRecord(
-                        KafkaConfig.topic,
+                        AivenKafkaConfig.topic,
                         reisetilskudd.reisetilskuddId,
                         reisetilskudd
                     )
@@ -37,7 +37,7 @@ class ReisetilskuddService(
     }
 
     fun settOppKafkaProducer() {
-        kafkaProducer = kafkaConfig.producer()
+        kafkaProducer = aivenKafkaConfig.producer()
     }
 
     fun lukkProducer() {

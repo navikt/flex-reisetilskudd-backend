@@ -1,4 +1,4 @@
-package no.nav.helse.flex.kafka.util
+package no.nav.helse.flex.kafka
 
 import no.nav.helse.flex.Environment
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
@@ -20,7 +20,7 @@ import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 
-class KafkaConfig(val environment: Environment) {
+class AivenKafkaConfig(val environment: Environment) {
     private val JAVA_KEYSTORE = "JKS"
     private val PKCS12 = "PKCS12"
 
