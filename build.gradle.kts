@@ -8,7 +8,6 @@ version = "1.0.0"
 
 val coroutinesVersion = "1.3.3"
 val jacksonVersion = "2.11.2"
-val javaxActivationVersion = "1.1.1"
 val kafkaEmbeddedVersion = "2.4.0"
 val postgresEmbeddedVersion = "0.13.3"
 val kluentVersion = "1.49"
@@ -90,9 +89,6 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
 
-    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
-
-    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")

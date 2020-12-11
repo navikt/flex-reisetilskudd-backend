@@ -8,11 +8,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.flex.application.ApplicationState
-import no.nav.helse.flex.kafka.SykmeldingKafkaService
-import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.kafka.util.JacksonKafkaDeserializer
-import no.nav.helse.flex.kafka.util.JacksonKafkaSerializer
-import no.nav.helse.flex.kafka.util.KafkaConfig
+import no.nav.helse.flex.kafka.* // ktlint-disable no-wildcard-imports
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
@@ -20,28 +16,29 @@ import no.nav.helse.flex.utils.TestDB
 import no.nav.helse.flex.utils.getSykmeldingDto
 import no.nav.helse.flex.utils.skapSykmeldingStatusKafkaMessageDTO
 import no.nav.helse.flex.utils.stopApplicationNårAntallKafkaMeldingerErLest
-import no.nav.syfo.kafka.toConsumerConfig
-import no.nav.syfo.kafka.toProducerConfig
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import org.testcontainers.containers.KafkaContainer
 import org.testcontainers.containers.Network
+import org.testcontainers.utility.DockerImageName
 import java.util.Properties
 
 @KtorExperimentalAPI
 object ReisetilskuddVerdikjedeSpek : Spek({
     val applicationState = ApplicationState()
     val fnr = "12345678901"
-    val kafkaAivenConfig = mockk<KafkaConfig>()
+    val kafkaAivenConfig = mockk<AivenKafkaConfig>()
 
-    val kafka = KafkaContainer().withNetwork(Network.newNetwork())
+    val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
+        .withNetwork(Network.newNetwork())
     kafka.start()
 
     val kafkaConfig = Properties()
@@ -53,22 +50,28 @@ object ReisetilskuddVerdikjedeSpek : Spek({
         it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
     }
     val env = mockk<Environment>()
-
-    val consumerProperties = kafkaConfig.toConsumerConfig(
-        "consumer", valueDeserializer = JacksonKafkaDeserializer::class
-    )
-    val sykmeldingKafkaConsumer = spyk(KafkaConsumer<String, SykmeldingMessage?>(consumerProperties))
-    val producerProperties = kafkaConfig.toProducerConfig(
-        "producer", valueSerializer = JacksonKafkaSerializer::class
-    )
-    val sykmeldingKafkaProducer = KafkaProducer<String, SykmeldingMessage?>(producerProperties)
-
     fun setupEnvMock() {
         clearAllMocks()
         every { env.cluster } returns "test"
+        every { env.kafkaSecurityProtocol } returns "PLAINTEXT"
+        every { env.serviceuserUsername } returns "user"
+        every { env.serviceuserPassword } returns "pwd"
+        every { env.kafkaAutoOffsetReset } returns "earliest"
+        every { env.kafkaBootstrapServers } returns kafka.bootstrapServers
     }
 
     setupEnvMock()
+
+    val sykmeldingKafkaConsumer = spyk(skapSykmeldingKafkaConsumer(env))
+
+    val producerProperties = mapOf(
+        ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
+        ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
+    )
+    val sykmeldingKafkaProducer = KafkaProducer<String, SykmeldingMessage?>(
+        producerProperties
+    )
 
     beforeEachTest {
         setupEnvMock()

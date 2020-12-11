@@ -13,15 +13,10 @@ import no.nav.helse.flex.application.createApplicationEngine
 import no.nav.helse.flex.application.cronjob.setUpCronJob
 import no.nav.helse.flex.application.getWellKnown
 import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.kafka.* // ktlint-disable no-wildcard-imports
-import no.nav.helse.flex.kafka.util.JacksonKafkaDeserializer
-import no.nav.helse.flex.kafka.util.KafkaConfig
+import no.nav.helse.flex.kafka.AivenKafkaConfig
+import no.nav.helse.flex.kafka.SykmeldingKafkaService
+import no.nav.helse.flex.kafka.skapSykmeldingKafkaConsumer
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
-import no.nav.syfo.kafka.envOverrides
-import no.nav.syfo.kafka.loadBaseConfig
-import no.nav.syfo.kafka.toConsumerConfig
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
@@ -47,15 +42,10 @@ fun main() {
 
     DefaultExports.initialize()
     val applicationState = ApplicationState()
-    val kafkaBaseConfig = loadBaseConfig(env, env.hentKafkaCredentials()).envOverrides()
-    val consumerProperties = kafkaBaseConfig.toConsumerConfig(
-        "${env.applicationName}-consumer",
-        JacksonKafkaDeserializer::class
-    )
-    consumerProperties.let { it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1" }
-    val kafkaConsumer = KafkaConsumer<String, SykmeldingMessage?>(consumerProperties)
 
-    val kafkaAivenConfig = KafkaConfig(environment = env)
+    val kafkaConsumer = skapSykmeldingKafkaConsumer(env)
+
+    val kafkaAivenConfig = AivenKafkaConfig(environment = env)
 
     val database = Database(env)
 
