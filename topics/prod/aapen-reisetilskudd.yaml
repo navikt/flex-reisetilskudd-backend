@@ -21,3 +21,6 @@ spec:
     - team: flex
       application: flex-reisetilskudd-backend
       access: write
+    - team: flex
+      application: flex-reisetilskudd-gsak
+      access: read
