@@ -33,8 +33,11 @@ fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
     connection.use { it.oppdaterReisetilskudd(reisetilskudd) }
 }
 
-fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
-    connection.use { it.sendReisetilskudd(fnr, reisetilskuddId) }
+fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+    connection.use {
+        it.sendReisetilskudd(fnr, reisetilskuddId)
+        return it.hentReisetilskudd(fnr, reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    }
 }
 
 fun DatabaseInterface.lagreKvittering(kvittering: Kvittering) {

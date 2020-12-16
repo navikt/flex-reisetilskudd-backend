@@ -58,8 +58,17 @@ class ReisetilskuddService(
         database.oppdaterReisetilskudd(reisetilskudd)
     }
 
-    fun sendReisetilskudd(fnr: String, reisetilskuddId: String) =
-        database.sendReisetilskudd(fnr, reisetilskuddId)
+    fun sendReisetilskudd(fnr: String, reisetilskuddId: String) {
+        val reisetilskudd = database.sendReisetilskudd(fnr, reisetilskuddId)
+        kafkaProducer.send(
+            ProducerRecord(
+                AivenKafkaConfig.topic,
+                reisetilskudd.reisetilskuddId,
+                reisetilskudd
+            )
+        ).get()
+        log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
+    }
 
     fun lagreKvittering(kvittering: Kvittering) {
         database.lagreKvittering(kvittering)
