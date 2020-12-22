@@ -27,7 +27,7 @@ val githubPassword: String by project
 plugins {
     application
     kotlin("jvm") version "1.4.21"
-    id("com.github.johnrengelman.shadow") version "5.0.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
 group = "no.nav.syfo"
@@ -111,8 +111,9 @@ tasks {
         useJUnitPlatform {
             includeEngines("spek2")
         }
+        testLogging.showStandardStreams = true
     }
     named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileTestKotlin") {
-        kotlinOptions.jvmTarget = "12"
+        kotlinOptions.jvmTarget = "14"
     }
 }
