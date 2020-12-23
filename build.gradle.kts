@@ -18,11 +18,8 @@ val flywayVersion = "6.5.4"
 val hikariVersion = "3.4.5"
 val spekVersion = "2.0.9"
 
-
 val githubUser: String by project
 val githubPassword: String by project
-
-
 
 plugins {
     application
@@ -45,13 +42,23 @@ repositories {
     }
 }
 
+buildscript {
+    repositories {
+        maven("https://plugins.gradle.org/m2/")
+    }
+    dependencies {
+        classpath("org.jlleitschuh.gradle:ktlint-gradle:9.4.1")
+    }
+}
+
+apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-jackson:$ktorVersion")
-
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:$coroutinesVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
@@ -94,7 +101,6 @@ dependencies {
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion") {
         exclude(group = "org.jetbrains.kotlin")
     }
-
 
     testImplementation("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
     testImplementation("com.opentable.components:otj-pg-embedded:$postgresEmbeddedVersion")
