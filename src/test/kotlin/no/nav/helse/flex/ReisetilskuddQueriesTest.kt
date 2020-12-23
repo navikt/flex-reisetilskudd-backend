@@ -1,23 +1,21 @@
 package no.nav.helse.flex
 
-import io.ktor.util.KtorExperimentalAPI
-import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
+import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
 import no.nav.helse.flex.utils.TestDB
-import org.amshove.kluent.* // ktlint-disable no-wildcard-imports
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
+import org.amshove.kluent.*
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
-@KtorExperimentalAPI
-object DatabaseTest : Spek({
+internal class DatabaseTest {
     val db = TestDB()
 
-    describe("lagre og hente reisetilskudd") {
+    @Test
+    fun `lagre og hente reisetilskudd`() {
         val fnr = "01010112345"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
@@ -25,7 +23,8 @@ object DatabaseTest : Spek({
         db.eierReisetilskudd(fnr, rt.reisetilskuddId) shouldBe true
     }
 
-    describe("lagre kvittering og forsikre at reell person eier kvittering") {
+    @Test
+    fun `lagre kvittering og forsikre at reell person eier kvittering`() {
         val fnr = "01010154321"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
@@ -36,7 +35,8 @@ object DatabaseTest : Spek({
         db.eierKvittering("abc", "123") shouldBe false
     }
 
-    describe("lagre og slette kvittering") {
+    @Test
+    fun `lagre og slette kvittering`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
@@ -47,7 +47,8 @@ object DatabaseTest : Spek({
         db.eierKvittering(fnr, kv.kvitteringId) shouldBe false
     }
 
-    describe("oppdater reisetilskudd") {
+    @Test
+    fun `oppdater reisetilskudd`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
@@ -83,7 +84,8 @@ object DatabaseTest : Spek({
         nyRtFraDB.kollektivtransport.shouldBeInRange(37.0, 37.0)
     }
 
-    describe("sende reisetilskudd") {
+    @Test
+    fun `sende reisetilskudd`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
 
@@ -106,9 +108,9 @@ object DatabaseTest : Spek({
         nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
         nyereRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
     }
-})
+}
 
-fun reisetilskudd(fnr: String): Reisetilskudd =
+private fun reisetilskudd(fnr: String): Reisetilskudd =
     Reisetilskudd(
         reisetilskuddId = UUID.randomUUID().toString(),
         sykmeldingId = UUID.randomUUID().toString(),
@@ -121,7 +123,7 @@ fun reisetilskudd(fnr: String): Reisetilskudd =
         oppfølgende = false
     )
 
-fun kvittering(id: String): Kvittering =
+private fun kvittering(id: String): Kvittering =
     Kvittering(
         kvitteringId = UUID.randomUUID().toString(),
         reisetilskuddId = id,

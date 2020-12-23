@@ -1,10 +1,10 @@
 package no.nav.helse.flex.application.cronjob
 
-import io.ktor.util.* // ktlint-disable no-wildcard-imports
+import io.ktor.util.*
 import no.nav.helse.flex.Environment
 import no.nav.helse.flex.log
-import java.time.* // ktlint-disable no-wildcard-imports
-import java.util.* // ktlint-disable no-wildcard-imports
+import java.time.*
+import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
 @KtorExperimentalAPI

@@ -1,12 +1,12 @@
 package no.nav.helse.flex.reisetilskudd.api
 
-import io.ktor.application.* // ktlint-disable no-wildcard-imports
+import io.ktor.application.*
 import io.ktor.auth.authentication
 import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.routing.* // ktlint-disable no-wildcard-imports
+import io.ktor.routing.*
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.api.utils.Respons
 import no.nav.helse.flex.reisetilskudd.api.utils.toTextContent

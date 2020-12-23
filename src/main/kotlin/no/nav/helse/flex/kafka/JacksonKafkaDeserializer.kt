@@ -20,5 +20,6 @@ class JacksonKafkaDeserializer : Deserializer<SykmeldingMessage> {
     override fun deserialize(topic: String?, data: ByteArray): SykmeldingMessage {
         return objectMapper.readValue(data)
     }
+
     override fun close() {}
 }

@@ -20,7 +20,8 @@ fun SykmeldingMessage.toReisetilskuddDTO(): List<Reisetilskudd> =
         Reisetilskudd(
             status = ReisetilskuddStatus.ÅPEN,
             oppfølgende = false,
-            reisetilskuddId = UUID.nameUUIDFromBytes("${this.sykmelding.id}-${it.fom}-${it.tom}".toByteArray()).toString(),
+            reisetilskuddId = UUID.nameUUIDFromBytes("${this.sykmelding.id}-${it.fom}-${it.tom}".toByteArray())
+                .toString(),
             sykmeldingId = this.sykmelding.id,
             fnr = this.kafkaMetadata.fnr,
             fom = it.fom,
