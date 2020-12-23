@@ -16,7 +16,7 @@ val kafkaVersion = "2.6.0"
 val postgresVersion = "42.2.15"
 val flywayVersion = "6.5.4"
 val hikariVersion = "3.4.5"
-val spekVersion = "2.0.9"
+val junitVersion = "5.7.0"
 
 val githubUser: String by project
 val githubPassword: String by project
@@ -95,12 +95,8 @@ dependencies {
         exclude(group = "org.eclipse.jetty")
     }
 
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion") {
-        exclude(group = "org.jetbrains.kotlin")
-    }
-    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion") {
-        exclude(group = "org.jetbrains.kotlin")
-    }
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     testImplementation("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
     testImplementation("com.opentable.components:otj-pg-embedded:$postgresEmbeddedVersion")
@@ -114,10 +110,10 @@ application {
 
 tasks {
     withType<Test> {
-        useJUnitPlatform {
-            includeEngines("spek2")
+        useJUnitPlatform()
+        testLogging {
+            events("PASSED", "FAILED", "SKIPPED")
         }
-        testLogging.showStandardStreams = true
     }
     named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileTestKotlin") {
         kotlinOptions.jvmTarget = "14"

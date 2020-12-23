@@ -1,7 +1,7 @@
 package no.nav.helse.flex
 
 import com.auth0.jwk.JwkProviderBuilder
-import io.ktor.util.* // ktlint-disable no-wildcard-imports
+import io.ktor.util.*
 import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope

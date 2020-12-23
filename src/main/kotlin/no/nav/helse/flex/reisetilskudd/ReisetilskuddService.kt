@@ -5,7 +5,7 @@ import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
 import no.nav.helse.flex.log
-import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
+import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import org.apache.kafka.clients.producer.KafkaProducer
