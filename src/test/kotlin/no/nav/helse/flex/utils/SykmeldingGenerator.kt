@@ -77,9 +77,9 @@ fun skapSykmeldingStatusKafkaMessageDTO(
     statusEvent: String = STATUS_SENDT,
     fnr: String,
     timestamp: OffsetDateTime = OffsetDateTime.now(),
-    arbeidsgiver: ArbeidsgiverStatusDTO? = null
+    arbeidsgiver: ArbeidsgiverStatusDTO? = null,
+    sykmeldingId: String = UUID.randomUUID().toString()
 ): SykmeldingStatusKafkaMessageDTO {
-    val sykmeldingId = UUID.randomUUID().toString()
     return SykmeldingStatusKafkaMessageDTO(
         event = SykmeldingStatusKafkaEventDTO(
             statusEvent = statusEvent,
