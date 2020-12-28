@@ -1,20 +1,23 @@
 package no.nav.helse.flex
 
-import io.ktor.server.testing.TestApplicationEngine
+import com.auth0.jwk.JwkProviderBuilder
+import com.fasterxml.jackson.module.kotlin.readValue
+import io.ktor.http.*
+import io.ktor.server.testing.*
+import io.ktor.util.*
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.flex.application.ApplicationState
+import no.nav.helse.flex.application.configureApplication
+import no.nav.helse.flex.application.objectMapper
 import no.nav.helse.flex.kafka.*
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.utils.TestDB
-import no.nav.helse.flex.utils.getSykmeldingDto
-import no.nav.helse.flex.utils.skapSykmeldingStatusKafkaMessageDTO
-import no.nav.helse.flex.utils.stopApplicationNårAntallKafkaMeldingerErLest
+import no.nav.helse.flex.utils.*
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldEqual
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -28,8 +31,10 @@ import org.junit.jupiter.api.Test
 import org.testcontainers.containers.KafkaContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.utility.DockerImageName
+import java.nio.file.Paths
 import java.util.Properties
 
+@KtorExperimentalAPI
 internal class ReisetilskuddVerdikjedeTest {
     val applicationState = ApplicationState()
     val fnr = "12345678901"
@@ -59,6 +64,7 @@ internal class ReisetilskuddVerdikjedeTest {
         every { env.serviceuserUsername } returns "user"
         every { env.serviceuserPassword } returns "pwd"
         every { env.kafkaAutoOffsetReset } returns "earliest"
+        every { env.loginserviceIdportenAudience } returns "AUD"
         every { env.kafkaBootstrapServers } returns kafka.bootstrapServers
     }
 
@@ -95,15 +101,46 @@ internal class ReisetilskuddVerdikjedeTest {
                 environment = env
             )
 
+            val path = "src/test/resources/jwkset.json"
+            val uri = Paths.get(path).toUri().toURL()
+            val jwkProvider = JwkProviderBuilder(uri).build()
             start()
-            // TODO: Sett opp createApplicationEngine, skjønner meg ikke helt på auth greiene
+            val issuer = "TestIssuer"
+            val aud = "AUD"
+            application.configureApplication(
+                env = env,
+                applicationState = applicationState,
+                reisetilskuddService = reisetilskuddService,
+                jwkProvider = jwkProvider,
+                issuer = issuer
+            )
+
+            fun TestApplicationRequest.medSelvbetjeningToken(subject: String, level: String = "Level4") {
+                addHeader(
+                    HttpHeaders.Authorization,
+                    "Bearer ${
+                    generateJWT(
+                        audience = aud,
+                        issuer = issuer,
+                        subject = subject,
+                        level = level
+                    )
+                    }"
+                )
+            }
 
             val sykmeldingStatusKafkaMessageDTO = skapSykmeldingStatusKafkaMessageDTO(fnr = fnr)
             val sykmeldingId = sykmeldingStatusKafkaMessageDTO.event.sykmeldingId
             val sykmelding = getSykmeldingDto(sykmeldingId = sykmeldingId)
 
-            testDb.hentReisetilskudd(fnr).size `should be equal to` 0
-
+            with(
+                handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+                response.content!!.tilReisetilskuddListe().size `should be equal to` 0
+            }
             sykmeldingKafkaProducer.send(
                 ProducerRecord(
                     "syfo-sendt-sykmelding",
@@ -123,14 +160,22 @@ internal class ReisetilskuddVerdikjedeTest {
                 )
                 sykmeldingKafkaService.start()
             }
-
-            val reisetilskudd = testDb.hentReisetilskudd(fnr)
-            reisetilskudd.size shouldEqual 1
-            reisetilskudd[0].fnr shouldEqual fnr
-            reisetilskudd[0].fom shouldEqual sykmelding.sykmeldingsperioder[0].fom
-            reisetilskudd[0].tom shouldEqual sykmelding.sykmeldingsperioder[0].tom
-            reisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
-            reisetilskudd[0].sykmeldingId shouldEqual sykmeldingId
+            with(
+                handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+                val reisetilskudd = response.content!!.tilReisetilskuddListe()
+                reisetilskudd.size `should be equal to` 1
+                reisetilskudd[0].fnr shouldEqual fnr
+                reisetilskudd[0].fom shouldEqual sykmelding.sykmeldingsperioder[0].fom
+                reisetilskudd[0].tom shouldEqual sykmelding.sykmeldingsperioder[0].tom
+                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+                reisetilskudd[0].sykmeldingId shouldEqual sykmeldingId
+            }
         }
     }
 }
+
+fun String.tilReisetilskuddListe(): List<Reisetilskudd> = objectMapper.readValue(this)

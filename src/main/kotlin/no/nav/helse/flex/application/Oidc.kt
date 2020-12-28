@@ -1,10 +1,6 @@
 package no.nav.helse.flex.application
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
@@ -18,12 +14,7 @@ import java.net.ProxySelector
 
 val proxyConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
     install(JsonFeature) {
-        serializer = JacksonSerializer {
-            registerKotlinModule()
-            registerModule(JavaTimeModule())
-            configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
+        serializer = JacksonSerializer(objectMapper)
     }
     engine {
         customizeClient {
