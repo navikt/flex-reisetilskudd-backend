@@ -26,14 +26,11 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
             val reisetilskuddId = call.parameters["reisetilskuddId"]!!
 
             val svarJson = call.receive<Svar>()
-            if (reisetilskuddId != svarJson.reisetilskuddId) {
-                call.respond(Respons("ID i url matcher ikke ID i body").toTextContent(HttpStatusCode.BadRequest))
-                return@put
-            }
-            if (reisetilskuddService.eierReisetilskudd(fnr, svarJson.reisetilskuddId)) {
-                var reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
+
+            if (reisetilskuddService.eierReisetilskudd(fnr, reisetilskuddId)) {
+                var reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, reisetilskuddId)
                 if (reisetilskudd == null) {
-                    call.respond(Respons("${svarJson.reisetilskuddId} finnes ikke").toTextContent(HttpStatusCode.NotFound))
+                    call.respond(Respons("$reisetilskuddId finnes ikke").toTextContent(HttpStatusCode.NotFound))
                     return@put
                 }
                 if (svarJson.går != null) {
@@ -52,7 +49,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
                     reisetilskudd = reisetilskudd.copy(kollektivtransport = svarJson.kollektivtransport)
                 }
                 reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
-                val reisetilskuddFraDb = reisetilskuddService.hentReisetilskudd(fnr, svarJson.reisetilskuddId)
+                val reisetilskuddFraDb = reisetilskuddService.hentReisetilskudd(fnr, reisetilskuddId)
                 if (reisetilskuddFraDb != null) {
                     call.respond(reisetilskuddFraDb)
                 } else {
