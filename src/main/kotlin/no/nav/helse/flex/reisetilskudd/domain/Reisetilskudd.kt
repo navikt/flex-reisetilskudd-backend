@@ -12,6 +12,7 @@ data class Reisetilskudd(
     val fom: LocalDate,
     val tom: LocalDate,
     val sendt: LocalDateTime? = null,
+    val avbrutt: LocalDateTime? = null,
     val orgNummer: String?,
     val orgNavn: String?,
     val utbetalingTilArbeidsgiver: Boolean? = null,
@@ -23,5 +24,5 @@ data class Reisetilskudd(
 )
 
 enum class ReisetilskuddStatus {
-    FREMTIDIG, ÅPEN, SENDT
+    FREMTIDIG, ÅPEN, SENDT, AVBRUTT
 }

@@ -108,6 +108,30 @@ internal class DatabaseTest {
         nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
         nyereRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
     }
+
+    @Test
+    fun `avbryt og gjenåpne reisetilskudd`() {
+        val fnr = "01010111111"
+        val rt = reisetilskudd(fnr)
+
+        db.lagreReisetilskudd(rt)
+        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        rtFraDB.shouldNotBeNull()
+        rtFraDB.sendt.shouldBeNull()
+        rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+
+        db.avbrytReisetilskudd(fnr, rt.reisetilskuddId)
+        val avbruttRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        avbruttRtFraDB.shouldNotBeNull()
+        avbruttRtFraDB.status shouldEqual ReisetilskuddStatus.AVBRUTT
+        avbruttRtFraDB.avbrutt.shouldNotBeNull()
+
+        db.gjenapneReisetilskudd(fnr, rt.reisetilskuddId)
+        val gjenåpnetRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        gjenåpnetRtFraDB.shouldNotBeNull()
+        gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+        gjenåpnetRtFraDB.avbrutt.shouldBeNull()
+    }
 }
 
 private fun reisetilskudd(fnr: String): Reisetilskudd =

@@ -40,6 +40,20 @@ fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String): R
     }
 }
 
+fun DatabaseInterface.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+    connection.use {
+        it.avbrytReisetilskudd(fnr, reisetilskuddId)
+        return it.hentReisetilskudd(fnr, reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    }
+}
+
+fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+    connection.use {
+        it.gjenapneReisetilskudd(fnr, reisetilskuddId)
+        return it.hentReisetilskudd(fnr, reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    }
+}
+
 fun DatabaseInterface.lagreKvittering(kvittering: Kvittering) {
     connection.use { it.lagreKvittering(kvittering) }
 }
@@ -116,6 +130,48 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
         it.setTimestamp(1, Timestamp.from(now))
         it.setString(2, reisetilskuddId)
         it.setString(3, fnr)
+        it.executeUpdate()
+    }
+    this.commit()
+}
+
+private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
+    val now = Instant.now()
+    // TODO: Gjelder kanskje også status = FREMTIDIG, dette må tas høyde for når søknader opprettes som FREMTIDIG
+    this.prepareStatement(
+        """
+           UPDATE reisetilskudd 
+           SET (status, avbrutt) = (?, ?)
+           WHERE reisetilskudd_id = ?
+           AND fnr = ?
+           AND sendt is null
+           AND status = 'ÅPEN'
+        """
+    ).use {
+        it.setString(1, ReisetilskuddStatus.AVBRUTT.name)
+        it.setTimestamp(2, Timestamp.from(now))
+        it.setString(3, reisetilskuddId)
+        it.setString(4, fnr)
+        it.executeUpdate()
+    }
+    this.commit()
+}
+
+private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
+    this.prepareStatement(
+        """
+           UPDATE reisetilskudd 
+           SET (status, avbrutt) = (?, ?)
+           WHERE reisetilskudd_id = ?
+           AND fnr = ?
+           AND sendt is null
+           AND status = 'AVBRUTT'
+        """
+    ).use {
+        it.setString(1, ReisetilskuddStatus.ÅPEN.name)
+        it.setTimestamp(2, null)
+        it.setString(3, reisetilskuddId)
+        it.setString(4, fnr)
         it.executeUpdate()
     }
     this.commit()
@@ -259,6 +315,7 @@ fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Rei
         orgNummer = getString("arbeidsgiver_orgnummer"),
         orgNavn = getString("arbeidsgiver_navn"),
         sendt = getObject("sendt", LocalDateTime::class.java),
+        avbrutt = getObject("avbrutt", LocalDateTime::class.java),
         utbetalingTilArbeidsgiver = getInt("utbetaling_til_arbeidsgiver").toOptionalBoolean(),
         går = getInt("gar").toOptionalBoolean(),
         sykler = getInt("sykler").toOptionalBoolean(),

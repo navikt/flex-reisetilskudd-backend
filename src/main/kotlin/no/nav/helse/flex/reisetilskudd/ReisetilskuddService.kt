@@ -70,6 +70,30 @@ class ReisetilskuddService(
         log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
+    fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
+        val reisetilskudd = database.avbrytReisetilskudd(fnr, reisetilskuddId)
+        kafkaProducer.send(
+            ProducerRecord(
+                AivenKafkaConfig.topic,
+                reisetilskudd.reisetilskuddId,
+                reisetilskudd
+            )
+        ).get()
+        log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
+    }
+
+    fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
+        val reisetilskudd = database.gjenapneReisetilskudd(fnr, reisetilskuddId)
+        kafkaProducer.send(
+            ProducerRecord(
+                AivenKafkaConfig.topic,
+                reisetilskudd.reisetilskuddId,
+                reisetilskudd
+            )
+        ).get()
+        log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+    }
+
     fun lagreKvittering(kvittering: Kvittering) {
         database.lagreKvittering(kvittering)
     }

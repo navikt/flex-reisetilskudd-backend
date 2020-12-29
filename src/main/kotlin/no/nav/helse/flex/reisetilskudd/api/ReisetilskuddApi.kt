@@ -83,6 +83,28 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
             }
         }
 
+        post("/reisetilskudd/{reisetilskuddId}/avbryt") {
+            val fnr = call.fnr()
+            val reisetilskuddId = call.parameters["reisetilskuddId"]!!
+            if (reisetilskuddService.eierReisetilskudd(fnr, reisetilskuddId)) {
+                reisetilskuddService.avbrytReisetilskudd(fnr, reisetilskuddId)
+                call.respond(Respons("Reisetilskudd $reisetilskuddId har blitt avbrutt").toTextContent())
+            } else {
+                call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.Forbidden))
+            }
+        }
+
+        post("/reisetilskudd/{reisetilskuddId}/gjenapne") {
+            val fnr = call.fnr()
+            val reisetilskuddId = call.parameters["reisetilskuddId"]!!
+            if (reisetilskuddService.eierReisetilskudd(fnr, reisetilskuddId)) {
+                reisetilskuddService.gjenapneReisetilskudd(fnr, reisetilskuddId)
+                call.respond(Respons("Reisetilskudd $reisetilskuddId har blitt gjenåpnet").toTextContent())
+            } else {
+                call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.Forbidden))
+            }
+        }
+
         delete("/kvittering/{kvitteringId}") {
             val fnr = call.fnr()
             val kvitteringId = call.parameters["kvitteringId"]!!
