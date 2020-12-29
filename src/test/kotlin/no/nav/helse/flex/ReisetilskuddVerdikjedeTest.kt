@@ -103,6 +103,7 @@ internal class ReisetilskuddVerdikjedeTest {
                 reisetilskudd[0].kollektivtransport shouldEqual 0.0
                 reisetilskudd[0].oppfølgende.`should be false`()
                 reisetilskudd[0].sendt.shouldBeNull()
+                reisetilskudd[0].avbrutt.shouldBeNull()
                 reisetilskudd[0].går.shouldBeNull()
                 reisetilskudd[0].kvitteringer.shouldBeEmpty()
                 reisetilskudd[0].orgNummer.shouldBeNull()
@@ -128,6 +129,64 @@ internal class ReisetilskuddVerdikjedeTest {
 
     @Test
     @Order(3)
+    fun `Vi kan avbryte søknaden`() {
+        with(testApp) {
+            val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                medSelvbetjeningToken(fnr)
+            }.response.content!!.tilReisetilskuddListe()[0].reisetilskuddId
+            with(
+                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/$id/avbryt") {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+            }
+            with(
+                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+                val reisetilskudd = response.content!!.tilReisetilskuddListe()
+                reisetilskudd.size `should be equal to` 1
+
+                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.AVBRUTT
+                reisetilskudd[0].avbrutt.shouldNotBeNull()
+            }
+        }
+    }
+
+    @Test
+    @Order(4)
+    fun `Vi kan gjenåpne søknaden`() {
+        with(testApp) {
+            val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                medSelvbetjeningToken(fnr)
+            }.response.content!!.tilReisetilskuddListe()[0].reisetilskuddId
+            with(
+                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/$id/gjenapne") {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+            }
+            with(
+                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+                val reisetilskudd = response.content!!.tilReisetilskuddListe()
+                reisetilskudd.size `should be equal to` 1
+
+                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+                reisetilskudd[0].avbrutt.shouldBeNull()
+            }
+        }
+    }
+
+    @Test
+    @Order(5)
     fun `Vi kan besvare et av spørsmålene`() {
         with(testApp) {
             val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
@@ -148,7 +207,7 @@ internal class ReisetilskuddVerdikjedeTest {
     }
 
     @Test
-    @Order(4)
+    @Order(6)
     fun `Vi kan sende inn søknaden`() {
         with(testApp) {
             val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
