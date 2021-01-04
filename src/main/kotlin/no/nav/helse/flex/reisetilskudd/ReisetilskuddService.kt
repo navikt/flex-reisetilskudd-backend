@@ -44,11 +44,11 @@ class ReisetilskuddService(
         kafkaProducer.close()
     }
 
-    fun hentReisetilskudd(fnr: String) =
-        database.hentReisetilskudd(fnr)
+    fun hentReisetilskuddene(fnr: String) =
+        database.hentReisetilskuddene(fnr)
 
-    fun hentReisetilskudd(fnr: String, reisetilskuddId: String) =
-        database.hentReisetilskudd(fnr, reisetilskuddId)
+    fun hentReisetilskudd(reisetilskuddId: String) =
+        database.hentReisetilskudd(reisetilskuddId)
 
     private fun lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
         database.lagreReisetilskudd(reisetilskudd)

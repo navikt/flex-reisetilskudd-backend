@@ -70,7 +70,11 @@ fun main() {
     createListener(applicationState) {
         sykmeldingKafkaService.start()
     }
-    setUpCronJob(env = env)
+    setUpCronJob(
+        env = env,
+        database = database,
+        aivenKafkaConfig = kafkaAivenConfig
+    )
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =
