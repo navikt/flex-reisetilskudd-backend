@@ -31,6 +31,7 @@ fun setUpCronJob(
     }
 }
 
+@KtorExperimentalAPI
 internal fun cronJobTask(
     env: Environment,
     database: DatabaseInterface,
