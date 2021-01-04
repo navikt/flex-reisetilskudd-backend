@@ -59,20 +59,16 @@ fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String
     }
 }
 
-fun DatabaseInterface.lagreKvittering(kvittering: Kvittering) {
-    connection.use { it.lagreKvittering(kvittering) }
+fun DatabaseInterface.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
+    connection.use { it.lagreKvittering(kvittering, reisetilskuddId) }
 }
 
 fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
     connection.use { return it.eierReisetilskudd(fnr, id) }
 }
 
-fun DatabaseInterface.eierKvittering(fnr: String, id: String): Boolean {
-    connection.use { return it.eierKvittering(fnr, id) }
-}
-
-fun DatabaseInterface.slettKvittering(id: String) {
-    connection.use { it.slettKvittering(id) }
+fun DatabaseInterface.slettKvittering(kvitteringId: String, reisetilskuddId: String) {
+    connection.use { it.slettKvittering(kvitteringId, reisetilskuddId) }
 }
 
 fun DatabaseInterface.finnReisetilskuddSomSkalAktiveres(now: LocalDate): List<String> {
@@ -247,7 +243,7 @@ private fun Connection.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
     this.commit()
 }
 
-private fun Connection.lagreKvittering(kvittering: Kvittering) {
+private fun Connection.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
     val now = Instant.now()
 
     this.prepareStatement(
@@ -258,7 +254,7 @@ private fun Connection.lagreKvittering(kvittering: Kvittering) {
             """
     ).use {
         it.setString(1, kvittering.kvitteringId)
-        it.setString(2, kvittering.reisetilskuddId)
+        it.setString(2, reisetilskuddId)
         it.setString(3, kvittering.navn)
         it.setDouble(4, kvittering.belop)
         it.setDate(5, Date.valueOf(kvittering.fom))
@@ -271,34 +267,20 @@ private fun Connection.lagreKvittering(kvittering: Kvittering) {
     this.commit()
 }
 
-private fun Connection.slettKvittering(id: String) {
+private fun Connection.slettKvittering(kvitteringId: String, reisetilskuddId: String) {
     this.prepareStatement(
         """
             DELETE FROM kvitteringer
             WHERE kvittering_id = ?
+            AND reisetilskudd_id = ?
+
         """
     ).use {
-        it.setString(1, id)
+        it.setString(1, kvitteringId)
+        it.setString(2, reisetilskuddId)
         it.executeUpdate()
     }
     this.commit()
-}
-
-private fun Connection.eierKvittering(fnr: String, id: String): Boolean {
-    return this.prepareStatement(
-        """
-            SELECT * FROM kvitteringer kv, reisetilskudd re
-            WHERE kv.kvittering_id = ?
-            AND kv.reisetilskudd_id = re.reisetilskudd_id
-            AND re.fnr = ?
-        """
-    ).use {
-        it.setString(1, id)
-        it.setString(2, fnr)
-        it.executeQuery().toList {
-            getString("kvittering_id")
-        }.isNotEmpty()
-    }
 }
 
 private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvittering> {
@@ -371,7 +353,6 @@ fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Rei
 
 fun ResultSet.toKvitteringDTO(): Kvittering {
     return Kvittering(
-        reisetilskuddId = getString("reisetilskudd_id"),
         kvitteringId = getString("kvittering_id"),
         navn = getString("navn"),
         fom = getObject("fom", LocalDate::class.java),

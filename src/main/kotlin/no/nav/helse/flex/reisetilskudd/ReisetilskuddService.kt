@@ -94,16 +94,10 @@ class ReisetilskuddService(
         log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
-    fun lagreKvittering(kvittering: Kvittering) {
-        database.lagreKvittering(kvittering)
+    fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
+        database.lagreKvittering(kvittering, reisetilskuddId)
     }
 
-    fun eierReisetilskudd(fnr: String, id: String) =
-        database.eierReisetilskudd(fnr, id)
-
-    fun eierKvittering(fnr: String, id: String) =
-        database.eierKvittering(fnr, id)
-
-    fun slettKvittering(id: String) =
-        database.slettKvittering(id)
+    fun slettKvittering(kvitteringId: String, reisetilskuddId: String) =
+        database.slettKvittering(kvitteringId, reisetilskuddId)
 }

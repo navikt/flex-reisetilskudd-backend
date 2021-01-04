@@ -24,27 +24,13 @@ internal class DatabaseTest {
     }
 
     @Test
-    fun `lagre kvittering og forsikre at reell person eier kvittering`() {
-        val fnr = "01010154321"
-        val rt = reisetilskudd(fnr)
-        db.lagreReisetilskudd(rt)
-        val kv = kvittering(rt.reisetilskuddId)
-        db.lagreKvittering(kv)
-        db.eierKvittering(fnr, kv.kvitteringId) shouldBe true
-        db.eierKvittering("01010112345", kv.kvitteringId) shouldBe false
-        db.eierKvittering("abc", "123") shouldBe false
-    }
-
-    @Test
     fun `lagre og slette kvittering`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
-        val kv = kvittering(rt.reisetilskuddId)
-        db.lagreKvittering(kv)
-        db.eierKvittering(fnr, kv.kvitteringId) shouldBe true
-        db.slettKvittering(kv.kvitteringId)
-        db.eierKvittering(fnr, kv.kvitteringId) shouldBe false
+        val kv = kvittering()
+        db.lagreKvittering(kv, rt.reisetilskuddId)
+        db.slettKvittering(kv.kvitteringId, rt.reisetilskuddId)
     }
 
     @Test
@@ -184,10 +170,9 @@ private fun reisetilskudd(fnr: String): Reisetilskudd =
         oppfølgende = false
     )
 
-private fun kvittering(id: String): Kvittering =
+private fun kvittering(): Kvittering =
     Kvittering(
         kvitteringId = UUID.randomUUID().toString(),
-        reisetilskuddId = id,
         navn = "test.jpg",
         fom = LocalDate.of(2020, 7, 1),
         tom = null,
