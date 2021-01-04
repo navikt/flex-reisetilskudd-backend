@@ -23,17 +23,29 @@ fun setUpCronJob(
         startAt = klokkeslett,
         period = period
     ) {
-        val podLeaderCoordinator = PodLeaderCoordinator(env)
+        cronJobTask(
+            env = env,
+            database = database,
+            aivenKafkaConfig = aivenKafkaConfig
+        )
+    }
+}
 
-        if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
-            log.info("Kjører reisetilskudd cronjob")
-            val kafkaProducer = aivenKafkaConfig.producer()
-            val aktiverService = AktiverService(database, kafkaProducer)
+internal fun cronJobTask(
+    env: Environment,
+    database: DatabaseInterface,
+    aivenKafkaConfig: AivenKafkaConfig
+) {
+    val podLeaderCoordinator = PodLeaderCoordinator(env)
 
-            aktiverService.aktiverReisetilskudd()
-        } else {
-            log.info("Jeg er ikke leder")
-        }
+    if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
+        log.info("Kjører reisetilskudd cronjob")
+        val kafkaProducer = aivenKafkaConfig.producer()
+        val aktiverService = AktiverService(database, kafkaProducer)
+
+        aktiverService.aktiverReisetilskudd()
+    } else {
+        log.info("Jeg er ikke leder")
     }
 }
 
