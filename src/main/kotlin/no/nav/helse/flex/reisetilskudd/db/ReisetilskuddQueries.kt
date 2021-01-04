@@ -6,6 +6,7 @@ import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
+import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
@@ -71,7 +72,15 @@ fun DatabaseInterface.slettKvittering(id: String) {
     connection.use { it.slettKvittering(id) }
 }
 
-private fun Connection.hentReisetilskudd(fnr: String): List<Reisetilskudd> {
+fun DatabaseInterface.finnReisetilskuddSomSkalAktiveres(now: LocalDate): List<String> {
+    connection.use { return it.finnReisetilskuddSomSkalAktiveres(now) }
+}
+
+fun DatabaseInterface.aktiverReisetilskudd(id: String) {
+    connection.use { it.aktiverReisetilskudd(id) }
+}
+
+private fun Connection.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
     val reisetilskudd = this.prepareStatement(
         """
             SELECT * FROM reisetilskudd
@@ -301,6 +310,38 @@ private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvitterin
             toKvitteringDTO()
         }
     }
+}
+
+private fun Connection.finnReisetilskuddSomSkalAktiveres(now: LocalDate): List<String> =
+    this.prepareStatement(
+        """
+            select * FROM reisetilskudd
+            WHERE status = ? 
+            AND tom < ?
+    """
+    ).use {
+        it.setString(1, ReisetilskuddStatus.FREMTIDIG.name)
+        it.setDate(2, Date.valueOf(now))
+        it.executeQuery().toList {
+            getString("reisetilskudd_id")
+        }
+    }
+
+private fun Connection.aktiverReisetilskudd(id: String) {
+    this.prepareStatement(
+        """
+            UPDATE reisetilskudd 
+            SET status = ? 
+            WHERE reisetilskudd_id = ? 
+            AND status = ?
+        """
+    ).use {
+        it.setString(1, ReisetilskuddStatus.ÅPEN.name)
+        it.setString(2, id)
+        it.setString(3, ReisetilskuddStatus.FREMTIDIG.name)
+        it.executeUpdate()
+    }
+    this.commit()
 }
 
 fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Reisetilskudd {

@@ -2,15 +2,19 @@ package no.nav.helse.flex.application.cronjob
 
 import io.ktor.util.*
 import no.nav.helse.flex.Environment
+import no.nav.helse.flex.db.DatabaseInterface
+import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
 import java.time.*
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
 @KtorExperimentalAPI
-fun setUpCronJob(env: Environment) {
-
-    val podLeaderCoordinator = PodLeaderCoordinator(env)
+fun setUpCronJob(
+    env: Environment,
+    database: DatabaseInterface,
+    aivenKafkaConfig: AivenKafkaConfig
+) {
     val (klokkeslett, period) = hentKlokekslettOgPeriode(env)
 
     log.info("Schedulerer cronjob start: $klokkeslett, periode: $period ms")
@@ -19,8 +23,14 @@ fun setUpCronJob(env: Environment) {
         startAt = klokkeslett,
         period = period
     ) {
-        if (podLeaderCoordinator.isLeader()) {
+        val podLeaderCoordinator = PodLeaderCoordinator(env)
+
+        if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
             log.info("Kjører reisetilskudd cronjob")
+            val kafkaProducer = aivenKafkaConfig.producer()
+            val aktiverService = AktiverService(database, kafkaProducer)
+
+            aktiverService.aktiverReisetilskudd()
         } else {
             log.info("Jeg er ikke leder")
         }

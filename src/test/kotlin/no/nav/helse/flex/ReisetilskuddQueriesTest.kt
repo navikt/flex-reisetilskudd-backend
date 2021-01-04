@@ -132,6 +132,43 @@ internal class DatabaseTest {
         gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
         gjenåpnetRtFraDB.avbrutt.shouldBeNull()
     }
+
+    @Test
+    fun `aktivering av reisetilskudd`() {
+        val fnr = "123aktiver"
+        val rtÅpen = reisetilskudd(fnr).copy(
+            fom = LocalDate.of(2020, 7, 1),
+            tom = LocalDate.of(2020, 7, 20),
+            status = ReisetilskuddStatus.ÅPEN
+        )
+        val rtFremtidig = reisetilskudd(fnr).copy(
+            fom = LocalDate.of(2020, 7, 21),
+            tom = LocalDate.of(2020, 8, 5),
+            status = ReisetilskuddStatus.FREMTIDIG
+        )
+
+        db.lagreReisetilskudd(rtFremtidig)
+        db.lagreReisetilskudd(rtÅpen)
+        val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
+        reisetilskuddeneFør.size shouldBe 2
+        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+        reisetilskuddeneFør[1].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+
+        val åpneReisetilskuddSkalIkkeAktiveres = db.finnReisetilskuddSomSkalAktiveres(LocalDate.of(2020, 7, 21))
+        åpneReisetilskuddSkalIkkeAktiveres.size shouldBe 0
+
+        val aktiveresIkkeForSammeDag = db.finnReisetilskuddSomSkalAktiveres(LocalDate.of(2020, 8, 5))
+        aktiveresIkkeForSammeDag.size shouldBe 0
+
+        val aktiveresNårTomErPassert = db.finnReisetilskuddSomSkalAktiveres(LocalDate.of(2020, 8, 6))
+        aktiveresNårTomErPassert.size shouldBe 1
+        db.aktiverReisetilskudd(aktiveresNårTomErPassert.first())
+
+        val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
+        reisetilskuddeneEtter.size shouldBe 2
+        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+        reisetilskuddeneEtter[1].status shouldEqual ReisetilskuddStatus.ÅPEN
+    }
 }
 
 private fun reisetilskudd(fnr: String): Reisetilskudd =
