@@ -54,8 +54,8 @@ class ReisetilskuddService(
         database.lagreReisetilskudd(reisetilskudd)
     }
 
-    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
-        database.oppdaterReisetilskudd(reisetilskudd)
+    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
+        return database.oppdaterReisetilskudd(reisetilskudd)
     }
 
     fun sendReisetilskudd(fnr: String, reisetilskuddId: String) {

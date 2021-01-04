@@ -30,8 +30,11 @@ fun DatabaseInterface.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
     }
 }
 
-fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
-    connection.use { it.oppdaterReisetilskudd(reisetilskudd) }
+fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
+    connection.use {
+        it.oppdaterReisetilskudd(reisetilskudd)
+        return it.hentReisetilskudd(reisetilskudd.reisetilskuddId)!!
+    }
 }
 
 fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
