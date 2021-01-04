@@ -18,7 +18,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         get("/reisetilskudd") {
             val fnr = call.fnr()
 
-            call.respond(reisetilskuddService.hentReisetilskudd(fnr))
+            call.respond(reisetilskuddService.hentReisetilskuddene(fnr))
         }
 
         put("/reisetilskudd/{reisetilskuddId}") {
@@ -28,7 +28,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
             val svarJson = call.receive<Svar>()
 
             if (reisetilskuddService.eierReisetilskudd(fnr, reisetilskuddId)) {
-                var reisetilskudd = reisetilskuddService.hentReisetilskudd(fnr, reisetilskuddId)
+                var reisetilskudd = reisetilskuddService.hentReisetilskudd(reisetilskuddId)
                 if (reisetilskudd == null) {
                     call.respond(Respons("$reisetilskuddId finnes ikke").toTextContent(HttpStatusCode.NotFound))
                     return@put
@@ -49,7 +49,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
                     reisetilskudd = reisetilskudd.copy(kollektivtransport = svarJson.kollektivtransport)
                 }
                 reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
-                val reisetilskuddFraDb = reisetilskuddService.hentReisetilskudd(fnr, reisetilskuddId)
+                val reisetilskuddFraDb = reisetilskuddService.hentReisetilskudd(reisetilskuddId)
                 if (reisetilskuddFraDb != null) {
                     call.respond(reisetilskuddFraDb)
                 } else {

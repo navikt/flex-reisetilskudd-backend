@@ -19,7 +19,7 @@ internal class DatabaseTest {
         val fnr = "01010112345"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
-        db.hentReisetilskudd(fnr).size shouldBe 1
+        db.hentReisetilskuddene(fnr).size shouldBe 1
         db.eierReisetilskudd(fnr, rt.reisetilskuddId) shouldBe true
     }
 
@@ -52,7 +52,7 @@ internal class DatabaseTest {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
         val svar = Reisetilskudd(
@@ -72,7 +72,7 @@ internal class DatabaseTest {
             kollektivtransport = 37.0
         )
         db.oppdaterReisetilskudd(svar)
-        val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.fnr shouldBeEqualTo fnr
         nyRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
@@ -90,19 +90,19 @@ internal class DatabaseTest {
         val rt = reisetilskudd(fnr)
 
         db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
         rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
-        val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt.shouldNotBeNull()
         nyRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
-        val nyereRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyereRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyereRtFraDB.shouldNotBeNull()
         nyereRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
@@ -115,19 +115,19 @@ internal class DatabaseTest {
         val rt = reisetilskudd(fnr)
 
         db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
         rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
 
         db.avbrytReisetilskudd(fnr, rt.reisetilskuddId)
-        val avbruttRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val avbruttRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         avbruttRtFraDB.shouldNotBeNull()
         avbruttRtFraDB.status shouldEqual ReisetilskuddStatus.AVBRUTT
         avbruttRtFraDB.avbrutt.shouldNotBeNull()
 
         db.gjenapneReisetilskudd(fnr, rt.reisetilskuddId)
-        val gjenåpnetRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val gjenåpnetRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         gjenåpnetRtFraDB.shouldNotBeNull()
         gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
         gjenåpnetRtFraDB.avbrutt.shouldBeNull()

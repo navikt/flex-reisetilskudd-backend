@@ -14,17 +14,17 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-fun DatabaseInterface.hentReisetilskudd(fnr: String): List<Reisetilskudd> {
-    connection.use { return it.hentReisetilskudd(fnr) }
+fun DatabaseInterface.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
+    connection.use { return it.hentReisetilskuddene(fnr) }
 }
 
-fun DatabaseInterface.hentReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd? {
-    connection.use { return it.hentReisetilskudd(fnr, reisetilskuddId) }
+fun DatabaseInterface.hentReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
+    connection.use { return it.hentReisetilskudd(reisetilskuddId) }
 }
 
 fun DatabaseInterface.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
     connection.use {
-        it.hentReisetilskudd(reisetilskudd.fnr, reisetilskudd.reisetilskuddId)?.let { return }
+        it.hentReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
         it.lagreReisetilskudd(reisetilskudd)
     }
 }
@@ -36,21 +36,22 @@ fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
 fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
     connection.use {
         it.sendReisetilskudd(fnr, reisetilskuddId)
-        return it.hentReisetilskudd(fnr, reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+        return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
     }
 }
 
 fun DatabaseInterface.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
     connection.use {
         it.avbrytReisetilskudd(fnr, reisetilskuddId)
-        return it.hentReisetilskudd(fnr, reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+        return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
     }
 }
 
 fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
     connection.use {
-        it.gjenapneReisetilskudd(fnr, reisetilskuddId)
-        return it.hentReisetilskudd(fnr, reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+        val tom = it.hentReisetilskudd(reisetilskuddId)?.tom ?: throw RuntimeException("Reisetilskudd id skal finnes")
+        it.gjenapneReisetilskudd(fnr, reisetilskuddId, reisetilskuddStatus(tom))
+        return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
     }
 }
 
@@ -85,17 +86,15 @@ private fun Connection.hentReisetilskudd(fnr: String): List<Reisetilskudd> {
     }
 }
 
-private fun Connection.hentReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd? {
+private fun Connection.hentReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
     val kvitteringer = hentKvitteringer(reisetilskuddId)
     return this.prepareStatement(
         """
             SELECT * FROM reisetilskudd
-            WHERE fnr = ?
-            AND reisetilskudd_id = ?
+            WHERE reisetilskudd_id = ?
         """
     ).use {
-        it.setString(1, fnr)
-        it.setString(2, reisetilskuddId)
+        it.setString(1, reisetilskuddId)
         it.executeQuery().toList { toReisetilskudd(kvitteringer) }.firstOrNull()
     }
 }
@@ -137,7 +136,6 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
 
 private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
     val now = Instant.now()
-    // TODO: Gjelder kanskje også status = FREMTIDIG, dette må tas høyde for når søknader opprettes som FREMTIDIG
     this.prepareStatement(
         """
            UPDATE reisetilskudd 
@@ -145,7 +143,7 @@ private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String)
            WHERE reisetilskudd_id = ?
            AND fnr = ?
            AND sendt is null
-           AND status = 'ÅPEN'
+           AND (status = 'ÅPEN' OR status = 'FREMTIDIG')
         """
     ).use {
         it.setString(1, ReisetilskuddStatus.AVBRUTT.name)
@@ -157,7 +155,7 @@ private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String)
     this.commit()
 }
 
-private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
+private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String, status: ReisetilskuddStatus) {
     this.prepareStatement(
         """
            UPDATE reisetilskudd 
@@ -168,7 +166,7 @@ private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: Strin
            AND status = 'AVBRUTT'
         """
     ).use {
-        it.setString(1, ReisetilskuddStatus.ÅPEN.name)
+        it.setString(1, status.name)
         it.setTimestamp(2, null)
         it.setString(3, reisetilskuddId)
         it.setString(4, fnr)
