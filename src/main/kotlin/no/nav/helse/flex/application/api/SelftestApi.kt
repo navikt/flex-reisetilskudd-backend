@@ -12,7 +12,7 @@ import io.prometheus.client.exporter.common.TextFormat
 import io.prometheus.client.exporter.common.TextFormat.write004
 import no.nav.helse.flex.application.ApplicationState
 
-fun Routing.registerNaisApi(
+fun Routing.registerSelftestApi(
     applicationState: ApplicationState,
     readynessCheck: () -> Boolean = { applicationState.ready },
     alivenessCheck: () -> Boolean = { applicationState.alive },
@@ -21,13 +21,6 @@ fun Routing.registerNaisApi(
     get("/is_alive") {
         if (alivenessCheck()) {
             call.respondText("I'm alive! :)")
-        } else {
-            call.respondText("I'm dead x_x", status = HttpStatusCode.InternalServerError)
-        }
-    }
-    get("/test") {
-        if (alivenessCheck()) {
-            call.respondText("TEST")
         } else {
             call.respondText("I'm dead x_x", status = HttpStatusCode.InternalServerError)
         }
