@@ -20,7 +20,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import no.nav.helse.flex.Environment
-import no.nav.helse.flex.application.api.registerNaisApi
+import no.nav.helse.flex.application.api.registerSelftestApi
 import no.nav.helse.flex.application.metrics.monitorHttpRequests
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.api.setupReisetilskuddApi
@@ -79,7 +79,7 @@ fun Application.configureApplication(
     }
 
     routing {
-        registerNaisApi(applicationState)
+        registerSelftestApi(applicationState)
         authenticate("jwt") {
             setupReisetilskuddApi(reisetilskuddService)
         }
