@@ -6,6 +6,7 @@ import io.ktor.auth.authentication
 import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.Forbidden
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.content.*
@@ -32,7 +33,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
             return
         }
         if (reisetilskudd.fnr != fnr) {
-            call.reply("Bruker eier ikke søknaden", BadRequest)
+            call.reply("Bruker eier ikke søknaden", Forbidden)
             return
         }
         body(reisetilskudd)
