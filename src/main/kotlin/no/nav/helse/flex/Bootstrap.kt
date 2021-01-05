@@ -1,7 +1,7 @@
 package no.nav.helse.flex
 
 import com.auth0.jwk.JwkProviderBuilder
-import io.ktor.util.* // ktlint-disable no-wildcard-imports
+import io.ktor.util.*
 import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -70,7 +70,11 @@ fun main() {
     createListener(applicationState) {
         sykmeldingKafkaService.start()
     }
-    setUpCronJob(env = env)
+    setUpCronJob(
+        env = env,
+        database = database,
+        aivenKafkaConfig = kafkaAivenConfig
+    )
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =

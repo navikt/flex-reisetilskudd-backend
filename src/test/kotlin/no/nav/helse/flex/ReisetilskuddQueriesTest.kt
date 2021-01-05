@@ -1,57 +1,45 @@
 package no.nav.helse.flex
 
-import io.ktor.util.KtorExperimentalAPI
-import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
+import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
+import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
-import org.amshove.kluent.* // ktlint-disable no-wildcard-imports
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
+import org.amshove.kluent.*
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
-@KtorExperimentalAPI
-object DatabaseTest : Spek({
+internal class DatabaseTest {
     val db = TestDB()
 
-    describe("lagre og hente reisetilskudd") {
+    @Test
+    fun `lagre og hente reisetilskudd`() {
         val fnr = "01010112345"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
-        db.hentReisetilskudd(fnr).size shouldBe 1
+        db.hentReisetilskuddene(fnr).size shouldBe 1
         db.eierReisetilskudd(fnr, rt.reisetilskuddId) shouldBe true
     }
 
-    describe("lagre kvittering og forsikre at reell person eier kvittering") {
-        val fnr = "01010154321"
-        val rt = reisetilskudd(fnr)
-        db.lagreReisetilskudd(rt)
-        val kv = kvittering(rt.reisetilskuddId)
-        db.lagreKvittering(kv)
-        db.eierKvittering(fnr, kv.kvitteringId) shouldBe true
-        db.eierKvittering("01010112345", kv.kvitteringId) shouldBe false
-        db.eierKvittering("abc", "123") shouldBe false
-    }
-
-    describe("lagre og slette kvittering") {
+    @Test
+    fun `lagre og slette kvittering`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
-        val kv = kvittering(rt.reisetilskuddId)
-        db.lagreKvittering(kv)
-        db.eierKvittering(fnr, kv.kvitteringId) shouldBe true
-        db.slettKvittering(kv.kvitteringId)
-        db.eierKvittering(fnr, kv.kvitteringId) shouldBe false
+        val kv = kvittering()
+        db.lagreKvittering(kv, rt.reisetilskuddId)
+        db.slettKvittering(kv.kvitteringId, rt.reisetilskuddId)
     }
 
-    describe("oppdater reisetilskudd") {
+    @Test
+    fun `oppdater reisetilskudd`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
         val svar = Reisetilskudd(
@@ -71,7 +59,7 @@ object DatabaseTest : Spek({
             kollektivtransport = 37.0
         )
         db.oppdaterReisetilskudd(svar)
-        val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.fnr shouldBeEqualTo fnr
         nyRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
@@ -83,32 +71,130 @@ object DatabaseTest : Spek({
         nyRtFraDB.kollektivtransport.shouldBeInRange(37.0, 37.0)
     }
 
-    describe("sende reisetilskudd") {
+    @Test
+    fun `sende reisetilskudd`() {
         val fnr = "01010111111"
-        val rt = reisetilskudd(fnr)
+        val rt = reisetilskudd(fnr).copy(status = ReisetilskuddStatus.SENDBAR)
 
         db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
-        rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+        rtFraDB.status shouldEqual ReisetilskuddStatus.SENDBAR
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
-        val nyRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt.shouldNotBeNull()
         nyRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
-        val nyereRtFraDB = db.hentReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyereRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyereRtFraDB.shouldNotBeNull()
         nyereRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
         nyereRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
     }
-})
 
-fun reisetilskudd(fnr: String): Reisetilskudd =
+    @Test
+    fun `avbryt og gjenåpne reisetilskudd`() {
+        val fnr = "01010111111"
+        val rt = reisetilskudd(fnr)
+
+        db.lagreReisetilskudd(rt)
+        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        rtFraDB.shouldNotBeNull()
+        rtFraDB.sendt.shouldBeNull()
+        rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+
+        db.avbrytReisetilskudd(fnr, rt.reisetilskuddId)
+        val avbruttRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        avbruttRtFraDB.shouldNotBeNull()
+        avbruttRtFraDB.status shouldEqual ReisetilskuddStatus.AVBRUTT
+        avbruttRtFraDB.avbrutt.shouldNotBeNull()
+
+        db.gjenapneReisetilskudd(fnr, rt.reisetilskuddId)
+        val gjenåpnetRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        gjenåpnetRtFraDB.shouldNotBeNull()
+        gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.SENDBAR
+        gjenåpnetRtFraDB.avbrutt.shouldBeNull()
+    }
+
+    @Test
+    fun `aktivering av reisetilskudd`() {
+        val fnr = "123aktiver"
+        val rtFremtidig = reisetilskudd(fnr).copy(
+            fom = LocalDate.of(2020, 7, 1),
+            tom = LocalDate.of(2020, 7, 20),
+            status = ReisetilskuddStatus.FREMTIDIG
+        )
+
+        db.lagreReisetilskudd(rtFremtidig)
+        val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
+        reisetilskuddeneFør.size shouldBe 1
+        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+
+        val åpnesIkkeFørFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.minusDays(1))
+        åpnesIkkeFørFom.size shouldBe 0
+
+        val åpnesNårDatoErFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom)
+        åpnesNårDatoErFom.size shouldBe 1
+
+        val åpnesNårDatoErEtterFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.plusDays(5))
+        åpnesNårDatoErEtterFom.size shouldBe 1
+
+        db.åpneReisetilskudd(åpnesNårDatoErEtterFom.first())
+        val åpneReisetilskudd = db.hentReisetilskuddene(fnr)
+        åpneReisetilskudd.size shouldBe 1
+        åpneReisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+
+        val blirIkkeSendtbartFørTom = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.minusDays(5))
+        blirIkkeSendtbartFørTom.size shouldBe 0
+
+        val blirIkkeSendtbartFørTomErPassert = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom)
+        blirIkkeSendtbartFørTomErPassert.size shouldBe 0
+
+        val blirSendtbartNårTomErPassert = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.plusDays(1))
+        blirSendtbartNårTomErPassert.size shouldBe 1
+
+        db.sendbarReisetilskudd(blirSendtbartNårTomErPassert.first())
+        val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
+        reisetilskuddeneEtter.size shouldBe 1
+        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.SENDBAR
+    }
+
+    @Test
+    fun `reisetilskuddStatus test`() {
+        val now = LocalDate.now()
+
+        reisetilskuddStatus(
+            fom = now.plusDays(10),
+            tom = now.plusDays(20)
+        ) shouldBe ReisetilskuddStatus.FREMTIDIG
+
+        reisetilskuddStatus(
+            fom = now,
+            tom = now.plusDays(10)
+        ) shouldBe ReisetilskuddStatus.ÅPEN
+
+        reisetilskuddStatus(
+            fom = now.minusDays(10),
+            tom = now
+        ) shouldBe ReisetilskuddStatus.ÅPEN
+
+        reisetilskuddStatus(
+            fom = now.minusDays(11),
+            tom = now.minusDays(1)
+        ) shouldBe ReisetilskuddStatus.SENDBAR
+
+        reisetilskuddStatus(
+            fom = now.minusDays(100),
+            tom = now.minusDays(90)
+        ) shouldBe ReisetilskuddStatus.SENDBAR
+    }
+}
+
+private fun reisetilskudd(fnr: String): Reisetilskudd =
     Reisetilskudd(
         reisetilskuddId = UUID.randomUUID().toString(),
         sykmeldingId = UUID.randomUUID().toString(),
@@ -121,10 +207,9 @@ fun reisetilskudd(fnr: String): Reisetilskudd =
         oppfølgende = false
     )
 
-fun kvittering(id: String): Kvittering =
+private fun kvittering(): Kvittering =
     Kvittering(
         kvitteringId = UUID.randomUUID().toString(),
-        reisetilskuddId = id,
         navn = "test.jpg",
         fom = LocalDate.of(2020, 7, 1),
         tom = null,

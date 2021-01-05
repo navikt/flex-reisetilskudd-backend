@@ -1,7 +1,7 @@
 package no.nav.helse.flex.kafka
 
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
 import no.nav.syfo.model.sykmeldingstatus.KafkaMetadataDTO
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
@@ -18,9 +18,10 @@ fun SykmeldingMessage.toReisetilskuddDTO(): List<Reisetilskudd> =
         it.reisetilskudd
     }.map {
         Reisetilskudd(
-            status = ReisetilskuddStatus.ÅPEN,
+            status = reisetilskuddStatus(it.fom, it.tom),
             oppfølgende = false,
-            reisetilskuddId = UUID.nameUUIDFromBytes("${this.sykmelding.id}-${it.fom}-${it.tom}".toByteArray()).toString(),
+            reisetilskuddId = UUID.nameUUIDFromBytes("${this.sykmelding.id}-${it.fom}-${it.tom}".toByteArray())
+                .toString(),
             sykmeldingId = this.sykmelding.id,
             fnr = this.kafkaMetadata.fnr,
             fom = it.fom,

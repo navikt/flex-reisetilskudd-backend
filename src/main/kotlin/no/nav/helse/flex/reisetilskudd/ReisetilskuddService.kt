@@ -5,7 +5,7 @@ import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.toReisetilskuddDTO
 import no.nav.helse.flex.log
-import no.nav.helse.flex.reisetilskudd.db.* // ktlint-disable no-wildcard-imports
+import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -44,33 +44,60 @@ class ReisetilskuddService(
         kafkaProducer.close()
     }
 
-    fun hentReisetilskudd(fnr: String) =
-        database.hentReisetilskudd(fnr)
+    fun hentReisetilskuddene(fnr: String) =
+        database.hentReisetilskuddene(fnr)
 
-    fun hentReisetilskudd(fnr: String, reisetilskuddId: String) =
-        database.hentReisetilskudd(fnr, reisetilskuddId)
+    fun hentReisetilskudd(reisetilskuddId: String) =
+        database.hentReisetilskudd(reisetilskuddId)
 
     private fun lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
         database.lagreReisetilskudd(reisetilskudd)
     }
 
-    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
-        database.oppdaterReisetilskudd(reisetilskudd)
+    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
+        return database.oppdaterReisetilskudd(reisetilskudd)
     }
 
-    fun sendReisetilskudd(fnr: String, reisetilskuddId: String) =
-        database.sendReisetilskudd(fnr, reisetilskuddId)
-
-    fun lagreKvittering(kvittering: Kvittering) {
-        database.lagreKvittering(kvittering)
+    fun sendReisetilskudd(fnr: String, reisetilskuddId: String) {
+        val reisetilskudd = database.sendReisetilskudd(fnr, reisetilskuddId)
+        kafkaProducer.send(
+            ProducerRecord(
+                AivenKafkaConfig.topic,
+                reisetilskudd.reisetilskuddId,
+                reisetilskudd
+            )
+        ).get()
+        log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
-    fun eierReisetilskudd(fnr: String, id: String) =
-        database.eierReisetilskudd(fnr, id)
+    fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
+        val reisetilskudd = database.avbrytReisetilskudd(fnr, reisetilskuddId)
+        kafkaProducer.send(
+            ProducerRecord(
+                AivenKafkaConfig.topic,
+                reisetilskudd.reisetilskuddId,
+                reisetilskudd
+            )
+        ).get()
+        log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
+    }
 
-    fun eierKvittering(fnr: String, id: String) =
-        database.eierKvittering(fnr, id)
+    fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
+        val reisetilskudd = database.gjenapneReisetilskudd(fnr, reisetilskuddId)
+        kafkaProducer.send(
+            ProducerRecord(
+                AivenKafkaConfig.topic,
+                reisetilskudd.reisetilskuddId,
+                reisetilskudd
+            )
+        ).get()
+        log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+    }
 
-    fun slettKvittering(id: String) =
-        database.slettKvittering(id)
+    fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
+        database.lagreKvittering(kvittering, reisetilskuddId)
+    }
+
+    fun slettKvittering(kvitteringId: String, reisetilskuddId: String) =
+        database.slettKvittering(kvitteringId, reisetilskuddId)
 }
