@@ -71,12 +71,20 @@ fun DatabaseInterface.slettKvittering(kvitteringId: String, reisetilskuddId: Str
     connection.use { it.slettKvittering(kvitteringId, reisetilskuddId) }
 }
 
-fun DatabaseInterface.finnReisetilskuddSomSkalAktiveres(now: LocalDate): List<String> {
-    connection.use { return it.finnReisetilskuddSomSkalAktiveres(now) }
+fun DatabaseInterface.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> {
+    connection.use { return it.finnReisetilskuddSomSkalÅpnes(now) }
 }
 
-fun DatabaseInterface.aktiverReisetilskudd(id: String) {
-    connection.use { it.aktiverReisetilskudd(id) }
+fun DatabaseInterface.finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<String> {
+    connection.use { return it.finnReisetilskuddSomSkalBliSendbar(now) }
+}
+
+fun DatabaseInterface.åpneReisetilskudd(id: String) {
+    connection.use { it.åpneReisetilskudd(id) }
+}
+
+fun DatabaseInterface.sendbarReisetilskudd(id: String) {
+    connection.use { it.sendbarReisetilskudd(id) }
 }
 
 private fun Connection.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
@@ -297,12 +305,12 @@ private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvitterin
     }
 }
 
-private fun Connection.finnReisetilskuddSomSkalAktiveres(now: LocalDate): List<String> =
+private fun Connection.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> =
     this.prepareStatement(
         """
             select * FROM reisetilskudd
             WHERE status = ? 
-            AND tom < ?
+            AND fom <= ?
     """
     ).use {
         it.setString(1, ReisetilskuddStatus.FREMTIDIG.name)
@@ -312,7 +320,22 @@ private fun Connection.finnReisetilskuddSomSkalAktiveres(now: LocalDate): List<S
         }
     }
 
-private fun Connection.aktiverReisetilskudd(id: String) {
+private fun Connection.finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<String> =
+    this.prepareStatement(
+        """
+            select * FROM reisetilskudd
+            WHERE status = ? 
+            AND tom < ?
+    """
+    ).use {
+        it.setString(1, ReisetilskuddStatus.ÅPEN.name)
+        it.setDate(2, Date.valueOf(now))
+        it.executeQuery().toList {
+            getString("reisetilskudd_id")
+        }
+    }
+
+private fun Connection.åpneReisetilskudd(id: String) {
     this.prepareStatement(
         """
             UPDATE reisetilskudd 
@@ -324,6 +347,23 @@ private fun Connection.aktiverReisetilskudd(id: String) {
         it.setString(1, ReisetilskuddStatus.ÅPEN.name)
         it.setString(2, id)
         it.setString(3, ReisetilskuddStatus.FREMTIDIG.name)
+        it.executeUpdate()
+    }
+    this.commit()
+}
+
+private fun Connection.sendbarReisetilskudd(id: String) {
+    this.prepareStatement(
+        """
+            UPDATE reisetilskudd 
+            SET status = ? 
+            WHERE reisetilskudd_id = ? 
+            AND status = ?
+        """
+    ).use {
+        it.setString(1, ReisetilskuddStatus.SENDBAR.name)
+        it.setString(2, id)
+        it.setString(3, ReisetilskuddStatus.ÅPEN.name)
         it.executeUpdate()
     }
     this.commit()
