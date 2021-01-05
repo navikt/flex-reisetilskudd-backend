@@ -10,6 +10,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.application.configureApplication
+import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.*
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.TestDB
@@ -35,7 +36,8 @@ class TestApp(
     val sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage?>,
     val sykmeldingKafkaService: SykmeldingKafkaService,
     val applicationState: ApplicationState,
-    val sykmeldingKafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>
+    val sykmeldingKafkaConsumer: KafkaConsumer<String, SykmeldingMessage?>,
+    val testDb: DatabaseInterface,
 )
 
 @KtorExperimentalAPI
@@ -55,6 +57,7 @@ fun skapTestApplication(): TestApp {
         ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
         ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
     )
+
     fun setupEnvMock() {
         clearAllMocks()
         every { env.cluster } returns "test"
@@ -113,7 +116,8 @@ fun skapTestApplication(): TestApp {
         sykmeldingKafkaConsumer = sykmeldingKafkaConsumer,
         sykmeldingKafkaProducer = sykmeldingKafkaProducer,
         sykmeldingKafkaService = sykmeldingKafkaService,
-        applicationState = applicationState
+        applicationState = applicationState,
+        testDb = testDb,
     )
 }
 

@@ -24,5 +24,5 @@ data class Reisetilskudd(
 )
 
 enum class ReisetilskuddStatus {
-    FREMTIDIG, ÅPEN, SENDT, AVBRUTT
+    FREMTIDIG, ÅPEN, SENDBAR, SENDT, AVBRUTT
 }

@@ -53,8 +53,8 @@ fun DatabaseInterface.avbrytReisetilskudd(fnr: String, reisetilskuddId: String):
 
 fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
     connection.use {
-        val tom = it.hentReisetilskudd(reisetilskuddId)?.tom ?: throw RuntimeException("Reisetilskudd id skal finnes")
-        it.gjenapneReisetilskudd(fnr, reisetilskuddId, reisetilskuddStatus(tom))
+        val reisetilskudd = it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
+        it.gjenapneReisetilskudd(fnr, reisetilskuddId, reisetilskuddStatus(reisetilskudd.fom, reisetilskudd.tom))
         return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
     }
 }
@@ -131,7 +131,7 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
            WHERE reisetilskudd_id = ?
            AND fnr = ?
            AND sendt is null
-           AND status = 'ÅPEN'
+           AND status = 'SENDBAR'
         """
     ).use {
         it.setTimestamp(1, Timestamp.from(now))
@@ -151,7 +151,7 @@ private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String)
            WHERE reisetilskudd_id = ?
            AND fnr = ?
            AND sendt is null
-           AND (status = 'ÅPEN' OR status = 'FREMTIDIG')
+           AND (status = 'ÅPEN' OR status = 'FREMTIDIG' OR status = 'SENDBAR')
         """
     ).use {
         it.setString(1, ReisetilskuddStatus.AVBRUTT.name)

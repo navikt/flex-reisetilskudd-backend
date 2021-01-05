@@ -18,7 +18,7 @@ fun SykmeldingMessage.toReisetilskuddDTO(): List<Reisetilskudd> =
         it.reisetilskudd
     }.map {
         Reisetilskudd(
-            status = reisetilskuddStatus(it.tom),
+            status = reisetilskuddStatus(it.fom, it.tom),
             oppfølgende = false,
             reisetilskuddId = UUID.nameUUIDFromBytes("${this.sykmelding.id}-${it.fom}-${it.tom}".toByteArray())
                 .toString(),

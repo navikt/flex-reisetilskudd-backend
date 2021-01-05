@@ -1,5 +1,6 @@
 package no.nav.helse.flex.application.cronjob
 
+import io.ktor.util.*
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -26,6 +27,7 @@ import org.testcontainers.utility.DockerImageName
 import java.time.LocalDate
 import java.util.*
 
+@KtorExperimentalAPI
 internal class CronjobKtTest {
     companion object {
         val db = TestDB()
@@ -118,7 +120,7 @@ internal class CronjobKtTest {
         tom = tom,
         orgNummer = orgNummer,
         orgNavn = orgNavn,
-        status = status ?: reisetilskuddStatus(tom),
+        status = status ?: reisetilskuddStatus(fom, tom),
         oppfølgende = oppfølgende
     )
 }

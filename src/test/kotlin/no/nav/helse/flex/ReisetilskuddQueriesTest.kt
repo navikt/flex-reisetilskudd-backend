@@ -73,13 +73,13 @@ internal class DatabaseTest {
     @Test
     fun `sende reisetilskudd`() {
         val fnr = "01010111111"
-        val rt = reisetilskudd(fnr)
+        val rt = reisetilskudd(fnr).copy(status = ReisetilskuddStatus.SENDBAR)
 
         db.lagreReisetilskudd(rt)
         val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
-        rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+        rtFraDB.status shouldEqual ReisetilskuddStatus.SENDBAR
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
         val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
@@ -115,7 +115,7 @@ internal class DatabaseTest {
         db.gjenapneReisetilskudd(fnr, rt.reisetilskuddId)
         val gjenåpnetRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         gjenåpnetRtFraDB.shouldNotBeNull()
-        gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+        gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.SENDBAR
         gjenåpnetRtFraDB.avbrutt.shouldBeNull()
     }
 
