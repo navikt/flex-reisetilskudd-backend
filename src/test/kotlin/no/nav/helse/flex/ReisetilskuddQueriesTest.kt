@@ -5,6 +5,7 @@ import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
+import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
 import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
@@ -122,38 +123,74 @@ internal class DatabaseTest {
     @Test
     fun `aktivering av reisetilskudd`() {
         val fnr = "123aktiver"
-        val rtÅpen = reisetilskudd(fnr).copy(
+        val rtFremtidig = reisetilskudd(fnr).copy(
             fom = LocalDate.of(2020, 7, 1),
             tom = LocalDate.of(2020, 7, 20),
-            status = ReisetilskuddStatus.ÅPEN
-        )
-        val rtFremtidig = reisetilskudd(fnr).copy(
-            fom = LocalDate.of(2020, 7, 21),
-            tom = LocalDate.of(2020, 8, 5),
             status = ReisetilskuddStatus.FREMTIDIG
         )
 
         db.lagreReisetilskudd(rtFremtidig)
-        db.lagreReisetilskudd(rtÅpen)
         val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
-        reisetilskuddeneFør.size shouldBe 2
-        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneFør[1].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneFør.size shouldBe 1
+        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.FREMTIDIG
 
-        val åpneReisetilskuddSkalIkkeAktiveres = db.finnReisetilskuddSomSkalAktiveres(LocalDate.of(2020, 7, 21))
-        åpneReisetilskuddSkalIkkeAktiveres.size shouldBe 0
+        val åpnesIkkeFørFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.minusDays(1))
+        åpnesIkkeFørFom.size shouldBe 0
 
-        val aktiveresIkkeForSammeDag = db.finnReisetilskuddSomSkalAktiveres(LocalDate.of(2020, 8, 5))
-        aktiveresIkkeForSammeDag.size shouldBe 0
+        val åpnesNårDatoErFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom)
+        åpnesNårDatoErFom.size shouldBe 1
 
-        val aktiveresNårTomErPassert = db.finnReisetilskuddSomSkalAktiveres(LocalDate.of(2020, 8, 6))
-        aktiveresNårTomErPassert.size shouldBe 1
-        db.aktiverReisetilskudd(aktiveresNårTomErPassert.first())
+        val åpnesNårDatoErEtterFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.plusDays(5))
+        åpnesNårDatoErEtterFom.size shouldBe 1
 
+        db.åpneReisetilskudd(åpnesNårDatoErEtterFom.first())
+        val åpneReisetilskudd = db.hentReisetilskuddene(fnr)
+        åpneReisetilskudd.size shouldBe 1
+        åpneReisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+
+        val blirIkkeSendtbartFørTom = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.minusDays(5))
+        blirIkkeSendtbartFørTom.size shouldBe 0
+
+        val blirIkkeSendtbartFørTomErPassert = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom)
+        blirIkkeSendtbartFørTomErPassert.size shouldBe 0
+
+        val blirSendtbartNårTomErPassert = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.plusDays(1))
+        blirSendtbartNårTomErPassert.size shouldBe 1
+
+        db.sendbarReisetilskudd(blirSendtbartNårTomErPassert.first())
         val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
-        reisetilskuddeneEtter.size shouldBe 2
-        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneEtter[1].status shouldEqual ReisetilskuddStatus.ÅPEN
+        reisetilskuddeneEtter.size shouldBe 1
+        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.SENDBAR
+    }
+
+    @Test
+    fun `reisetilskuddStatus test`() {
+        val now = LocalDate.now()
+
+        reisetilskuddStatus(
+            fom = now.plusDays(10),
+            tom = now.plusDays(20)
+        ) shouldBe ReisetilskuddStatus.FREMTIDIG
+
+        reisetilskuddStatus(
+            fom = now,
+            tom = now.plusDays(10)
+        ) shouldBe ReisetilskuddStatus.ÅPEN
+
+        reisetilskuddStatus(
+            fom = now.minusDays(10),
+            tom = now
+        ) shouldBe ReisetilskuddStatus.ÅPEN
+
+        reisetilskuddStatus(
+            fom = now.minusDays(11),
+            tom = now.minusDays(1)
+        ) shouldBe ReisetilskuddStatus.SENDBAR
+
+        reisetilskuddStatus(
+            fom = now.minusDays(100),
+            tom = now.minusDays(90)
+        ) shouldBe ReisetilskuddStatus.SENDBAR
     }
 }
 

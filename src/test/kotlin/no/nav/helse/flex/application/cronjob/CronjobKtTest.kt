@@ -65,29 +65,37 @@ internal class CronjobKtTest {
             fnr = fnr,
             fom = now.minusDays(20),
             tom = now.minusDays(11),
-            status = ReisetilskuddStatus.ÅPEN
+            status = ReisetilskuddStatus.SENDT
         )
         val nr2 = reisetilskudd(
             fnr = fnr,
             fom = now.minusDays(10),
             tom = now.minusDays(1),
-            status = ReisetilskuddStatus.FREMTIDIG
+            status = ReisetilskuddStatus.ÅPEN
         )
         val nr3 = reisetilskudd(
             fnr = fnr,
             fom = now,
-            tom = now.plusDays(10),
+            tom = now.plusDays(9),
             status = ReisetilskuddStatus.FREMTIDIG
         )
+        val nr4 = reisetilskudd(
+            fnr = fnr,
+            fom = now.plusDays(10),
+            tom = now.plusDays(19),
+            status = ReisetilskuddStatus.FREMTIDIG
+        )
+        db.lagreReisetilskudd(nr4)
         db.lagreReisetilskudd(nr3)
         db.lagreReisetilskudd(nr2)
         db.lagreReisetilskudd(nr1)
 
         val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
-        reisetilskuddeneFør.size shouldBe 3
-        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneFør[1].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneFør.size shouldBe 4
+        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.SENDT
+        reisetilskuddeneFør[1].status shouldEqual ReisetilskuddStatus.ÅPEN
         reisetilskuddeneFør[2].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneFør[3].status shouldEqual ReisetilskuddStatus.FREMTIDIG
 
         cronJobTask(
             env = env,
@@ -96,10 +104,11 @@ internal class CronjobKtTest {
         )
 
         val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
-        reisetilskuddeneEtter.size shouldBe 3
-        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneEtter[1].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneEtter[2].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneEtter.size shouldBe 4
+        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.SENDT
+        reisetilskuddeneEtter[1].status shouldEqual ReisetilskuddStatus.SENDBAR
+        reisetilskuddeneEtter[2].status shouldEqual ReisetilskuddStatus.ÅPEN
+        reisetilskuddeneEtter[3].status shouldEqual ReisetilskuddStatus.FREMTIDIG
     }
 
     private fun reisetilskudd(

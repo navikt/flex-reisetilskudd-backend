@@ -44,7 +44,8 @@ internal fun cronJobTask(
         val kafkaProducer = aivenKafkaConfig.producer()
         val aktiverService = AktiverService(database, kafkaProducer)
 
-        aktiverService.aktiverReisetilskudd()
+        aktiverService.åpneReisetilskudd()
+        aktiverService.sendbareReisetilskudd()
     } else {
         log.info("Jeg er ikke leder")
     }
