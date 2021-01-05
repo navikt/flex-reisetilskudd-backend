@@ -4,14 +4,16 @@ import io.ktor.application.*
 import io.ktor.application.ApplicationCall
 import io.ktor.auth.authentication
 import io.ktor.auth.jwt.JWTPrincipal
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.NotFound
+import io.ktor.http.HttpStatusCode.Companion.OK
+import io.ktor.http.content.*
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.*
 import io.ktor.util.pipeline.*
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
-import no.nav.helse.flex.reisetilskudd.api.utils.Respons
-import no.nav.helse.flex.reisetilskudd.api.utils.toTextContent
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
@@ -26,11 +28,11 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         val reisetilskuddId = this.call.parameters["reisetilskuddId"]!!
         val reisetilskudd = reisetilskuddService.hentReisetilskudd(reisetilskuddId)
         if (reisetilskudd == null) {
-            this.call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.NotFound))
+            call.reply("Søknad ikke funnet", NotFound)
             return
         }
         if (reisetilskudd.fnr != fnr) {
-            call.respond(Respons("Bruker eier ikke søknaden").toTextContent(HttpStatusCode.Forbidden))
+            call.reply("Bruker eier ikke søknaden", BadRequest)
             return
         }
         body(reisetilskudd)
@@ -45,17 +47,8 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         if (statusList.contains(this.status)) {
             body(this)
         } else {
-            call.respond(Respons("Operasjonen støttes ikke på søknad med status $status").toTextContent(HttpStatusCode.BadRequest))
+            call.reply("Operasjonen støttes ikke på søknad med status $status", BadRequest)
         }
-    }
-
-    @ContextDsl
-    suspend fun Reisetilskudd.sjekkStatus(
-        status: ReisetilskuddStatus,
-        call: ApplicationCall,
-        body: suspend Reisetilskudd.() -> Unit
-    ) {
-        return sjekkStatus(listOf(status), call, body)
     }
 
     route("/api/v1") {
@@ -74,7 +67,7 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         put("/reisetilskudd/{reisetilskuddId}") {
 
             reisetilskudd {
-                sjekkStatus(ÅPEN, call) {
+                sjekkStatus(listOf(ÅPEN, SENDBAR), call) {
                     val svar = call.receive<Svar>()
                     var reisetilskudd = this
                     if (svar.går != null) {
@@ -102,37 +95,37 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
 
         post("/reisetilskudd/{reisetilskuddId}/send") {
             reisetilskudd {
-                sjekkStatus(ÅPEN, call) {
+                sjekkStatus(listOf(SENDBAR), call) {
                     reisetilskuddService.sendReisetilskudd(fnr, reisetilskuddId)
-                    call.respond(Respons("Reisetilskudd $reisetilskuddId har blitt sendt").toTextContent())
+                    call.reply("Reisetilskudd $reisetilskuddId har blitt sendt")
                 }
             }
         }
 
         post("/reisetilskudd/{reisetilskuddId}/avbryt") {
             reisetilskudd {
-                sjekkStatus(listOf(ÅPEN, FREMTIDIG), call) {
+                sjekkStatus(listOf(ÅPEN, FREMTIDIG, SENDBAR), call) {
                     reisetilskuddService.avbrytReisetilskudd(fnr, reisetilskuddId)
-                    call.respond(Respons("Reisetilskudd $reisetilskuddId har blitt avbrutt").toTextContent())
+                    call.reply("Reisetilskudd $reisetilskuddId har blitt avbrutt")
                 }
             }
         }
 
         post("/reisetilskudd/{reisetilskuddId}/gjenapne") {
             reisetilskudd {
-                sjekkStatus(AVBRUTT, call) {
+                sjekkStatus(listOf(AVBRUTT), call) {
                     reisetilskuddService.gjenapneReisetilskudd(fnr, reisetilskuddId)
-                    call.respond(Respons("Reisetilskudd $reisetilskuddId har blitt gjenåpnet").toTextContent())
+                    call.reply("Reisetilskudd $reisetilskuddId har blitt gjenåpnet")
                 }
             }
         }
 
         post("/reisetilskudd/{reisetilskuddId}/kvittering") {
             reisetilskudd {
-                sjekkStatus(ÅPEN, call) {
+                sjekkStatus(listOf(ÅPEN, SENDBAR), call) {
                     val kvittering = call.receive<Kvittering>()
                     reisetilskuddService.lagreKvittering(kvittering, reisetilskuddId)
-                    call.respond(Respons("Kvittering ${kvittering.kvitteringId} ble lagret").toTextContent())
+                    call.reply("Kvittering ${kvittering.kvitteringId} ble lagret")
                 }
             }
         }
@@ -140,10 +133,13 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         delete("/reisetilskudd/{reisetilskuddId}/kvittering/{kvitteringId}") {
             reisetilskudd {
                 reisetilskudd {
-                    sjekkStatus(ÅPEN, call) {
+                    sjekkStatus(listOf(ÅPEN, SENDBAR), call) {
                         val kvitteringId = call.parameters["kvitteringId"]!!
-                        reisetilskuddService.slettKvittering(kvitteringId = kvitteringId, reisetilskuddId = reisetilskuddId)
-                        call.respond(Respons("kvitteringId $kvitteringId ble slettet").toTextContent())
+                        reisetilskuddService.slettKvittering(
+                            kvitteringId = kvitteringId,
+                            reisetilskuddId = reisetilskuddId
+                        )
+                        call.reply("kvitteringId $kvitteringId ble slettet")
                     }
                 }
             }
@@ -154,4 +150,9 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
 private fun ApplicationCall.fnr(): String {
     val principal: JWTPrincipal = this.authentication.principal()!!
     return principal.payload.subject
+}
+
+private suspend fun ApplicationCall.reply(message: String, status: HttpStatusCode = OK) {
+    this.response.status(status)
+    this.respond(TextContent(message, ContentType.Application.Json))
 }

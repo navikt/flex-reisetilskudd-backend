@@ -24,8 +24,8 @@ internal class ReisetilskuddVerdikjedeTest {
     companion object {
         lateinit var testApp: TestApp
         val fnr = "12345678901"
-        val tom = LocalDate.now()
-        val fom = LocalDate.now().minusDays(4)
+        val tom = LocalDate.now().minusDays(1)
+        val fom = LocalDate.now().minusDays(5)
         val sykmeldingId = UUID.randomUUID().toString()
 
         @BeforeAll
@@ -96,7 +96,7 @@ internal class ReisetilskuddVerdikjedeTest {
                 reisetilskudd[0].fnr shouldEqual fnr
                 reisetilskudd[0].fom shouldEqual fom
                 reisetilskudd[0].tom shouldEqual tom
-                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.SENDBAR
                 reisetilskudd[0].sykmeldingId shouldEqual sykmeldingId
                 reisetilskudd[0].egenBil shouldEqual 0.0
                 reisetilskudd[0].sykler.shouldBeNull()
@@ -179,7 +179,7 @@ internal class ReisetilskuddVerdikjedeTest {
                 val reisetilskudd = response.content!!.tilReisetilskuddListe()
                 reisetilskudd.size `should be equal to` 1
 
-                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.SENDBAR
                 reisetilskudd[0].avbrutt.shouldBeNull()
             }
         }
