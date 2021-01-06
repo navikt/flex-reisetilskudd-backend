@@ -153,7 +153,9 @@ private fun ApplicationCall.fnr(): String {
     return principal.payload.subject
 }
 
+private data class Message(val message: String)
+
 private suspend fun ApplicationCall.reply(message: String, status: HttpStatusCode = OK) {
     this.response.status(status)
-    this.respond(TextContent(message, ContentType.Application.Json))
+    this.respond(Message(message))
 }
