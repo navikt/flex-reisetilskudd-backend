@@ -1,5 +1,7 @@
 package no.nav.helse.flex.application.cronjob
 
+import no.nav.helse.flex.application.metrics.SENDBARE_REISETILSKUDD
+import no.nav.helse.flex.application.metrics.ÅPNE_REISETILSKUDD
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
@@ -36,7 +38,7 @@ class AktiverService(
                         reisetilskudd
                     )
                 ).get()
-                // TODO: Metrikk
+                ÅPNE_REISETILSKUDD.inc()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
             }
@@ -65,7 +67,7 @@ class AktiverService(
                         reisetilskudd
                     )
                 ).get()
-                // TODO: Metrikk
+                SENDBARE_REISETILSKUDD.inc()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
             }
