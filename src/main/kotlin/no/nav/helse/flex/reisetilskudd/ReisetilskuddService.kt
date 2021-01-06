@@ -3,13 +3,17 @@ package no.nav.helse.flex.reisetilskudd
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.kafka.toReisetilskuddDTO
+import no.nav.helse.flex.kafka.reisetilskuddPerioder
+import no.nav.helse.flex.kafka.splittLangeSykmeldingperioder
+import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import java.util.*
 
 class ReisetilskuddService(
     private val database: DatabaseInterface,
@@ -17,22 +21,41 @@ class ReisetilskuddService(
 ) {
     private lateinit var kafkaProducer: KafkaProducer<String, Reisetilskudd>
 
-    fun behandleSykmelding(melding: SykmeldingMessage) {
-        melding.toReisetilskuddDTO().forEach { reisetilskudd ->
-            try {
-                lagreReisetilskudd(reisetilskudd)
-                kafkaProducer.send(
-                    ProducerRecord(
-                        AivenKafkaConfig.topic,
-                        reisetilskudd.reisetilskuddId,
-                        reisetilskudd
+    fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
+        sykmeldingMessage.runCatching {
+            this.reisetilskuddPerioder()
+                .splittLangeSykmeldingperioder()
+                .tidligstePeriodeFoerst()
+                .mapIndexed { idx, periode ->
+                    Reisetilskudd(
+                        reisetilskuddId = UUID.nameUUIDFromBytes("${sykmeldingMessage.sykmelding.id}-${periode.fom}-${periode.tom}".toByteArray()).toString(),
+                        sykmeldingId = sykmeldingMessage.sykmelding.id,
+                        status = reisetilskuddStatus(periode.fom, periode.tom),
+                        oppfølgende = idx > 0,
+                        fnr = sykmeldingMessage.kafkaMetadata.fnr,
+                        fom = periode.fom,
+                        tom = periode.tom,
+                        orgNavn = sykmeldingMessage.event.arbeidsgiver?.orgNavn,
+                        orgNummer = sykmeldingMessage.event.arbeidsgiver?.orgnummer
                     )
-                ).get()
-                log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
-            } catch (e: Exception) {
-                log.warn("Feiler på reisetilskudd ${reisetilskudd.reisetilskuddId}", e)
-                throw e
-            }
+                }
+                .forEach { reisetilskudd ->
+                    // TODO: Transaksjons håndtering
+                    lagreReisetilskudd(reisetilskudd)
+                    kafkaProducer.send(
+                        ProducerRecord(
+                            AivenKafkaConfig.topic,
+                            reisetilskudd.reisetilskuddId,
+                            reisetilskudd
+                        )
+                    ).get()
+                    log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+                }
+        }.onSuccess {
+            log.info("Sykmelding ${sykmeldingMessage.sykmelding.id} ferdig behandlet")
+        }.onFailure { ex ->
+            log.error("Uhåndtert feil ved behandleSykmelding ${sykmeldingMessage.sykmelding.id}", ex)
+            throw ex
         }
     }
 
