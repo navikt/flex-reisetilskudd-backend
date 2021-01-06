@@ -54,8 +54,8 @@ internal class ReisetilskuddInputValideringTest {
                 }
             ) {
                 response.status() shouldEqual HttpStatusCode.BadRequest
-                response.headers["Content-Type"]!! `should be equal to` "application/json"
-                response.content!! `should be equal to` "Operasjonen støttes ikke på søknad med status FREMTIDIG"
+                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
+                response.content!! `should be equal to` "{\"message\":\"Operasjonen støttes ikke på søknad med status FREMTIDIG\"}"
             }
 
             with(
@@ -64,8 +64,8 @@ internal class ReisetilskuddInputValideringTest {
                 }
             ) {
                 response.status() shouldEqual HttpStatusCode.BadRequest
-                response.headers["Content-Type"]!! `should be equal to` "application/json"
-                response.content!! `should be equal to` "Operasjonen støttes ikke på søknad med status ÅPEN"
+                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
+                response.content!! `should be equal to` "{\"message\":\"Operasjonen støttes ikke på søknad med status ÅPEN\"}"
             }
         }
     }
@@ -80,8 +80,8 @@ internal class ReisetilskuddInputValideringTest {
                 }
             ) {
                 response.status() shouldEqual HttpStatusCode.NotFound
-                response.headers["Content-Type"]!! `should be equal to` "application/json"
-                response.content!! `should be equal to` "Søknad ikke funnet"
+                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
+                response.content!! `should be equal to` "{\"message\":\"Søknad ikke funnet\"}"
             }
         }
     }
@@ -98,8 +98,8 @@ internal class ReisetilskuddInputValideringTest {
                 }
             ) {
                 response.status() shouldEqual Forbidden
-                response.headers["Content-Type"]!! `should be equal to` "application/json"
-                response.content!! `should be equal to` "Bruker eier ikke søknaden"
+                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
+                response.content!! `should be equal to` "{\"message\":\"Bruker eier ikke søknaden\"}"
             }
         }
     }
