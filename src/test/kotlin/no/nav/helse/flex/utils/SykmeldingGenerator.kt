@@ -1,5 +1,6 @@
 package no.nav.helse.flex.utils
 
+import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
 import no.nav.syfo.model.sykmelding.model.AdresseDTO
 import no.nav.syfo.model.sykmelding.model.ArbeidsgiverDTO
@@ -102,4 +103,34 @@ fun skapSykmeldingStatusKafkaMessageDTO(
             fnr = fnr
         )
     )
+}
+
+fun lagSykmeldingMessage(
+    fnr: String = "fnr",
+    sykmeldingsperioder: List<SykmeldingsperiodeDTO> = listOf(
+        SykmeldingsperiodeDTO(
+            fom = LocalDate.now().minusDays(10),
+            tom = LocalDate.now(),
+            type = PeriodetypeDTO.REISETILSKUDD,
+            reisetilskudd = true,
+            aktivitetIkkeMulig = null,
+            behandlingsdager = null,
+            gradert = null,
+            innspillTilArbeidsgiver = null
+        )
+    )
+): SykmeldingMessage {
+    val sykmelding = getSykmeldingDto().copy(
+        sykmeldingsperioder = sykmeldingsperioder
+    )
+    val kafka = skapSykmeldingStatusKafkaMessageDTO(
+        fnr = fnr,
+        sykmeldingId = sykmelding.id
+    )
+    val melding = SykmeldingMessage(
+        sykmelding = sykmelding,
+        kafkaMetadata = kafka.kafkaMetadata,
+        event = kafka.event
+    )
+    return melding
 }
