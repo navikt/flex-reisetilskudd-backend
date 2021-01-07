@@ -49,6 +49,7 @@ spec:
     inbound:
       rules:
         - application: flex-reisetilskudd-backend-proxy
+        - application: flex-gateway
 
   envFrom:
     - secret: flex-reisetilskudd-backend-serviceuser
