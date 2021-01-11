@@ -14,6 +14,7 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.*
 
 fun DatabaseInterface.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
     connection.use { return it.hentReisetilskuddene(fnr) }
@@ -59,16 +60,16 @@ fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String
     }
 }
 
-fun DatabaseInterface.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
-    connection.use { it.lagreKvittering(kvittering, reisetilskuddId) }
+fun DatabaseInterface.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
+    connection.use { return it.lagreKvittering(kvittering, reisetilskuddId) }
 }
 
 fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
     connection.use { return it.eierReisetilskudd(fnr, id) }
 }
 
-fun DatabaseInterface.slettKvittering(kvitteringId: String, reisetilskuddId: String) {
-    connection.use { it.slettKvittering(kvitteringId, reisetilskuddId) }
+fun DatabaseInterface.slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
+    connection.use { return it.slettKvittering(kvitteringId, reisetilskuddId) }
 }
 
 fun DatabaseInterface.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> {
@@ -251,31 +252,33 @@ private fun Connection.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
     this.commit()
 }
 
-private fun Connection.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
+private fun Connection.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
     val now = Instant.now()
+    val id = UUID.randomUUID().toString()
 
     this.prepareStatement(
         """
                 INSERT INTO kvitteringer
-                (kvittering_id, reisetilskudd_id, navn, belop, fom, tom, transportmiddel, storrelse, opprettet)
+                (kvittering_id, reisetilskudd_id, navn, belop, dato_for_reise, blob_id, transportmiddel, storrelse, opprettet)
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
     ).use {
-        it.setString(1, kvittering.kvitteringId)
+        it.setString(1, id)
         it.setString(2, reisetilskuddId)
         it.setString(3, kvittering.navn)
-        it.setDouble(4, kvittering.belop)
-        it.setDate(5, Date.valueOf(kvittering.fom))
-        it.setDate(6, if (kvittering.tom != null) Date.valueOf(kvittering.tom) else null)
+        it.setInt(4, kvittering.belop)
+        it.setDate(5, Date.valueOf(kvittering.datoForReise))
+        it.setString(6, kvittering.blobId)
         it.setString(7, kvittering.transportmiddel.name)
         it.setLong(8, kvittering.storrelse)
         it.setTimestamp(9, Timestamp.from(now))
         it.executeUpdate()
     }
     this.commit()
+    return kvittering.copy(kvitteringId = id)
 }
 
-private fun Connection.slettKvittering(kvitteringId: String, reisetilskuddId: String) {
+private fun Connection.slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
     this.prepareStatement(
         """
             DELETE FROM kvitteringer
@@ -286,9 +289,10 @@ private fun Connection.slettKvittering(kvitteringId: String, reisetilskuddId: St
     ).use {
         it.setString(1, kvitteringId)
         it.setString(2, reisetilskuddId)
-        it.executeUpdate()
+        val executeUpdate = it.executeUpdate()
+        this.commit()
+        return executeUpdate
     }
-    this.commit()
 }
 
 private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvittering> {
@@ -394,10 +398,10 @@ fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Rei
 fun ResultSet.toKvitteringDTO(): Kvittering {
     return Kvittering(
         kvitteringId = getString("kvittering_id"),
+        blobId = getString("blob_id"),
         navn = getString("navn"),
-        fom = getObject("fom", LocalDate::class.java),
-        tom = getObject("tom", LocalDate::class.java),
-        belop = getDouble("belop"),
+        datoForReise = getObject("dato_for_reise", LocalDate::class.java),
+        belop = getInt("belop"),
         storrelse = getLong("storrelse"),
         transportmiddel = Transportmiddel.valueOf(getString("transportmiddel"))
     )

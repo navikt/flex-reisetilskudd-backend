@@ -30,8 +30,11 @@ internal class DatabaseTest {
         val rt = reisetilskudd(fnr)
         db.lagreReisetilskudd(rt)
         val kv = kvittering()
-        db.lagreKvittering(kv, rt.reisetilskuddId)
-        db.slettKvittering(kv.kvitteringId, rt.reisetilskuddId)
+        val lagretKvittering = db.lagreKvittering(kv, rt.reisetilskuddId)
+        val reisetilskuddene = db.hentReisetilskuddene(fnr)
+        reisetilskuddene.size shouldBe 1
+        val antallSlettet = db.slettKvittering(lagretKvittering.kvitteringId!!, rt.reisetilskuddId)
+        antallSlettet `should be equal to` 1
     }
 
     @Test
@@ -209,11 +212,10 @@ private fun reisetilskudd(fnr: String): Reisetilskudd =
 
 private fun kvittering(): Kvittering =
     Kvittering(
-        kvitteringId = UUID.randomUUID().toString(),
+        blobId = UUID.randomUUID().toString(),
         navn = "test.jpg",
-        fom = LocalDate.of(2020, 7, 1),
-        tom = null,
-        belop = 250.0,
+        datoForReise = LocalDate.of(2020, 7, 1),
+        belop = 25000,
         transportmiddel = Transportmiddel.TAXI,
         storrelse = 1000 * 1000
     )
