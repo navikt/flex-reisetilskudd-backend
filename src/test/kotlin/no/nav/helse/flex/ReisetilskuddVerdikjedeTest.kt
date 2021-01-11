@@ -7,9 +7,7 @@ import io.ktor.util.*
 import kotlinx.coroutines.runBlocking
 import no.nav.helse.flex.application.objectMapper
 import no.nav.helse.flex.kafka.*
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.domain.Svar
+import no.nav.helse.flex.reisetilskudd.domain.*
 import no.nav.helse.flex.utils.*
 import org.amshove.kluent.*
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -208,6 +206,83 @@ internal class ReisetilskuddVerdikjedeTest {
 
     @Test
     @Order(6)
+    fun `Vi kan laste opp en kvittering`() {
+        with(testApp) {
+            val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                medSelvbetjeningToken(fnr)
+            }.response.content!!.tilReisetilskuddListe()[0].reisetilskuddId
+            with(
+                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/$id/kvittering") {
+                    medSelvbetjeningToken(fnr)
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    val kvittering = Kvittering(
+                        blobId = "123456",
+                        belop = 133700,
+                        storrelse = 12,
+                        transportmiddel = Transportmiddel.EGEN_BIL,
+                        datoForReise = LocalDate.now(),
+                        navn = "bilde123.jpg"
+                    )
+                    setBody(kvittering.serialisertTilString())
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.Created
+                val kvittering = response.content.tilKvittering()
+                kvittering.datoForReise.`should equal`(LocalDate.now())
+                kvittering.kvitteringId.shouldNotBeNull()
+            }
+        }
+    }
+
+    @Test
+    @Order(7)
+    fun `Vi kan se den opplastede kvitteringen`() {
+        with(testApp) {
+            val kvitteringer = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                medSelvbetjeningToken(fnr)
+            }.response.content!!.tilReisetilskuddListe()[0].kvitteringer
+
+            kvitteringer.size `should be equal to` 1
+            val kvittering = kvitteringer.first()
+
+            kvittering.datoForReise.`should equal`(LocalDate.now())
+            kvittering.kvitteringId.shouldNotBeNull()
+            kvittering.storrelse.`should equal`(12)
+            kvittering.belop.`should equal`(133700)
+        }
+    }
+
+    @Test
+    @Order(8)
+    fun `Vi kan slette en kvittering`() {
+        with(testApp) {
+            val reisetilskudd = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                medSelvbetjeningToken(fnr)
+            }.response.content!!.tilReisetilskuddListe()[0]
+
+            reisetilskudd.kvitteringer.size.`should be equal to`(1)
+
+            with(
+                engine.handleRequest(
+                    HttpMethod.Delete,
+                    "/api/v1/reisetilskudd/${reisetilskudd.reisetilskuddId}/kvittering/${reisetilskudd.kvitteringer[0].kvitteringId}"
+                ) {
+                    medSelvbetjeningToken(fnr)
+                }
+            ) {
+                response.status() shouldEqual HttpStatusCode.OK
+            }
+
+            val reisetilskuddEtter = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
+                medSelvbetjeningToken(fnr)
+            }.response.content!!.tilReisetilskuddListe()[0]
+
+            reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
+        }
+    }
+
+    @Test
+    @Order(9)
     fun `Vi kan sende inn søknaden`() {
         with(testApp) {
             val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
@@ -238,5 +313,6 @@ internal class ReisetilskuddVerdikjedeTest {
 
 fun String?.tilReisetilskuddListe(): List<Reisetilskudd> = objectMapper.readValue(this!!)
 fun String?.tilReisetilskudd(): Reisetilskudd = objectMapper.readValue(this!!)
+fun String?.tilKvittering(): Kvittering = objectMapper.readValue(this!!)
 
 fun Any.serialisertTilString(): String = objectMapper.writeValueAsString(this)

@@ -6,6 +6,7 @@ import io.ktor.auth.authentication
 import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.Created
 import io.ktor.http.HttpStatusCode.Companion.Forbidden
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -15,7 +16,6 @@ import io.ktor.response.respond
 import io.ktor.routing.*
 import io.ktor.util.pipeline.*
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
-import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.*
@@ -124,9 +124,9 @@ fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
         post("/reisetilskudd/{reisetilskuddId}/kvittering") {
             reisetilskudd {
                 sjekkStatus(listOf(ÅPEN, SENDBAR), call) {
-                    val kvittering = call.receive<Kvittering>()
-                    reisetilskuddService.lagreKvittering(kvittering, reisetilskuddId)
-                    call.reply("Kvittering ${kvittering.kvitteringId} ble lagret")
+                    val kvittering = reisetilskuddService.lagreKvittering(call.receive(), reisetilskuddId)
+                    call.response.status(Created)
+                    call.respond(kvittering)
                 }
             }
         }
