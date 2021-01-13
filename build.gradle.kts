@@ -124,7 +124,7 @@ tasks.register("createDependabotFile") {
     doLast {
         mkdir("$projectDir/dependabot")
         val file = File("$projectDir/dependabot/build.gradle")
-        file.writeText( "// Do not edit manually! This file was created by the 'createDependabotFile' task defined in the root build.gradle.kts file.\n")
+        file.writeText("// Do not edit manually! This file was created by the 'createDependabotFile' task defined in the root build.gradle.kts file.\n")
         file.appendText("dependencies {\n")
         project.configurations.getByName("runtimeClasspath").allDependencies
             .filter { it.group != rootProject.name && it.version != null }
