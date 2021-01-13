@@ -5,11 +5,9 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.JacksonKafkaSerializer
-import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
-import no.nav.helse.flex.utils.getSykmeldingDto
-import no.nav.helse.flex.utils.skapSykmeldingStatusKafkaMessageDTO
+import no.nav.helse.flex.utils.lagSykmeldingMessage
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import org.amshove.kluent.shouldBe
@@ -156,35 +154,5 @@ internal class ReisetilskuddServiceTest {
         reisetilskudd[2].fom shouldEqual now.minusDays(50)
         reisetilskudd[2].tom shouldEqual now.minusDays(26)
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
-    }
-
-    private fun lagSykmeldingMessage(
-        fnr: String = "fnr",
-        sykmeldingsperioder: List<SykmeldingsperiodeDTO> = listOf(
-            SykmeldingsperiodeDTO(
-                fom = LocalDate.now().minusDays(10),
-                tom = LocalDate.now(),
-                type = PeriodetypeDTO.REISETILSKUDD,
-                reisetilskudd = true,
-                aktivitetIkkeMulig = null,
-                behandlingsdager = null,
-                gradert = null,
-                innspillTilArbeidsgiver = null
-            )
-        )
-    ): SykmeldingMessage {
-        val sykmelding = getSykmeldingDto().copy(
-            sykmeldingsperioder = sykmeldingsperioder
-        )
-        val kafka = skapSykmeldingStatusKafkaMessageDTO(
-            fnr = fnr,
-            sykmeldingId = sykmelding.id
-        )
-        val melding = SykmeldingMessage(
-            sykmelding = sykmelding,
-            kafkaMetadata = kafka.kafkaMetadata,
-            event = kafka.event
-        )
-        return melding
     }
 }

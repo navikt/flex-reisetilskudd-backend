@@ -17,7 +17,6 @@ data class SykmeldingMessage(
 fun SykmeldingMessage.reisetilskuddPerioder(): List<SykmeldingsperiodeDTO> =
     this.sykmelding.sykmeldingsperioder.filter {
         it.reisetilskudd
-        // TODO: Finnes det flere perioder som skal med, eller noen perioder som ikke skal med?
     }
 
 fun List<SykmeldingsperiodeDTO>.splittLangeSykmeldingperioder(): List<SykmeldingsperiodeDTO> {

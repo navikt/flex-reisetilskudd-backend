@@ -1,5 +1,8 @@
 package no.nav.helse.flex.reisetilskudd
 
+import no.nav.helse.flex.application.metrics.AVBRUTT_REISETILSKUDD
+import no.nav.helse.flex.application.metrics.GJENÅPNET_REISETILSKUDD
+import no.nav.helse.flex.application.metrics.SENDT_REISETILSKUDD
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
@@ -90,6 +93,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
+        SENDT_REISETILSKUDD.inc()
         log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
@@ -102,6 +106,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
+        AVBRUTT_REISETILSKUDD.inc()
         log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
@@ -114,13 +119,15 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
+        GJENÅPNET_REISETILSKUDD.inc()
         log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
-    fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String) {
-        database.lagreKvittering(kvittering, reisetilskuddId)
+    fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
+        return database.lagreKvittering(kvittering, reisetilskuddId)
     }
 
-    fun slettKvittering(kvitteringId: String, reisetilskuddId: String) =
-        database.slettKvittering(kvitteringId, reisetilskuddId)
+    fun slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
+        return database.slettKvittering(kvitteringId, reisetilskuddId)
+    }
 }
