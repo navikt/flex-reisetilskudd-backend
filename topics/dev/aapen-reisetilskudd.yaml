@@ -24,3 +24,6 @@ spec:
     - team: flex
       application: flex-reisetilskudd-gsak
       access: read
+    - team: flex
+      application: flex-reisetilskudd-brukernotifikasjon
+      access: read
