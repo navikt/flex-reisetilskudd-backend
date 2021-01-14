@@ -1,5 +1,5 @@
 val ktorVersion = "1.5.0"
-val kotlinVersion = "1.4.21"
+val kotlinVersion = "1.4.21-2"
 val coroutinesVersion = "1.3.3"
 val jacksonVersion = "2.11.2"
 val kafkaEmbeddedVersion = "2.4.0"
