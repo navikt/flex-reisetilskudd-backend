@@ -5,6 +5,7 @@ import no.nav.helse.flex.Environment
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
+import java.lang.System.gc
 import java.time.*
 import java.util.*
 
@@ -44,6 +45,8 @@ class Cronjob(
             } else {
                 log.info("Jeg er ikke leder")
             }
+
+            gc() // Tving garbage collection
         }
     }
 
