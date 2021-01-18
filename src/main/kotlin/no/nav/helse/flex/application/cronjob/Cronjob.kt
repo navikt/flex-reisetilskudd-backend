@@ -1,8 +1,6 @@
 package no.nav.helse.flex.application.cronjob
 
 import io.ktor.util.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import no.nav.helse.flex.Environment
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
@@ -20,17 +18,17 @@ fun setUpCronJob(
     val (klokkeslett, period) = hentKlokekslettOgPeriode(env)
 
     log.info("Schedulerer cronjob start: $klokkeslett, periode: $period ms")
+
     fixedRateTimer(
+        name = "cron-job",
         startAt = klokkeslett,
         period = period
     ) {
-        GlobalScope.launch {
-            cronJobTask(
-                env = env,
-                database = database,
-                aivenKafkaConfig = aivenKafkaConfig
-            )
-        }
+        cronJobTask(
+            env = env,
+            database = database,
+            aivenKafkaConfig = aivenKafkaConfig
+        )
     }
 }
 
