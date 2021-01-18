@@ -97,11 +97,11 @@ internal class CronjobKtTest {
         reisetilskuddeneFør[2].status shouldEqual ReisetilskuddStatus.FREMTIDIG
         reisetilskuddeneFør[3].status shouldEqual ReisetilskuddStatus.FREMTIDIG
 
-        cronJobTask(
+        Cronjob.TidsOppgave(
             env = env,
             database = db,
             aivenKafkaConfig = aivenKafkaConfig
-        )
+        ).run()
 
         val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
         reisetilskuddeneEtter.size shouldBe 4

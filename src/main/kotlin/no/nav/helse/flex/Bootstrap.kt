@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import no.nav.helse.flex.application.ApplicationServer
 import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.application.createApplicationEngine
-import no.nav.helse.flex.application.cronjob.setUpCronJob
+import no.nav.helse.flex.application.cronjob.Cronjob
 import no.nav.helse.flex.application.getWellKnown
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.kafka.AivenKafkaConfig
@@ -70,11 +70,12 @@ fun main() {
     createListener(applicationState) {
         sykmeldingKafkaService.start()
     }
-    setUpCronJob(
+    val cronJob = Cronjob(
         env = env,
         database = database,
         aivenKafkaConfig = kafkaAivenConfig
     )
+    cronJob.setUpCronJob()
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =

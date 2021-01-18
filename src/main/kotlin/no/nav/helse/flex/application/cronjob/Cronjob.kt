@@ -7,73 +7,69 @@ import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
 import java.time.*
 import java.util.*
-import kotlin.concurrent.fixedRateTimer
 
 @KtorExperimentalAPI
-fun setUpCronJob(
-    env: Environment,
-    database: DatabaseInterface,
-    aivenKafkaConfig: AivenKafkaConfig
+class Cronjob(
+    private val env: Environment,
+    private val database: DatabaseInterface,
+    private val aivenKafkaConfig: AivenKafkaConfig
 ) {
-    val (klokkeslett, period) = hentKlokekslettOgPeriode(env)
+    private val kjøretider = hentKlokekslettOgPeriode(env)
+    private val timer = Timer("cron-job", true)
 
-    log.info("Schedulerer cronjob start: $klokkeslett, periode: $period ms")
-
-    fixedRateTimer(
-        name = "cron-job",
-        startAt = klokkeslett,
-        period = period
-    ) {
-        cronJobTask(
-            env = env,
-            database = database,
-            aivenKafkaConfig = aivenKafkaConfig
+    fun setUpCronJob() {
+        log.info("Schedulerer cronjob start: ${kjøretider.first}, periode: ${kjøretider.second} ms")
+        timer.scheduleAtFixedRate(
+            TidsOppgave(env, database, aivenKafkaConfig),
+            kjøretider.first,
+            kjøretider.second
         )
     }
-}
 
-@KtorExperimentalAPI
-internal fun cronJobTask(
-    env: Environment,
-    database: DatabaseInterface,
-    aivenKafkaConfig: AivenKafkaConfig
-) {
-    val podLeaderCoordinator = PodLeaderCoordinator(env)
+    class TidsOppgave(
+        private val env: Environment,
+        private val database: DatabaseInterface,
+        private val aivenKafkaConfig: AivenKafkaConfig
+    ) : TimerTask() {
+        override fun run() {
+            val podLeaderCoordinator = PodLeaderCoordinator(env)
 
-    if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
-        log.info("Kjører reisetilskudd cronjob")
-        val kafkaProducer = aivenKafkaConfig.producer()
-        val aktiverService = AktiverService(database, kafkaProducer)
+            if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
+                log.info("Kjører reisetilskudd cronjob")
+                val kafkaProducer = aivenKafkaConfig.producer()
+                val aktiverService = AktiverService(database, kafkaProducer)
 
-        aktiverService.åpneReisetilskudd()
-        aktiverService.sendbareReisetilskudd()
-    } else {
-        log.info("Jeg er ikke leder")
+                aktiverService.åpneReisetilskudd()
+                aktiverService.sendbareReisetilskudd()
+            } else {
+                log.info("Jeg er ikke leder")
+            }
+        }
     }
-}
 
-internal fun hentKlokekslettOgPeriode(env: Environment): Pair<Date, Long> {
-    val osloTz = ZoneId.of("Europe/Oslo")
-    val now = ZonedDateTime.now(osloTz)
-    if (env.cluster == "dev-gcp" || env.cluster == "flex") {
-        val femMinutter = Duration.ofMinutes(2)
-        val omEtMinutt = now.plusSeconds(60)
-        return Pair(Date.from(omEtMinutt.toInstant()), femMinutter.toMillis())
+    private fun hentKlokekslettOgPeriode(env: Environment): Pair<Date, Long> {
+        val osloTz = ZoneId.of("Europe/Oslo")
+        val now = ZonedDateTime.now(osloTz)
+        if (env.cluster == "dev-gcp" || env.cluster == "flex") {
+            val femMinutter = Duration.ofMinutes(2)
+            val omEtMinutt = now.plusSeconds(60)
+            return Pair(Date.from(omEtMinutt.toInstant()), femMinutter.toMillis())
+        }
+        if (env.cluster == "prod-gcp") {
+            val enDag = Duration.ofDays(1).toMillis()
+            val nesteNatt = now.next(LocalTime.of(2, 0, 0))
+            return Pair(nesteNatt, enDag)
+        }
+        throw IllegalStateException("Ukjent cluster name for cronjob ${env.cluster}")
     }
-    if (env.cluster == "prod-gcp") {
-        val enDag = Duration.ofDays(1).toMillis()
-        val nesteNatt = now.next(LocalTime.of(2, 0, 0))
-        return Pair(nesteNatt, enDag)
-    }
-    throw IllegalStateException("Ukjent cluster name for cronjob ${env.cluster}")
-}
 
-private fun ZonedDateTime.next(atTime: LocalTime): Date {
-    return if (this.toLocalTime().isAfter(atTime)) {
-        Date.from(
-            this.plusDays(1).withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant()
-        )
-    } else {
-        Date.from(this.withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant())
+    private fun ZonedDateTime.next(atTime: LocalTime): Date {
+        return if (this.toLocalTime().isAfter(atTime)) {
+            Date.from(
+                this.plusDays(1).withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant()
+            )
+        } else {
+            Date.from(this.withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant())
+        }
     }
 }
