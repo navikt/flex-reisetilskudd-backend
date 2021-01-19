@@ -8,6 +8,8 @@ import no.nav.helse.flex.log
 import java.lang.System.gc
 import java.time.*
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @KtorExperimentalAPI
 class Cronjob(
@@ -16,14 +18,15 @@ class Cronjob(
     private val aivenKafkaConfig: AivenKafkaConfig
 ) {
     private val kjøretider = hentKlokekslettOgPeriode(env)
-    private val timer = Timer("cron-job", true)
+    private val scheduler = Executors.newScheduledThreadPool(1)
 
     fun setUpCronJob() {
         log.info("Schedulerer cronjob start: ${kjøretider.first}, periode: ${kjøretider.second} ms")
-        timer.scheduleAtFixedRate(
+        scheduler.scheduleAtFixedRate(
             TidsOppgave(env, database, aivenKafkaConfig),
-            kjøretider.first,
-            kjøretider.second
+            10L,
+            kjøretider.second,
+            TimeUnit.MILLISECONDS
         )
     }
 
@@ -31,7 +34,7 @@ class Cronjob(
         private val env: Environment,
         private val database: DatabaseInterface,
         private val aivenKafkaConfig: AivenKafkaConfig
-    ) : TimerTask() {
+    ) : Runnable {
         override fun run() {
             val podLeaderCoordinator = PodLeaderCoordinator(env)
 
