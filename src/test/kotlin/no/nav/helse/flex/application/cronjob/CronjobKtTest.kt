@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.helse.flex.Environment
+import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.JacksonKafkaSerializer
 import no.nav.helse.flex.reisetilskudd.db.hentReisetilskuddene
@@ -30,11 +31,20 @@ import java.util.*
 @KtorExperimentalAPI
 internal class CronjobKtTest {
     companion object {
+        val applicationState = ApplicationState()
         val db = TestDB()
         val env = mockk<Environment>()
         val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
             .withNetwork(Network.newNetwork())
         val aivenKafkaConfig = mockk<AivenKafkaConfig>()
+        val podLeaderCoordinator = mockk<PodLeaderCoordinator>()
+        val cronjob = Cronjob(
+            applicationState = applicationState,
+            env = env,
+            database = db,
+            aivenKafkaConfig = aivenKafkaConfig,
+            podLeaderCoordinator = podLeaderCoordinator
+        )
 
         @BeforeAll
         @JvmStatic
@@ -55,6 +65,10 @@ internal class CronjobKtTest {
         every { env.cluster } returns "test"
         every { env.electorPath } returns "dont_look_for_leader"
         every { aivenKafkaConfig.producer() } returns KafkaProducer(producerProperties)
+        every { podLeaderCoordinator.isLeader() } returns true
+
+        applicationState.alive = true
+        applicationState.ready = true
     }
 
     @Test
@@ -97,11 +111,7 @@ internal class CronjobKtTest {
         reisetilskuddeneFør[2].status shouldEqual ReisetilskuddStatus.FREMTIDIG
         reisetilskuddeneFør[3].status shouldEqual ReisetilskuddStatus.FREMTIDIG
 
-        Cronjob.TidsOppgave(
-            env = env,
-            database = db,
-            aivenKafkaConfig = aivenKafkaConfig
-        ).run()
+        cronjob.run()
 
         val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
         reisetilskuddeneEtter.size shouldBe 4
