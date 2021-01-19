@@ -45,6 +45,8 @@ class Cronjob(
 
                 aktiverService.åpneReisetilskudd()
                 aktiverService.sendbareReisetilskudd()
+
+                kafkaProducer.close()
             } else {
                 log.info("Jeg er ikke leder")
             }
