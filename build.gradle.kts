@@ -1,12 +1,12 @@
 val ktorVersion = "1.5.0"
-val kotlinVersion = "1.4.21"
+val kotlinVersion = "1.4.21-2"
 val coroutinesVersion = "1.3.3"
-val jacksonVersion = "2.11.2"
+val jacksonVersion = "2.12.1"
 val kafkaEmbeddedVersion = "2.4.0"
 val postgresEmbeddedVersion = "0.13.3"
 val kluentVersion = "1.49"
 val logbackVersion = "1.2.3"
-val logstashEncoderVersion = "5.1"
+val logstashEncoderVersion = "6.6"
 val mockkVersion = "1.10.0"
 val nimbusdsVersion = "7.5.1"
 val prometheusVersion = "0.6.0"
@@ -14,7 +14,7 @@ val smCommonVersion = "1.c22544d"
 val testContainerKafkaVersion = "1.15.1"
 val kafkaVersion = "2.6.0"
 val postgresVersion = "42.2.15"
-val flywayVersion = "6.5.4"
+val flywayVersion = "7.5.0"
 val hikariVersion = "3.4.5"
 val junitVersion = "5.7.0"
 
@@ -23,7 +23,7 @@ val githubPassword: String by project
 
 plugins {
     application
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.4.21-2"
     id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
