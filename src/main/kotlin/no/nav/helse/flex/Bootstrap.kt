@@ -10,7 +10,8 @@ import kotlinx.coroutines.launch
 import no.nav.helse.flex.application.ApplicationServer
 import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.application.createApplicationEngine
-import no.nav.helse.flex.application.cronjob.setUpCronJob
+import no.nav.helse.flex.application.cronjob.Cronjob
+import no.nav.helse.flex.application.cronjob.PodLeaderCoordinator
 import no.nav.helse.flex.application.getWellKnown
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.kafka.AivenKafkaConfig
@@ -57,6 +58,17 @@ fun main() {
         reisetilskuddService = reisetilskuddService,
         environment = env
     )
+
+    val podLeaderCoordinator = PodLeaderCoordinator(env)
+
+    val cronjob = Cronjob(
+        applicationState = applicationState,
+        env = env,
+        database = database,
+        aivenKafkaConfig = kafkaAivenConfig,
+        podLeaderCoordinator = podLeaderCoordinator
+    )
+
     val applicationEngine = createApplicationEngine(
         env = env,
         reisetilskuddService = reisetilskuddService,
@@ -67,14 +79,14 @@ fun main() {
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     applicationServer.start()
     applicationState.ready = true
+
     createListener(applicationState) {
         sykmeldingKafkaService.start()
     }
-    setUpCronJob(
-        env = env,
-        database = database,
-        aivenKafkaConfig = kafkaAivenConfig
-    )
+
+    createListener(applicationState) {
+        cronjob.start()
+    }
 }
 
 fun createListener(applicationState: ApplicationState, action: suspend CoroutineScope.() -> Unit): Job =

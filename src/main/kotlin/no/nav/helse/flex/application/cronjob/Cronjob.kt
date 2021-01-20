@@ -1,78 +1,81 @@
 package no.nav.helse.flex.application.cronjob
 
 import io.ktor.util.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import no.nav.helse.flex.Environment
+import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
+import java.lang.Exception
 import java.time.*
-import java.util.*
-import kotlin.concurrent.fixedRateTimer
 
 @KtorExperimentalAPI
-fun setUpCronJob(
-    env: Environment,
-    database: DatabaseInterface,
-    aivenKafkaConfig: AivenKafkaConfig
+class Cronjob(
+    private val applicationState: ApplicationState,
+    private val env: Environment,
+    private val database: DatabaseInterface,
+    private val aivenKafkaConfig: AivenKafkaConfig,
+    private val podLeaderCoordinator: PodLeaderCoordinator
 ) {
-    val (klokkeslett, period) = hentKlokekslettOgPeriode(env)
+    suspend fun start() = coroutineScope {
+        val (initialDelay, interval) = hentKjøretider(env)
 
-    log.info("Schedulerer cronjob start: $klokkeslett, periode: $period ms")
+        log.info("Schedulerer cronjob start: $initialDelay ms, interval: $interval ms")
+        delay(initialDelay)
 
-    fixedRateTimer(
-        startAt = klokkeslett,
-        period = period
-    ) {
-        cronJobTask(
-            env = env,
-            database = database,
-            aivenKafkaConfig = aivenKafkaConfig
-        )
+        while (applicationState.alive) {
+            val job = launch { run() }
+            delay(interval)
+            if (job.isActive) {
+                log.warn("Cronjob er ikke ferdig, venter til den er ferdig")
+                job.join()
+            }
+        }
+
+        log.info("Avslutter cronjob")
     }
-}
 
-@KtorExperimentalAPI
-internal fun cronJobTask(
-    env: Environment,
-    database: DatabaseInterface,
-    aivenKafkaConfig: AivenKafkaConfig
-) {
-    val podLeaderCoordinator = PodLeaderCoordinator(env)
+    internal fun run() {
+        try {
+            if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
+                log.info("Kjører reisetilskudd cronjob")
+                val kafkaProducer = aivenKafkaConfig.producer()
+                val aktiverService = AktiverService(database, kafkaProducer)
 
-    if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
-        log.info("Kjører reisetilskudd cronjob")
-        val kafkaProducer = aivenKafkaConfig.producer()
-        val aktiverService = AktiverService(database, kafkaProducer)
+                aktiverService.åpneReisetilskudd()
+                aktiverService.sendbareReisetilskudd()
 
-        aktiverService.åpneReisetilskudd()
-        aktiverService.sendbareReisetilskudd()
-    } else {
-        log.info("Jeg er ikke leder")
+                kafkaProducer.close()
+            }
+        } catch (ex: Exception) {
+            log.error("Feil i cronjob, kjøres på nytt neste gang", ex)
+        }
     }
-}
 
-internal fun hentKlokekslettOgPeriode(env: Environment): Pair<Date, Long> {
-    val osloTz = ZoneId.of("Europe/Oslo")
-    val now = ZonedDateTime.now(osloTz)
-    if (env.cluster == "dev-gcp" || env.cluster == "flex") {
-        val femMinutter = Duration.ofMinutes(2)
-        val omEtMinutt = now.plusSeconds(60)
-        return Pair(Date.from(omEtMinutt.toInstant()), femMinutter.toMillis())
+    private fun hentKjøretider(env: Environment): Pair<Long, Long> {
+        val osloTz = ZoneId.of("Europe/Oslo")
+        val now = ZonedDateTime.now(osloTz)
+        if (env.cluster == "dev-gcp" || env.cluster == "flex") {
+            val omEtMinutt = Duration.ofMinutes(1).toMillis()
+            val femMinutter = Duration.ofMinutes(5).toMillis()
+            return Pair(omEtMinutt, femMinutter)
+        }
+        if (env.cluster == "prod-gcp") {
+            val nesteNatt = now.next(LocalTime.of(2, 0, 0)) - now.toInstant().toEpochMilli()
+            val enDag = Duration.ofDays(1).toMillis()
+            return Pair(nesteNatt, enDag)
+        }
+        throw IllegalStateException("Ukjent cluster name for cronjob ${env.cluster}")
     }
-    if (env.cluster == "prod-gcp") {
-        val enDag = Duration.ofDays(1).toMillis()
-        val nesteNatt = now.next(LocalTime.of(2, 0, 0))
-        return Pair(nesteNatt, enDag)
-    }
-    throw IllegalStateException("Ukjent cluster name for cronjob ${env.cluster}")
-}
 
-private fun ZonedDateTime.next(atTime: LocalTime): Date {
-    return if (this.toLocalTime().isAfter(atTime)) {
-        Date.from(
-            this.plusDays(1).withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant()
-        )
-    } else {
-        Date.from(this.withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant())
+    private fun ZonedDateTime.next(atTime: LocalTime): Long {
+        return if (this.toLocalTime().isAfter(atTime)) {
+            this.plusDays(1).withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant().toEpochMilli()
+        } else {
+            this.withHour(atTime.hour).withMinute(atTime.minute).withSecond(atTime.second).toInstant().toEpochMilli()
+        }
     }
 }
