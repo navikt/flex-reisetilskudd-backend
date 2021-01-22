@@ -14,7 +14,7 @@ val smCommonVersion = "1.c22544d"
 val testContainerKafkaVersion = "1.15.1"
 val kafkaVersion = "2.7.0"
 val postgresVersion = "42.2.18"
-val flywayVersion = "7.5.0"
+val flywayVersion = "7.5.1"
 val hikariVersion = "3.4.5"
 val junitVersion = "5.7.0"
 
