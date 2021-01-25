@@ -15,7 +15,7 @@ import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringSerializer
@@ -107,19 +107,19 @@ internal class CronjobKtTest {
 
         val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
         reisetilskuddeneFør.size shouldBe 4
-        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.SENDT
-        reisetilskuddeneFør[1].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneFør[2].status shouldEqual ReisetilskuddStatus.FREMTIDIG
-        reisetilskuddeneFør[3].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneFør[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
+        reisetilskuddeneFør[1].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
+        reisetilskuddeneFør[2].status shouldBeEqualTo ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneFør[3].status shouldBeEqualTo ReisetilskuddStatus.FREMTIDIG
 
         cronjob.run()
 
         val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
         reisetilskuddeneEtter.size shouldBe 4
-        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.SENDT
-        reisetilskuddeneEtter[1].status shouldEqual ReisetilskuddStatus.SENDBAR
-        reisetilskuddeneEtter[2].status shouldEqual ReisetilskuddStatus.ÅPEN
-        reisetilskuddeneEtter[3].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneEtter[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
+        reisetilskuddeneEtter[1].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
+        reisetilskuddeneEtter[2].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
+        reisetilskuddeneEtter[3].status shouldBeEqualTo ReisetilskuddStatus.FREMTIDIG
     }
 
     private fun reisetilskudd(

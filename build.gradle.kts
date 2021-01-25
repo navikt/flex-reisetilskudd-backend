@@ -117,5 +117,6 @@ tasks {
     }
     named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileTestKotlin") {
         kotlinOptions.jvmTarget = "14"
+        kotlinOptions.allWarningsAsErrors = true
     }
 }

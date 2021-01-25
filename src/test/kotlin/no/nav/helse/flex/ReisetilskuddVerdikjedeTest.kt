@@ -42,7 +42,7 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 response.content!!.tilReisetilskuddListe().size `should be equal to` 0
             }
         }
@@ -88,17 +88,17 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 val reisetilskudd = response.content!!.tilReisetilskuddListe()
                 reisetilskudd.size `should be equal to` 1
-                reisetilskudd[0].fnr shouldEqual fnr
-                reisetilskudd[0].fom shouldEqual fom
-                reisetilskudd[0].tom shouldEqual tom
-                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.SENDBAR
-                reisetilskudd[0].sykmeldingId shouldEqual sykmeldingId
-                reisetilskudd[0].egenBil shouldEqual 0.0
+                reisetilskudd[0].fnr shouldBeEqualTo fnr
+                reisetilskudd[0].fom shouldBeEqualTo fom
+                reisetilskudd[0].tom shouldBeEqualTo tom
+                reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
+                reisetilskudd[0].sykmeldingId shouldBeEqualTo sykmeldingId
+                reisetilskudd[0].egenBil shouldBeEqualTo 0.0
                 reisetilskudd[0].sykler.shouldBeNull()
-                reisetilskudd[0].kollektivtransport shouldEqual 0.0
+                reisetilskudd[0].kollektivtransport shouldBeEqualTo 0.0
                 reisetilskudd[0].oppfølgende.`should be false`()
                 reisetilskudd[0].sendt.shouldBeNull()
                 reisetilskudd[0].avbrutt.shouldBeNull()
@@ -120,7 +120,7 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr, level = "Level3")
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.Unauthorized
+                response.status() shouldBeEqualTo HttpStatusCode.Unauthorized
             }
         }
     }
@@ -137,18 +137,18 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
             }
             with(
                 engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 val reisetilskudd = response.content!!.tilReisetilskuddListe()
                 reisetilskudd.size `should be equal to` 1
 
-                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.AVBRUTT
+                reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
                 reisetilskudd[0].avbrutt.shouldNotBeNull()
             }
         }
@@ -166,18 +166,18 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
             }
             with(
                 engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 val reisetilskudd = response.content!!.tilReisetilskuddListe()
                 reisetilskudd.size `should be equal to` 1
 
-                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.SENDBAR
+                reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
                 reisetilskudd[0].avbrutt.shouldBeNull()
             }
         }
@@ -197,7 +197,7 @@ internal class ReisetilskuddVerdikjedeTest {
                     setBody(Svar(sykler = true).serialisertTilString())
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 val reisetilskudd = response.content.tilReisetilskudd()
                 reisetilskudd.sykler?.shouldBeTrue()
             }
@@ -226,9 +226,9 @@ internal class ReisetilskuddVerdikjedeTest {
                     setBody(kvittering.serialisertTilString())
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.Created
+                response.status() shouldBeEqualTo HttpStatusCode.Created
                 val kvittering = response.content.tilKvittering()
-                kvittering.datoForReise.`should equal`(LocalDate.now())
+                kvittering.datoForReise.`should be equal to`(LocalDate.now())
                 kvittering.kvitteringId.shouldNotBeNull()
             }
         }
@@ -245,10 +245,10 @@ internal class ReisetilskuddVerdikjedeTest {
             kvitteringer.size `should be equal to` 1
             val kvittering = kvitteringer.first()
 
-            kvittering.datoForReise.`should equal`(LocalDate.now())
+            kvittering.datoForReise.`should be equal to`(LocalDate.now())
             kvittering.kvitteringId.shouldNotBeNull()
-            kvittering.storrelse.`should equal`(12)
-            kvittering.belop.`should equal`(133700)
+            kvittering.storrelse.`should be equal to`(12)
+            kvittering.belop.`should be equal to`(133700)
         }
     }
 
@@ -270,7 +270,7 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
             }
 
             val reisetilskuddEtter = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
@@ -293,18 +293,18 @@ internal class ReisetilskuddVerdikjedeTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
             }
             with(
                 engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 val reisetilskudd = response.content!!.tilReisetilskuddListe()
                 reisetilskudd.size `should be equal to` 1
 
-                reisetilskudd[0].status shouldEqual ReisetilskuddStatus.SENDT
+                reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
                 reisetilskudd[0].sendt.shouldNotBeNull()
             }
         }

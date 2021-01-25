@@ -62,12 +62,12 @@ internal class DatabaseTest {
             egenBil = 0.0,
             kollektivtransport = 37.0,
             opprettet = Instant.now(),
-            )
+        )
         db.oppdaterReisetilskudd(svar)
         val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.fnr shouldBeEqualTo fnr
-        nyRtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+        nyRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
         nyRtFraDB.utbetalingTilArbeidsgiver?.shouldBeFalse()
         nyRtFraDB.går?.shouldBeTrue()
         nyRtFraDB.sykler?.shouldBeTrue()
@@ -85,20 +85,20 @@ internal class DatabaseTest {
         val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
-        rtFraDB.status shouldEqual ReisetilskuddStatus.SENDBAR
+        rtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
         val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt.shouldNotBeNull()
-        nyRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
+        nyRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDT
 
         db.sendReisetilskudd(fnr, rt.reisetilskuddId)
         val nyereRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyereRtFraDB.shouldNotBeNull()
         nyereRtFraDB.shouldNotBeNull()
-        nyRtFraDB.sendt shouldEqual nyereRtFraDB.sendt
-        nyereRtFraDB.status shouldEqual ReisetilskuddStatus.SENDT
+        nyRtFraDB.sendt shouldBeEqualTo nyereRtFraDB.sendt
+        nyereRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDT
     }
 
     @Test
@@ -110,18 +110,18 @@ internal class DatabaseTest {
         val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
-        rtFraDB.status shouldEqual ReisetilskuddStatus.ÅPEN
+        rtFraDB.status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
 
         db.avbrytReisetilskudd(fnr, rt.reisetilskuddId)
         val avbruttRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         avbruttRtFraDB.shouldNotBeNull()
-        avbruttRtFraDB.status shouldEqual ReisetilskuddStatus.AVBRUTT
+        avbruttRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
         avbruttRtFraDB.avbrutt.shouldNotBeNull()
 
         db.gjenapneReisetilskudd(fnr, rt.reisetilskuddId)
         val gjenåpnetRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         gjenåpnetRtFraDB.shouldNotBeNull()
-        gjenåpnetRtFraDB.status shouldEqual ReisetilskuddStatus.SENDBAR
+        gjenåpnetRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         gjenåpnetRtFraDB.avbrutt.shouldBeNull()
     }
 
@@ -137,7 +137,7 @@ internal class DatabaseTest {
         db.lagreReisetilskudd(rtFremtidig)
         val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
         reisetilskuddeneFør.size shouldBe 1
-        reisetilskuddeneFør[0].status shouldEqual ReisetilskuddStatus.FREMTIDIG
+        reisetilskuddeneFør[0].status shouldBeEqualTo ReisetilskuddStatus.FREMTIDIG
 
         val åpnesIkkeFørFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.minusDays(1))
         åpnesIkkeFørFom.size shouldBe 0
@@ -151,7 +151,7 @@ internal class DatabaseTest {
         db.åpneReisetilskudd(åpnesNårDatoErEtterFom.first())
         val åpneReisetilskudd = db.hentReisetilskuddene(fnr)
         åpneReisetilskudd.size shouldBe 1
-        åpneReisetilskudd[0].status shouldEqual ReisetilskuddStatus.ÅPEN
+        åpneReisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
 
         val blirIkkeSendtbartFørTom = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.minusDays(5))
         blirIkkeSendtbartFørTom.size shouldBe 0
@@ -165,7 +165,7 @@ internal class DatabaseTest {
         db.sendbarReisetilskudd(blirSendtbartNårTomErPassert.first())
         val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
         reisetilskuddeneEtter.size shouldBe 1
-        reisetilskuddeneEtter[0].status shouldEqual ReisetilskuddStatus.SENDBAR
+        reisetilskuddeneEtter[0].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
     }
 
     @Test
@@ -211,7 +211,7 @@ private fun reisetilskudd(fnr: String): Reisetilskudd =
         status = ReisetilskuddStatus.ÅPEN,
         oppfølgende = false,
         opprettet = Instant.now(),
-        )
+    )
 
 private fun kvittering(): Kvittering =
     Kvittering(
