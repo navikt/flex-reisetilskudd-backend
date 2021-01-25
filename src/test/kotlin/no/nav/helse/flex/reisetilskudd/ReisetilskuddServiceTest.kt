@@ -11,7 +11,7 @@ import no.nav.helse.flex.utils.lagSykmeldingMessage
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringSerializer
@@ -88,20 +88,20 @@ internal class ReisetilskuddServiceTest {
 
         reisetilskudd[0].status shouldBe ReisetilskuddStatus.FREMTIDIG
         reisetilskudd[0].oppfølgende shouldBe true
-        reisetilskudd[0].fom shouldEqual now.plusDays(1)
-        reisetilskudd[0].tom shouldEqual now.plusDays(24)
+        reisetilskudd[0].fom shouldBeEqualTo now.plusDays(1)
+        reisetilskudd[0].tom shouldBeEqualTo now.plusDays(24)
         ChronoUnit.DAYS.between(reisetilskudd[0].fom, reisetilskudd[0].tom) + 1 shouldBe 24
 
         reisetilskudd[1].status shouldBe ReisetilskuddStatus.ÅPEN
         reisetilskudd[1].oppfølgende shouldBe true
-        reisetilskudd[1].fom shouldEqual now.minusDays(24)
-        reisetilskudd[1].tom shouldEqual now
+        reisetilskudd[1].fom shouldBeEqualTo now.minusDays(24)
+        reisetilskudd[1].tom shouldBeEqualTo now
         ChronoUnit.DAYS.between(reisetilskudd[1].fom, reisetilskudd[1].tom) + 1 shouldBe 25
 
         reisetilskudd[2].status shouldBe ReisetilskuddStatus.SENDBAR
         reisetilskudd[2].oppfølgende shouldBe false
-        reisetilskudd[2].fom shouldEqual now.minusDays(49)
-        reisetilskudd[2].tom shouldEqual now.minusDays(25)
+        reisetilskudd[2].fom shouldBeEqualTo now.minusDays(49)
+        reisetilskudd[2].tom shouldBeEqualTo now.minusDays(25)
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
     }
 
@@ -139,20 +139,20 @@ internal class ReisetilskuddServiceTest {
 
         reisetilskudd[0].status shouldBe ReisetilskuddStatus.ÅPEN
         reisetilskudd[0].oppfølgende shouldBe true
-        reisetilskudd[0].fom shouldEqual now
-        reisetilskudd[0].tom shouldEqual now.plusDays(20)
+        reisetilskudd[0].fom shouldBeEqualTo now
+        reisetilskudd[0].tom shouldBeEqualTo now.plusDays(20)
         ChronoUnit.DAYS.between(reisetilskudd[0].fom, reisetilskudd[0].tom) + 1 shouldBe 21
 
         reisetilskudd[1].status shouldBe ReisetilskuddStatus.SENDBAR
         reisetilskudd[1].oppfølgende shouldBe true
-        reisetilskudd[1].fom shouldEqual now.minusDays(25)
-        reisetilskudd[1].tom shouldEqual now.minusDays(1)
+        reisetilskudd[1].fom shouldBeEqualTo now.minusDays(25)
+        reisetilskudd[1].tom shouldBeEqualTo now.minusDays(1)
         ChronoUnit.DAYS.between(reisetilskudd[1].fom, reisetilskudd[1].tom) + 1 shouldBe 25
 
         reisetilskudd[2].status shouldBe ReisetilskuddStatus.SENDBAR
         reisetilskudd[2].oppfølgende shouldBe false
-        reisetilskudd[2].fom shouldEqual now.minusDays(50)
-        reisetilskudd[2].tom shouldEqual now.minusDays(26)
+        reisetilskudd[2].fom shouldBeEqualTo now.minusDays(50)
+        reisetilskudd[2].tom shouldBeEqualTo now.minusDays(26)
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
     }
 }

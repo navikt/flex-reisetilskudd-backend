@@ -14,7 +14,7 @@ import no.nav.syfo.model.sykmelding.model.GradertDTO
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
@@ -117,7 +117,7 @@ internal class SykmeldingKafkaServiceTest {
                     medSelvbetjeningToken("fnr")
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 response.content!!.tilReisetilskuddListe().size `should be equal to` 0
             }
         }
@@ -158,7 +158,7 @@ internal class SykmeldingKafkaServiceTest {
                     medSelvbetjeningToken("fnr")
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.OK
+                response.status() shouldBeEqualTo HttpStatusCode.OK
                 val reisetilskuddene = response.content!!.tilReisetilskuddListe()
                 reisetilskuddene.size `should be equal to` 3
                 reisetilskuddene.filter {

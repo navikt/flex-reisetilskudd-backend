@@ -54,7 +54,7 @@ internal class ReisetilskuddInputValideringTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.BadRequest
+                response.status() shouldBeEqualTo HttpStatusCode.BadRequest
                 response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
                 response.content!! `should be equal to` "{\"message\":\"Operasjonen støttes ikke på søknad med status FREMTIDIG\"}"
             }
@@ -64,7 +64,7 @@ internal class ReisetilskuddInputValideringTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.BadRequest
+                response.status() shouldBeEqualTo HttpStatusCode.BadRequest
                 response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
                 response.content!! `should be equal to` "{\"message\":\"Operasjonen støttes ikke på søknad med status ÅPEN\"}"
             }
@@ -80,7 +80,7 @@ internal class ReisetilskuddInputValideringTest {
                     medSelvbetjeningToken(fnr)
                 }
             ) {
-                response.status() shouldEqual HttpStatusCode.NotFound
+                response.status() shouldBeEqualTo HttpStatusCode.NotFound
                 response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
                 response.content!! `should be equal to` "{\"message\":\"Søknad ikke funnet\"}"
             }
@@ -98,7 +98,7 @@ internal class ReisetilskuddInputValideringTest {
                     medSelvbetjeningToken("01010132548")
                 }
             ) {
-                response.status() shouldEqual Forbidden
+                response.status() shouldBeEqualTo Forbidden
                 response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
                 response.content!! `should be equal to` "{\"message\":\"Bruker eier ikke søknaden\"}"
             }
