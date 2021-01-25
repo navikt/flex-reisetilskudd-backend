@@ -1,7 +1,7 @@
 package no.nav.helse.flex.reisetilskudd.domain
 
+import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 data class Reisetilskudd(
     val status: ReisetilskuddStatus,
@@ -11,8 +11,9 @@ data class Reisetilskudd(
     val fnr: String,
     val fom: LocalDate,
     val tom: LocalDate,
-    val sendt: LocalDateTime? = null,
-    val avbrutt: LocalDateTime? = null,
+    val opprettet: Instant,
+    val sendt: Instant? = null,
+    val avbrutt: Instant? = null,
     val orgNummer: String?,
     val orgNavn: String?,
     val utbetalingTilArbeidsgiver: Boolean? = null,

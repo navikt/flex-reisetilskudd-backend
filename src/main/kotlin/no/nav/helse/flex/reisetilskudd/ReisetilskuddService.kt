@@ -16,6 +16,7 @@ import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import java.time.Instant
 import java.util.*
 
 class ReisetilskuddService(
@@ -39,7 +40,8 @@ class ReisetilskuddService(
                         fom = periode.fom,
                         tom = periode.tom,
                         orgNavn = sykmeldingMessage.event.arbeidsgiver?.orgNavn,
-                        orgNummer = sykmeldingMessage.event.arbeidsgiver?.orgnummer
+                        orgNummer = sykmeldingMessage.event.arbeidsgiver?.orgnummer,
+                        opprettet = Instant.now()
                     )
                 }
                 .forEach { reisetilskudd ->

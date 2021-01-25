@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test
 import org.testcontainers.containers.KafkaContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.utility.DockerImageName
+import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
@@ -140,6 +141,7 @@ internal class CronjobKtTest {
         orgNummer = orgNummer,
         orgNavn = orgNavn,
         status = status ?: reisetilskuddStatus(fom, tom),
-        oppfølgende = oppfølgende
+        oppfølgende = oppfølgende,
+        opprettet = Instant.now(),
     )
 }

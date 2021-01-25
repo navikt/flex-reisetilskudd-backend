@@ -14,6 +14,7 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.*
 
 fun DatabaseInterface.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
@@ -193,7 +194,6 @@ private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: Strin
 }
 
 private fun Connection.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-    val now = Instant.now()
 
     this.prepareStatement(
         """
@@ -220,8 +220,8 @@ private fun Connection.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
         it.setDate(5, Date.valueOf(reisetilskudd.tom))
         it.setString(6, reisetilskudd.orgNummer)
         it.setString(7, reisetilskudd.orgNavn)
-        it.setTimestamp(8, Timestamp.from(now))
-        it.setTimestamp(9, Timestamp.from(now))
+        it.setTimestamp(8, Timestamp.from(reisetilskudd.opprettet))
+        it.setTimestamp(9, Timestamp.from(reisetilskudd.opprettet))
         it.setString(10, reisetilskudd.status.name)
         it.setInt(11, reisetilskudd.oppfølgende.toInt())
         it.executeUpdate()
@@ -382,8 +382,9 @@ fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Rei
         tom = getObject("tom", LocalDate::class.java),
         orgNummer = getString("arbeidsgiver_orgnummer"),
         orgNavn = getString("arbeidsgiver_navn"),
-        sendt = getObject("sendt", LocalDateTime::class.java),
-        avbrutt = getObject("avbrutt", LocalDateTime::class.java),
+        sendt = getObject("sendt", OffsetDateTime::class.java)?.toInstant(),
+        avbrutt = getObject("avbrutt", OffsetDateTime::class.java)?.toInstant(),
+        opprettet = getObject("opprettet", OffsetDateTime::class.java).toInstant(),
         utbetalingTilArbeidsgiver = getInt("utbetaling_til_arbeidsgiver").toOptionalBoolean(),
         går = getInt("gar").toOptionalBoolean(),
         sykler = getInt("sykler").toOptionalBoolean(),

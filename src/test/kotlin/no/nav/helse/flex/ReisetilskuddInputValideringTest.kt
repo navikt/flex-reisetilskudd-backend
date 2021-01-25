@@ -13,6 +13,7 @@ import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.ÅPEN
 import no.nav.helse.flex.utils.*
 import org.amshove.kluent.*
 import org.junit.jupiter.api.*
+import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
@@ -114,7 +115,8 @@ internal class ReisetilskuddInputValideringTest {
             orgNavn = "dsf",
             orgNummer = "sdfsdf",
             status = status,
-            sykmeldingId = UUID.randomUUID().toString()
+            sykmeldingId = UUID.randomUUID().toString(),
+            opprettet = Instant.now(),
         )
     }
 }
