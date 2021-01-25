@@ -9,6 +9,7 @@ import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
 import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
@@ -59,8 +60,9 @@ internal class DatabaseTest {
             går = true,
             sykler = true,
             egenBil = 0.0,
-            kollektivtransport = 37.0
-        )
+            kollektivtransport = 37.0,
+            opprettet = Instant.now(),
+            )
         db.oppdaterReisetilskudd(svar)
         val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
@@ -207,8 +209,9 @@ private fun reisetilskudd(fnr: String): Reisetilskudd =
         orgNummer = "12345",
         orgNavn = "min arbeidsplass",
         status = ReisetilskuddStatus.ÅPEN,
-        oppfølgende = false
-    )
+        oppfølgende = false,
+        opprettet = Instant.now(),
+        )
 
 private fun kvittering(): Kvittering =
     Kvittering(
