@@ -15,7 +15,7 @@ val testContainerKafkaVersion = "1.15.1"
 val kafkaVersion = "2.7.0"
 val postgresVersion = "42.2.18"
 val flywayVersion = "7.5.1"
-val hikariVersion = "4.0.0"
+val hikariVersion = "4.0.1"
 val junitVersion = "5.7.0"
 
 val githubUser: String by project
