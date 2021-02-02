@@ -5,75 +5,78 @@ import no.nav.helse.flex.application.metrics.ÅPNE_REISETILSKUDD
 import no.nav.helse.flex.db.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
-import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalBliSendbar
-import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalÅpnes
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.sendbarReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.åpneReisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import org.apache.kafka.clients.producer.KafkaProducer
+import no.nav.helse.flex.reisetilskudd.transactions.Transactions
+import no.nav.helse.flex.reisetilskudd.transactions.finnReisetilskuddSomSkalBliSendbar
+import no.nav.helse.flex.reisetilskudd.transactions.finnReisetilskuddSomSkalÅpnes
+import no.nav.helse.flex.reisetilskudd.transactions.hentReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.sendbarReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.åpneReisetilskudd
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.time.LocalDate
 
 class AktiverService(
-    private val database: DatabaseInterface,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
+    database: DatabaseInterface,
+    aivenKafkaConfig: AivenKafkaConfig
+) : Transactions(
+    database,
+    aivenKafkaConfig
 ) {
-    fun åpneReisetilskudd(now: LocalDate = LocalDate.now()): Int {
+    fun åpneReisetilskudd(now: LocalDate = LocalDate.now()) {
         log.info("Leter etter reisetilskudd som skal bli ÅPNE")
 
-        val reisetilskuddSomSkalÅpnes = database.finnReisetilskuddSomSkalÅpnes(now)
-        log.info("Fant ${reisetilskuddSomSkalÅpnes.size} reisetilskudd som skal bli ÅPNE")
+        transaction {
+            val reisetilskuddSomSkalÅpnes = this.finnReisetilskuddSomSkalÅpnes(now)
+            log.info("Fant ${reisetilskuddSomSkalÅpnes.size} reisetilskudd som skal bli ÅPNE")
 
-        var i = 0
-        reisetilskuddSomSkalÅpnes.forEach { id ->
-            try {
-                database.åpneReisetilskudd(id)
-                i++
-                val reisetilskudd = database.hentReisetilskudd(id)
-                kafkaProducer.send(
-                    ProducerRecord(
-                        AivenKafkaConfig.topic,
-                        id,
-                        reisetilskudd
-                    )
-                ).get()
-                ÅPNE_REISETILSKUDD.inc()
-            } catch (e: Exception) {
-                log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
+            var i = 0
+            reisetilskuddSomSkalÅpnes.forEach { id ->
+                try {
+                    this.åpneReisetilskudd(id)
+                    i++
+                    val reisetilskudd = this.hentReisetilskudd(id)
+                    kafkaProducer.send(
+                        ProducerRecord(
+                            AivenKafkaConfig.topic,
+                            id,
+                            reisetilskudd
+                        )
+                    ).get()
+                    ÅPNE_REISETILSKUDD.inc()
+                } catch (e: Exception) {
+                    log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
+                }
             }
+            log.info("$i reisetilskudd ble ÅPNE")
         }
-
-        log.info("$i reisetilskudd ble ÅPNE")
-        return i
     }
 
-    fun sendbareReisetilskudd(now: LocalDate = LocalDate.now()): Int {
+    fun sendbareReisetilskudd(now: LocalDate = LocalDate.now()) {
         log.info("Leter etter reisetilskudd som skal bli SENDBAR")
 
-        val reisetilskuddSomSkalBliSendbar = database.finnReisetilskuddSomSkalBliSendbar(now)
-        log.info("Fant ${reisetilskuddSomSkalBliSendbar.size} reisetilskudd som skal bli SENDBAR")
+        transaction {
+            val reisetilskuddSomSkalBliSendbar = this.finnReisetilskuddSomSkalBliSendbar(now)
+            log.info("Fant ${reisetilskuddSomSkalBliSendbar.size} reisetilskudd som skal bli SENDBAR")
 
-        var i = 0
-        reisetilskuddSomSkalBliSendbar.forEach { id ->
-            try {
-                database.sendbarReisetilskudd(id)
-                i++
-                val reisetilskudd = database.hentReisetilskudd(id)
-                kafkaProducer.send(
-                    ProducerRecord(
-                        AivenKafkaConfig.topic,
-                        id,
-                        reisetilskudd
-                    )
-                ).get()
-                SENDBARE_REISETILSKUDD.inc()
-            } catch (e: Exception) {
-                log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
+            var i = 0
+            reisetilskuddSomSkalBliSendbar.forEach { id ->
+                try {
+                    this.sendbarReisetilskudd(id)
+                    i++
+                    val reisetilskudd = this.hentReisetilskudd(id)
+                    kafkaProducer.send(
+                        ProducerRecord(
+                            AivenKafkaConfig.topic,
+                            id,
+                            reisetilskudd
+                        )
+                    ).get()
+                    SENDBARE_REISETILSKUDD.inc()
+                } catch (e: Exception) {
+                    log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
+                }
             }
-        }
 
-        log.info("$i reisetilskudd ble SENDBAR")
-        return i
+            log.info("$i reisetilskudd ble SENDBAR")
+        }
     }
 }

@@ -43,19 +43,22 @@ class TestApp(
 @KtorExperimentalAPI
 fun skapTestApplication(): TestApp {
     val applicationState = ApplicationState()
-    val kafkaAivenConfig = mockk<AivenKafkaConfig>()
 
     val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
         .withNetwork(Network.newNetwork())
+        .apply {
+            addEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
+            addEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
+        }
     val kafkaConfig = Properties()
     val env = mockk<Environment>()
+    val kafkaAivenConfig = AivenKafkaConfig(env)
 
     kafka.start()
-
     val producerProperties = mapOf(
         ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
         ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
+        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java,
     )
 
     fun setupEnvMock() {
@@ -67,7 +70,12 @@ fun skapTestApplication(): TestApp {
         every { env.kafkaAutoOffsetReset } returns "earliest"
         every { env.loginserviceIdportenAudience } returns "AUD"
         every { env.kafkaBootstrapServers } returns kafka.bootstrapServers
-        every { kafkaAivenConfig.producer() } returns KafkaProducer(producerProperties)
+        every { env.bootstrapServers() } returns kafka.bootstrapServers
+        every { env.securityProtocol() } returns "PLAINTEXT"
+        every { env.sslTruststoreLocation() } returns "/"
+        every { env.sslKeystoreLocation() } returns "/"
+        every { env.sslTruststorePassword() } returns "123"
+        every { env.sslKeystorePassword() } returns "123"
     }
 
     kafkaConfig.let {

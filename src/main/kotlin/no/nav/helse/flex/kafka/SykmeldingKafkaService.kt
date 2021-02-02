@@ -25,7 +25,6 @@ class SykmeldingKafkaService(
             } catch (ex: Exception) {
                 log.error("Uhåndtert feil i SykmeldingKafkaService, restarter om $delayStart ms", ex)
                 kafkaConsumer.unsubscribe()
-                reisetilskuddService.lukkProducer()
             }
             delay(delayStart)
         }
@@ -35,7 +34,6 @@ class SykmeldingKafkaService(
         log.info("Starter SykmeldingKafkaService")
 
         kafkaConsumer.subscribe(listOf("syfo-sendt-sykmelding", "syfo-bekreftet-sykmelding"))
-        reisetilskuddService.settOppKafkaProducer()
 
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofMillis(1000))

@@ -7,15 +7,19 @@ import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG
+import org.apache.kafka.clients.consumer.ConsumerConfig.ISOLATION_LEVEL_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG
+import org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.RETRIES_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.RETRY_BACKOFF_MS_CONFIG
+import org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
+import org.apache.kafka.common.IsolationLevel
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
@@ -31,16 +35,19 @@ class AivenKafkaConfig(val environment: Environment) {
         KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
         VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java,
         ACKS_CONFIG to "all",
-        RETRIES_CONFIG to 10,
-        RETRY_BACKOFF_MS_CONFIG to 100
+        RETRIES_CONFIG to 1000,
+        RETRY_BACKOFF_MS_CONFIG to 100,
+        ENABLE_IDEMPOTENCE_CONFIG to true,
+        TRANSACTIONAL_ID_CONFIG to "aiven-kafka-producer-flex-reisetilskudd-backend"
     ) + commonConfig()
 
     private fun consumerConfig() = mapOf(
         GROUP_ID_CONFIG to environment.applicationName,
         ENABLE_AUTO_COMMIT_CONFIG to false,
         KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-        VALUE_DESERIALIZER_CLASS_CONFIG to JacksonKafkaDeserializer::class.java,
-        AUTO_OFFSET_RESET_CONFIG to environment.kafkaAutoOffsetReset
+        VALUE_DESERIALIZER_CLASS_CONFIG to JacksonKafkaReisetilskuddDeserializer::class.java,
+        AUTO_OFFSET_RESET_CONFIG to environment.kafkaAutoOffsetReset,
+        ISOLATION_LEVEL_CONFIG to IsolationLevel.READ_COMMITTED.toString().toLowerCase()
     ) + commonConfig()
 
     private fun commonConfig() = mapOf(

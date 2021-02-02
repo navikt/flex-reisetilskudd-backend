@@ -42,13 +42,10 @@ class Cronjob(
         try {
             if (podLeaderCoordinator.isLeader() && env.cluster != "prod-gcp") {
                 log.info("Kjører reisetilskudd cronjob")
-                val kafkaProducer = aivenKafkaConfig.producer()
-                val aktiverService = AktiverService(database, kafkaProducer)
+                val aktiverService = AktiverService(database, aivenKafkaConfig)
 
                 aktiverService.åpneReisetilskudd()
                 aktiverService.sendbareReisetilskudd()
-
-                kafkaProducer.close()
             }
         } catch (ex: Exception) {
             log.error("Feil i cronjob, kjøres på nytt neste gang", ex)

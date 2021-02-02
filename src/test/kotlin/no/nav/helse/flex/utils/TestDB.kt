@@ -8,7 +8,7 @@ import java.sql.Connection
 class TestDB : DatabaseInterface {
     private var pg: EmbeddedPostgres? = null
     override val connection: Connection
-        get() = pg!!.postgresDatabase.connection.apply { autoCommit = false }
+        get() = pg!!.postgresDatabase.connection.apply { autoCommit = true }
 
     init {
         pg = try {
@@ -31,6 +31,5 @@ fun Connection.dropData() {
     use { connection ->
         connection.prepareStatement("DELETE FROM kvitteringer").executeUpdate()
         connection.prepareStatement("DELETE FROM reisetilskudd").executeUpdate()
-        connection.commit()
     }
 }

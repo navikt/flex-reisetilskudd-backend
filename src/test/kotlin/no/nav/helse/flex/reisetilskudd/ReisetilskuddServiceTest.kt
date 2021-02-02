@@ -3,8 +3,8 @@ package no.nav.helse.flex.reisetilskudd
 import io.ktor.util.*
 import io.mockk.every
 import io.mockk.mockk
+import no.nav.helse.flex.Environment
 import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.JacksonKafkaSerializer
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
 import no.nav.helse.flex.utils.lagSykmeldingMessage
@@ -12,9 +12,6 @@ import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringSerializer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.KafkaContainer
@@ -29,7 +26,12 @@ internal class ReisetilskuddServiceTest {
         val db = TestDB()
         val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
             .withNetwork(Network.newNetwork())
-        val aivenKafkaConfig = mockk<AivenKafkaConfig>()
+            .apply {
+                addEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
+                addEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
+            }
+        val env = mockk<Environment>()
+        val aivenKafkaConfig = AivenKafkaConfig(env)
         val reisetilskuddService = ReisetilskuddService(
             database = db,
             aivenKafkaConfig = aivenKafkaConfig
@@ -39,16 +41,12 @@ internal class ReisetilskuddServiceTest {
         @JvmStatic
         internal fun beforeAll() {
             kafka.start()
-
-            every { aivenKafkaConfig.producer() } returns KafkaProducer(
-                mapOf(
-                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
-                    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-                    ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
-                )
-            )
-
-            reisetilskuddService.settOppKafkaProducer()
+            every { env.bootstrapServers() } returns kafka.bootstrapServers
+            every { env.securityProtocol() } returns "PLAINTEXT"
+            every { env.sslTruststoreLocation() } returns "/"
+            every { env.sslKeystoreLocation() } returns "/"
+            every { env.sslTruststorePassword() } returns "123"
+            every { env.sslKeystorePassword() } returns "123"
         }
     }
 

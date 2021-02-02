@@ -40,13 +40,14 @@ internal class ReisetilskuddInputValideringTest {
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
         with(testApp) {
-            val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-                testDb.lagreReisetilskudd(it)
+            val reisetilskudd = reisetilskudd(FREMTIDIG)
+            testDb.connection.run {
+                lagreReisetilskudd(reisetilskudd)
             }
 
             val reisetilskudd2 = reisetilskudd(ÅPEN)
                 .also {
-                    testDb.lagreReisetilskudd(it)
+                    testDb.connection.lagreReisetilskudd(it)
                 }
 
             with(
@@ -91,7 +92,7 @@ internal class ReisetilskuddInputValideringTest {
     fun `En annen persons reisetilskudd id gir 403`() {
         with(testApp) {
             val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-                testDb.lagreReisetilskudd(it)
+                testDb.connection.lagreReisetilskudd(it)
             }
             with(
                 engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd/${reisetilskudd.reisetilskuddId}") {

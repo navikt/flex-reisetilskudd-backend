@@ -7,7 +7,6 @@ import io.mockk.mockk
 import no.nav.helse.flex.Environment
 import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.JacksonKafkaSerializer
 import no.nav.helse.flex.reisetilskudd.db.hentReisetilskuddene
 import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
@@ -16,9 +15,6 @@ import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import no.nav.helse.flex.utils.TestDB
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringSerializer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -37,7 +33,11 @@ internal class CronjobKtTest {
         val env = mockk<Environment>()
         val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
             .withNetwork(Network.newNetwork())
-        val aivenKafkaConfig = mockk<AivenKafkaConfig>()
+            .apply {
+                addEnv("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
+                addEnv("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
+            }
+        val aivenKafkaConfig = AivenKafkaConfig(env)
         val podLeaderCoordinator = mockk<PodLeaderCoordinator>()
         val cronjob = Cronjob(
             applicationState = applicationState,
@@ -56,16 +56,15 @@ internal class CronjobKtTest {
 
     @BeforeEach
     fun beforeEach() {
-        val producerProperties = mapOf(
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
-        )
-
         clearAllMocks()
         every { env.cluster } returns "test"
         every { env.electorPath } returns "dont_look_for_leader"
-        every { aivenKafkaConfig.producer() } returns KafkaProducer(producerProperties)
+        every { env.bootstrapServers() } returns kafka.bootstrapServers
+        every { env.securityProtocol() } returns "PLAINTEXT"
+        every { env.sslTruststoreLocation() } returns "/"
+        every { env.sslKeystoreLocation() } returns "/"
+        every { env.sslTruststorePassword() } returns "123"
+        every { env.sslKeystorePassword() } returns "123"
         every { podLeaderCoordinator.isLeader() } returns true
 
         applicationState.alive = true
@@ -100,12 +99,16 @@ internal class CronjobKtTest {
             tom = now.plusDays(19),
             status = ReisetilskuddStatus.FREMTIDIG
         )
-        db.lagreReisetilskudd(nr4)
-        db.lagreReisetilskudd(nr3)
-        db.lagreReisetilskudd(nr2)
-        db.lagreReisetilskudd(nr1)
+        db.connection.run {
+            lagreReisetilskudd(nr4)
+            lagreReisetilskudd(nr3)
+            lagreReisetilskudd(nr2)
+            lagreReisetilskudd(nr1)
+        }
 
-        val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
+        val reisetilskuddeneFør = db.connection.run {
+            hentReisetilskuddene(fnr)
+        }
         reisetilskuddeneFør.size shouldBe 4
         reisetilskuddeneFør[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
         reisetilskuddeneFør[1].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
@@ -114,7 +117,9 @@ internal class CronjobKtTest {
 
         cronjob.run()
 
-        val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
+        val reisetilskuddeneEtter = db.connection.run {
+            hentReisetilskuddene(fnr)
+        }
         reisetilskuddeneEtter.size shouldBe 4
         reisetilskuddeneEtter[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
         reisetilskuddeneEtter[1].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR

@@ -10,21 +10,27 @@ import no.nav.helse.flex.kafka.reisetilskuddPerioder
 import no.nav.helse.flex.kafka.splittLangeSykmeldingperioder
 import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
 import no.nav.helse.flex.log
-import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.Transactions
+import no.nav.helse.flex.reisetilskudd.transactions.avbrytReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.gjenapneReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.lagreKvittering
+import no.nav.helse.flex.reisetilskudd.transactions.lagreReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.oppdaterReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.sendReisetilskudd
+import no.nav.helse.flex.reisetilskudd.transactions.slettKvittering
 import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import java.time.Instant
 import java.util.*
 
 class ReisetilskuddService(
-    private val database: DatabaseInterface,
-    private val aivenKafkaConfig: AivenKafkaConfig
+    database: DatabaseInterface,
+    aivenKafkaConfig: AivenKafkaConfig
+) : Transactions(
+    database,
+    aivenKafkaConfig
 ) {
-    private lateinit var kafkaProducer: KafkaProducer<String, Reisetilskudd>
-
     fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
         sykmeldingMessage.runCatching {
             this.reisetilskuddPerioder()
@@ -44,17 +50,13 @@ class ReisetilskuddService(
                         opprettet = Instant.now()
                     )
                 }
-                .forEach { reisetilskudd ->
-                    // TODO: Transaksjons håndtering
-                    lagreReisetilskudd(reisetilskudd)
-                    kafkaProducer.send(
-                        ProducerRecord(
-                            AivenKafkaConfig.topic,
-                            reisetilskudd.reisetilskuddId,
-                            reisetilskudd
-                        )
-                    ).get()
-                    log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+                .let { reisetilskuddene ->
+                    transaction {
+                        reisetilskuddene.forEach { reisetilskudd ->
+                            this.lagreReisetilskudd(reisetilskudd)
+                            log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+                        }
+                    }
                 }
         }.onSuccess {
             log.info("Sykmelding ${sykmeldingMessage.sykmelding.id} ferdig behandlet")
@@ -64,72 +66,51 @@ class ReisetilskuddService(
         }
     }
 
-    fun settOppKafkaProducer() {
-        kafkaProducer = aivenKafkaConfig.producer()
-    }
-
-    fun lukkProducer() {
-        kafkaProducer.close()
-    }
-
-    fun hentReisetilskuddene(fnr: String) =
-        database.hentReisetilskuddene(fnr)
-
-    fun hentReisetilskudd(reisetilskuddId: String) =
-        database.hentReisetilskudd(reisetilskuddId)
-
-    private fun lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-        database.lagreReisetilskudd(reisetilskudd)
-    }
-
     fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
-        return database.oppdaterReisetilskudd(reisetilskudd)
+        transaction {
+            this.oppdaterReisetilskudd(reisetilskudd)
+        }
+        return hentReisetilskudd(reisetilskuddId = reisetilskudd.reisetilskuddId)!!
     }
 
     fun sendReisetilskudd(fnr: String, reisetilskuddId: String) {
-        val reisetilskudd = database.sendReisetilskudd(fnr, reisetilskuddId)
-        kafkaProducer.send(
-            ProducerRecord(
-                AivenKafkaConfig.topic,
-                reisetilskudd.reisetilskuddId,
-                reisetilskudd
-            )
-        ).get()
+        transaction {
+            this.sendReisetilskudd(fnr, reisetilskuddId)
+        }
+
         SENDT_REISETILSKUDD.inc()
-        log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
+        log.info("Sendte reisetilskudd $reisetilskuddId")
     }
 
     fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
-        val reisetilskudd = database.avbrytReisetilskudd(fnr, reisetilskuddId)
-        kafkaProducer.send(
-            ProducerRecord(
-                AivenKafkaConfig.topic,
-                reisetilskudd.reisetilskuddId,
-                reisetilskudd
-            )
-        ).get()
+        transaction {
+            this.avbrytReisetilskudd(fnr, reisetilskuddId)
+        }
+
         AVBRUTT_REISETILSKUDD.inc()
-        log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
+        log.info("Avbrøt reisetilskudd $reisetilskuddId")
     }
 
     fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
-        val reisetilskudd = database.gjenapneReisetilskudd(fnr, reisetilskuddId)
-        kafkaProducer.send(
-            ProducerRecord(
-                AivenKafkaConfig.topic,
-                reisetilskudd.reisetilskuddId,
-                reisetilskudd
-            )
-        ).get()
+        transaction {
+            this.gjenapneReisetilskudd(fnr, reisetilskuddId)
+        }
+
         GJENÅPNET_REISETILSKUDD.inc()
-        log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+        log.info("Gjenåpnet reisetilskudd $reisetilskuddId")
     }
 
     fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
-        return database.lagreKvittering(kvittering, reisetilskuddId)
+        val kvitteringId = UUID.randomUUID().toString()
+        transaction {
+            this.lagreKvittering(kvittering, reisetilskuddId, kvitteringId)
+        }
+        return hentKvittering(kvitteringId)!!
     }
 
-    fun slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
-        return database.slettKvittering(kvitteringId, reisetilskuddId)
+    fun slettKvittering(kvitteringId: String, reisetilskuddId: String) {
+        transaction {
+            this.slettKvittering(kvitteringId, reisetilskuddId)
+        }
     }
 }

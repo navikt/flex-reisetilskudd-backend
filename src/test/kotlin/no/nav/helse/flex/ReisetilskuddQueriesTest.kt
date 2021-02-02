@@ -20,21 +20,23 @@ internal class DatabaseTest {
     fun `lagre og hente reisetilskudd`() {
         val fnr = "01010112345"
         val rt = reisetilskudd(fnr)
-        db.lagreReisetilskudd(rt)
-        db.hentReisetilskuddene(fnr).size shouldBe 1
-        db.eierReisetilskudd(fnr, rt.reisetilskuddId) shouldBe true
+        db.connection.lagreReisetilskudd(rt)
+        db.connection.hentReisetilskuddene(fnr).size shouldBe 1
+        db.connection.eierReisetilskudd(fnr, rt.reisetilskuddId) shouldBe true
     }
 
     @Test
     fun `lagre og slette kvittering`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
-        db.lagreReisetilskudd(rt)
+        db.connection.lagreReisetilskudd(rt)
         val kv = kvittering()
-        val lagretKvittering = db.lagreKvittering(kv, rt.reisetilskuddId)
-        val reisetilskuddene = db.hentReisetilskuddene(fnr)
+        val kvitteringId = "1234"
+        db.connection.lagreKvittering(kv, rt.reisetilskuddId, kvitteringId)
+        val lagretKvittering = db.connection.hentKvittering(kvitteringId)
+        val reisetilskuddene = db.connection.hentReisetilskuddene(fnr)
         reisetilskuddene.size shouldBe 1
-        val antallSlettet = db.slettKvittering(lagretKvittering.kvitteringId!!, rt.reisetilskuddId)
+        val antallSlettet = db.connection.slettKvittering(lagretKvittering!!.kvitteringId!!, rt.reisetilskuddId)
         antallSlettet `should be equal to` 1
     }
 
@@ -42,8 +44,8 @@ internal class DatabaseTest {
     fun `oppdater reisetilskudd`() {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
-        db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.lagreReisetilskudd(rt)
+        val rtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.egenBil.shouldBeInRange(0.0, 0.0)
         val svar = Reisetilskudd(
@@ -63,8 +65,8 @@ internal class DatabaseTest {
             kollektivtransport = 37.0,
             opprettet = Instant.now(),
         )
-        db.oppdaterReisetilskudd(svar)
-        val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.oppdaterReisetilskudd(svar)
+        val nyRtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.fnr shouldBeEqualTo fnr
         nyRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
@@ -81,20 +83,20 @@ internal class DatabaseTest {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr).copy(status = ReisetilskuddStatus.SENDBAR)
 
-        db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.lagreReisetilskudd(rt)
+        val rtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
         rtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
 
-        db.sendReisetilskudd(fnr, rt.reisetilskuddId)
-        val nyRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.sendReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyRtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         nyRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt.shouldNotBeNull()
         nyRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDT
 
-        db.sendReisetilskudd(fnr, rt.reisetilskuddId)
-        val nyereRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.sendReisetilskudd(fnr, rt.reisetilskuddId)
+        val nyereRtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         nyereRtFraDB.shouldNotBeNull()
         nyereRtFraDB.shouldNotBeNull()
         nyRtFraDB.sendt shouldBeEqualTo nyereRtFraDB.sendt
@@ -106,20 +108,20 @@ internal class DatabaseTest {
         val fnr = "01010111111"
         val rt = reisetilskudd(fnr)
 
-        db.lagreReisetilskudd(rt)
-        val rtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.lagreReisetilskudd(rt)
+        val rtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         rtFraDB.shouldNotBeNull()
         rtFraDB.sendt.shouldBeNull()
         rtFraDB.status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
 
-        db.avbrytReisetilskudd(fnr, rt.reisetilskuddId)
-        val avbruttRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.avbrytReisetilskudd(fnr, rt.reisetilskuddId)
+        val avbruttRtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         avbruttRtFraDB.shouldNotBeNull()
         avbruttRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
         avbruttRtFraDB.avbrutt.shouldNotBeNull()
 
-        db.gjenapneReisetilskudd(fnr, rt.reisetilskuddId)
-        val gjenåpnetRtFraDB = db.hentReisetilskudd(rt.reisetilskuddId)
+        db.connection.gjenapneReisetilskudd(fnr, rt.reisetilskuddId, reisetilskuddStatus(rt.fom, rt.tom))
+        val gjenåpnetRtFraDB = db.connection.hentReisetilskudd(rt.reisetilskuddId)
         gjenåpnetRtFraDB.shouldNotBeNull()
         gjenåpnetRtFraDB.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         gjenåpnetRtFraDB.avbrutt.shouldBeNull()
@@ -134,36 +136,36 @@ internal class DatabaseTest {
             status = ReisetilskuddStatus.FREMTIDIG
         )
 
-        db.lagreReisetilskudd(rtFremtidig)
-        val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
+        db.connection.lagreReisetilskudd(rtFremtidig)
+        val reisetilskuddeneFør = db.connection.hentReisetilskuddene(fnr)
         reisetilskuddeneFør.size shouldBe 1
         reisetilskuddeneFør[0].status shouldBeEqualTo ReisetilskuddStatus.FREMTIDIG
 
-        val åpnesIkkeFørFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.minusDays(1))
+        val åpnesIkkeFørFom = db.connection.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.minusDays(1))
         åpnesIkkeFørFom.size shouldBe 0
 
-        val åpnesNårDatoErFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom)
+        val åpnesNårDatoErFom = db.connection.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom)
         åpnesNårDatoErFom.size shouldBe 1
 
-        val åpnesNårDatoErEtterFom = db.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.plusDays(5))
+        val åpnesNårDatoErEtterFom = db.connection.finnReisetilskuddSomSkalÅpnes(reisetilskuddeneFør[0].fom.plusDays(5))
         åpnesNårDatoErEtterFom.size shouldBe 1
 
-        db.åpneReisetilskudd(åpnesNårDatoErEtterFom.first())
-        val åpneReisetilskudd = db.hentReisetilskuddene(fnr)
+        db.connection.åpneReisetilskudd(åpnesNårDatoErEtterFom.first())
+        val åpneReisetilskudd = db.connection.hentReisetilskuddene(fnr)
         åpneReisetilskudd.size shouldBe 1
         åpneReisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
 
-        val blirIkkeSendtbartFørTom = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.minusDays(5))
+        val blirIkkeSendtbartFørTom = db.connection.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.minusDays(5))
         blirIkkeSendtbartFørTom.size shouldBe 0
 
-        val blirIkkeSendtbartFørTomErPassert = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom)
+        val blirIkkeSendtbartFørTomErPassert = db.connection.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom)
         blirIkkeSendtbartFørTomErPassert.size shouldBe 0
 
-        val blirSendtbartNårTomErPassert = db.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.plusDays(1))
+        val blirSendtbartNårTomErPassert = db.connection.finnReisetilskuddSomSkalBliSendbar(åpneReisetilskudd[0].tom.plusDays(1))
         blirSendtbartNårTomErPassert.size shouldBe 1
 
-        db.sendbarReisetilskudd(blirSendtbartNårTomErPassert.first())
-        val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
+        db.connection.sendbarReisetilskudd(blirSendtbartNårTomErPassert.first())
+        val reisetilskuddeneEtter = db.connection.hentReisetilskuddene(fnr)
         reisetilskuddeneEtter.size shouldBe 1
         reisetilskuddeneEtter[0].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
     }
