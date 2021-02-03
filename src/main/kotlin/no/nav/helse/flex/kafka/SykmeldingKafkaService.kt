@@ -1,16 +1,18 @@
 package no.nav.helse.flex.kafka
 
-import no.nav.helse.flex.Environment
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmeldingstatus.ShortNameDTO
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 @Component
 class SykmeldingKafkaService(
+    @Value("\${NAIS_CLUSTER_NAME}")
+    private val cluster: String,
+
     private val reisetilskuddService: ReisetilskuddService,
-    private val environment: Environment
 ) {
     val log = log()
 
@@ -29,7 +31,7 @@ class SykmeldingKafkaService(
         } else if (sykmeldingMessage.erIkkeArbeidstaker()) {
             log.info("Mottok sykmelding med reisetilskudd hvor arbeidssituasjon er ${sykmeldingMessage.hentArbeidssituasjon()}: ${sykmeldingMessage.sykmelding.id}")
         } else if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
-            if (environment.cluster == "prod-gcp") {
+            if (cluster == "prod-gcp") {
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
             } else {
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}")

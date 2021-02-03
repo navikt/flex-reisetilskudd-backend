@@ -1,6 +1,7 @@
 package no.nav.helse.flex.application.cronjob
 
 import no.nav.helse.flex.application.DatabaseInterface
+import no.nav.helse.flex.application.metrics.Metrikk
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalBliSendbar
@@ -17,7 +18,8 @@ import java.time.LocalDate
 @Component
 class AktiverService(
     private val database: DatabaseInterface,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
+    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
+    private val metrikk: Metrikk
 ) {
     val log = log()
 
@@ -40,7 +42,7 @@ class AktiverService(
                         reisetilskudd
                     )
                 ).get()
-                // TODO      ÅPNE_REISETILSKUDD.inc()
+                metrikk.ÅPNE_REISETILSKUDD.increment()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
             }
@@ -69,7 +71,7 @@ class AktiverService(
                         reisetilskudd
                     )
                 ).get()
-                // TODO    SENDBARE_REISETILSKUDD.inc()
+                metrikk.SENDBARE_REISETILSKUDD.increment()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
             }
