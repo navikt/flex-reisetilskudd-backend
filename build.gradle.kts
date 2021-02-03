@@ -21,7 +21,6 @@ buildscript {
     }
 }
 
-
 ext["nimbus-jose-jwt.version"] = "8.20" // https://nav-it.slack.com/archives/C01381BAT62/p1611056940004800
 
 val githubUser: String by project
@@ -88,7 +87,9 @@ tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
         jvmTarget = "14"
-        //       kotlinOptions.allWarningsAsErrors = true
+        if (System.getenv("CI") == "true") {
+            kotlinOptions.allWarningsAsErrors = true
+        }
     }
 }
 tasks.withType<Test> {
