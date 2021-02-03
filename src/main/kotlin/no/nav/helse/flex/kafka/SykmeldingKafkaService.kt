@@ -6,6 +6,7 @@ import no.nav.helse.flex.application.ApplicationState
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
+import no.nav.syfo.model.sykmeldingstatus.ShortNameDTO
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import java.lang.Exception
 import java.time.Duration
@@ -51,6 +52,8 @@ class SykmeldingKafkaService(
                     log.info("Mottok sykmelding med gradert periode: ${sykmeldingMessage.sykmelding.id}")
                 } else if (sykmeldingMessage.mismatchAvTypeOgReisetilskuddFlagg()) {
                     log.warn("Mottok sykmelding der reisetilskudd flagg ikke stemmer overens med type: ${sykmeldingMessage.sykmelding.id}")
+                } else if (sykmeldingMessage.erIkkeArbeidstaker()) {
+                    log.info("Mottok sykmelding med reisetilskudd hvor arbeidssituasjon er ${sykmeldingMessage.hentArbeidssituasjon()}: ${sykmeldingMessage.sykmelding.id}")
                 } else if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
                     if (environment.cluster == "prod-gcp") {
                         log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
@@ -90,5 +93,18 @@ class SykmeldingKafkaService(
         return this.sykmelding.sykmeldingsperioder.all { periode ->
             periode.reisetilskudd && periode.type == PeriodetypeDTO.REISETILSKUDD
         }
+    }
+
+    private fun SykmeldingMessage.erIkkeArbeidstaker(): Boolean {
+        return !this.erArbeidstaker()
+    }
+
+    private fun SykmeldingMessage.erArbeidstaker(): Boolean {
+        return this.hentArbeidssituasjon() == Arbeidssituasjon.ARBEIDSTAKER
+    }
+
+    private fun SykmeldingMessage.hentArbeidssituasjon(): Arbeidssituasjon? {
+        this.event.sporsmals?.firstOrNull { sporsmal -> sporsmal.shortName == ShortNameDTO.ARBEIDSSITUASJON }?.svar?.let { return Arbeidssituasjon.valueOf(it) }
+        return null
     }
 }
