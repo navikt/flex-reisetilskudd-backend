@@ -1,6 +1,6 @@
 package no.nav.helse.flex.reisetilskudd.db
 
-import no.nav.helse.flex.db.DatabaseInterface
+import no.nav.helse.flex.application.DatabaseInterface
 import no.nav.helse.flex.db.toList
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd

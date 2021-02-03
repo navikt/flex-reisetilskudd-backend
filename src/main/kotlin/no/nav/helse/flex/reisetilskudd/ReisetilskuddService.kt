@@ -1,9 +1,6 @@
 package no.nav.helse.flex.reisetilskudd
 
-import no.nav.helse.flex.application.metrics.AVBRUTT_REISETILSKUDD
-import no.nav.helse.flex.application.metrics.GJENÅPNET_REISETILSKUDD
-import no.nav.helse.flex.application.metrics.SENDT_REISETILSKUDD
-import no.nav.helse.flex.db.DatabaseInterface
+import no.nav.helse.flex.application.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.reisetilskuddPerioder
@@ -16,15 +13,17 @@ import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.*
 
+@Component
 class ReisetilskuddService(
     private val database: DatabaseInterface,
-    private val aivenKafkaConfig: AivenKafkaConfig
-) {
-    private lateinit var kafkaProducer: KafkaProducer<String, Reisetilskudd>
+    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
 
+) {
+    private val log = log()
     fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
         sykmeldingMessage.runCatching {
             this.reisetilskuddPerioder()
@@ -32,7 +31,8 @@ class ReisetilskuddService(
                 .tidligstePeriodeFoerst()
                 .mapIndexed { idx, periode ->
                     Reisetilskudd(
-                        reisetilskuddId = UUID.nameUUIDFromBytes("${sykmeldingMessage.sykmelding.id}-${periode.fom}-${periode.tom}".toByteArray()).toString(),
+                        reisetilskuddId = UUID.nameUUIDFromBytes("${sykmeldingMessage.sykmelding.id}-${periode.fom}-${periode.tom}".toByteArray())
+                            .toString(),
                         sykmeldingId = sykmeldingMessage.sykmelding.id,
                         status = reisetilskuddStatus(periode.fom, periode.tom),
                         oppfølgende = idx > 0,
@@ -64,14 +64,6 @@ class ReisetilskuddService(
         }
     }
 
-    fun settOppKafkaProducer() {
-        kafkaProducer = aivenKafkaConfig.producer()
-    }
-
-    fun lukkProducer() {
-        kafkaProducer.close()
-    }
-
     fun hentReisetilskuddene(fnr: String) =
         database.hentReisetilskuddene(fnr)
 
@@ -95,7 +87,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
-        SENDT_REISETILSKUDD.inc()
+        // TODO    SENDT_REISETILSKUDD.inc()
         log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
@@ -108,7 +100,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
-        AVBRUTT_REISETILSKUDD.inc()
+        // TODO   AVBRUTT_REISETILSKUDD.inc()
         log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
@@ -121,7 +113,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
-        GJENÅPNET_REISETILSKUDD.inc()
+        // TODO   GJENÅPNET_REISETILSKUDD.inc()
         log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 

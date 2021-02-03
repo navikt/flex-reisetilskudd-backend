@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  main.banner-mode: 'off'
+  profiles:
+    active: default
+  flyway:
+    enabled: true
+  datasource:
+    url: "jdbc:postgresql://${NAIS_DATABASE_FLEX_REISETILSKUDD_BACKEND_FLEX_REISETILSKUDD_DB_HOST}:${NAIS_DATABASE_FLEX_REISETILSKUDD_BACKEND_FLEX_REISETILSKUDD_DB_PORT}/${NAIS_DATABASE_FLEX_REISETILSKUDD_BACKEND_FLEX_REISETILSKUDD_DB_DATABASE}"
+    username: ${NAIS_DATABASE_FLEX_REISETILSKUDD_BACKEND_FLEX_REISETILSKUDD_DB_USERNAME}
+    password: ${NAIS_DATABASE_FLEX_REISETILSKUDD_BACKEND_FLEX_REISETILSKUDD_DB_PASSWORD}
+
+management:
+  endpoint.prometheus.enabled: true
+  endpoints.web:
+    base-path: /internal
+    exposure.include: prometheus
+    path-mapping.prometheus: /prometheus
+
+logging.config: "classpath:logback.xml"
+
+
+no.nav.security.jwt:
+  issuer:
+    selvbetjening:
+      discoveryurl: ${LOGINSERVICE_IDPORTEN_DISCOVERY_URL}
+      accepted_audience: ${LOGINSERVICE_IDPORTEN_AUDIENCE}
