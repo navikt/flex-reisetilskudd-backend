@@ -19,11 +19,15 @@ import org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_C
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
+@Configuration
 class AivenKafkaConfig(val environment: Environment) {
     private val JAVA_KEYSTORE = "JKS"
     private val PKCS12 = "PKCS12"
 
+    @Bean
     fun producer() = KafkaProducer<String, Reisetilskudd>(producerConfig())
     fun consumer() = KafkaConsumer<String, Reisetilskudd>(consumerConfig())
 

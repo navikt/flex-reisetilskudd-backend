@@ -1,7 +1,7 @@
 package no.nav.helse.flex.kafka
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.helse.flex.application.objectMapper
+import no.nav.helse.flex.objectMapper
 import org.apache.kafka.common.serialization.Deserializer
 
 class JacksonKafkaDeserializer : Deserializer<SykmeldingMessage> {

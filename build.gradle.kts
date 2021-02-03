@@ -1,46 +1,16 @@
-val ktorVersion = "1.5.0"
-val kotlinVersion = "1.4.21-2"
-val coroutinesVersion = "1.4.2-native-mt"
-val jacksonVersion = "2.12.1"
-val kafkaEmbeddedVersion = "2.4.0"
-val postgresEmbeddedVersion = "0.13.3"
-val kluentVersion = "1.65"
-val logbackVersion = "1.2.3"
-val logstashEncoderVersion = "6.6"
-val mockkVersion = "1.10.5"
-val nimbusdsVersion = "9.5"
-val prometheusVersion = "0.10.0"
-val smCommonVersion = "1.c22544d"
-val testContainerKafkaVersion = "1.15.1"
-val kafkaVersion = "2.7.0"
-val postgresVersion = "42.2.18"
-val flywayVersion = "7.5.2"
-val hikariVersion = "4.0.1"
-val junitVersion = "5.7.0"
-
-val githubUser: String by project
-val githubPassword: String by project
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    application
-    kotlin("jvm") version "1.4.21-2"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("org.springframework.boot") version "2.4.2"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    kotlin("jvm") version "1.4.21"
+    kotlin("plugin.spring") version "1.4.21"
 }
 
-group = "no.nav.syfo"
-version = "1.0.0"
-
-repositories {
-    jcenter()
-    maven { url = uri("https://packages.confluent.io/maven/") }
-    maven {
-        url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
-        credentials {
-            username = githubUser
-            password = githubPassword
-        }
-    }
-}
+group = "no.nav.helse.flex"
+version = "0.0.1-SNAPSHOT"
+description = "flex-reisetilskudd-backend"
+java.sourceCompatibility = JavaVersion.VERSION_14
 
 buildscript {
     repositories {
@@ -51,72 +21,79 @@ buildscript {
     }
 }
 
+
+ext["nimbus-jose-jwt.version"] = "8.20" // https://nav-it.slack.com/archives/C01381BAT62/p1611056940004800
+
+val githubUser: String by project
+val githubPassword: String by project
+
 apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-jackson:$ktorVersion")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:$coroutinesVersion")
-    implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
-    implementation("io.prometheus:simpleclient_common:$prometheusVersion")
-
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-client-apache:$ktorVersion")
-    implementation("io.ktor:ktor-client-auth-basic:$ktorVersion")
-    implementation("io.ktor:ktor-client-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-auth:$ktorVersion")
-    implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
-
-    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
-
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
-
-    implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.zaxxer:HikariCP:$hikariVersion")
-    implementation("org.flywaydb:flyway-core:$flywayVersion")
-    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
-
-    implementation("com.fasterxml.jackson.module:jackson-module-jaxb-annotations:$jacksonVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
-
-    testImplementation("org.amshove.kluent:kluent:$kluentVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:$nimbusdsVersion")
-    testImplementation("org.testcontainers:kafka:$testContainerKafkaVersion")
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
-        exclude(group = "org.eclipse.jetty")
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/maven-release")
     }
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-
-    testImplementation("no.nav:kafka-embedded-env:$kafkaEmbeddedVersion")
-    testImplementation("com.opentable.components:otj-pg-embedded:$postgresEmbeddedVersion")
-
-    testImplementation("io.ktor:ktor-server-tests:$ktorVersion")
-}
-
-application {
-    mainClassName = "no.nav.helse.flex.BootstrapKt"
-}
-
-tasks {
-    withType<Test> {
-        useJUnitPlatform()
-        testLogging {
-            events("PASSED", "FAILED", "SKIPPED")
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/freg-security")
+    }
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
+        credentials {
+            username = githubUser
+            password = githubPassword
         }
     }
-    named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileTestKotlin") {
-        kotlinOptions.jvmTarget = "14"
-        kotlinOptions.allWarningsAsErrors = true
+}
+
+val testContainersVersion = "1.15.1"
+val tokenSupportVersion = "1.3.3"
+val logstashLogbackEncoderVersion = "6.6"
+val smCommonVersion = "1.c22544d"
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("org.flywaydb:flyway-core")
+    implementation("no.nav.security:token-validation-spring:$tokenSupportVersion")
+    implementation("org.slf4j:slf4j-api")
+    implementation("org.hibernate.validator:hibernate-validator")
+    implementation("org.springframework.boot:spring-boot-starter-logging")
+    implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
+
+    runtimeOnly("org.postgresql:postgresql")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.testcontainers:postgresql:$testContainersVersion")
+    testImplementation("org.testcontainers:kafka:$testContainersVersion")
+    testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
+    testImplementation("org.awaitility:awaitility")
+    testImplementation("org.hamcrest:hamcrest-library")
+}
+
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    this.archiveFileName.set("app.jar")
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+        jvmTarget = "14"
+        //       kotlinOptions.allWarningsAsErrors = true
+    }
+}
+tasks.withType<Test> {
+    useJUnitPlatform()
+    testLogging {
+        events("PASSED", "FAILED", "SKIPPED")
     }
 }

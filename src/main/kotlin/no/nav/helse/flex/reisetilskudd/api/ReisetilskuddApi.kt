@@ -1,26 +1,7 @@
 package no.nav.helse.flex.reisetilskudd.api
 
-import io.ktor.application.*
-import io.ktor.application.ApplicationCall
-import io.ktor.auth.authentication
-import io.ktor.auth.jwt.JWTPrincipal
-import io.ktor.http.*
-import io.ktor.http.HttpStatusCode.Companion.BadRequest
-import io.ktor.http.HttpStatusCode.Companion.Created
-import io.ktor.http.HttpStatusCode.Companion.Forbidden
-import io.ktor.http.HttpStatusCode.Companion.NotFound
-import io.ktor.http.HttpStatusCode.Companion.OK
-import io.ktor.http.content.*
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.*
-import io.ktor.util.pipeline.*
-import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.*
-import no.nav.helse.flex.reisetilskudd.domain.Svar
-
+/*
 fun Route.setupReisetilskuddApi(reisetilskuddService: ReisetilskuddService) {
 
     @ContextDsl
@@ -159,3 +140,4 @@ private suspend fun ApplicationCall.reply(message: String, status: HttpStatusCod
     this.response.status(status)
     this.respond(Message(message))
 }
+*/

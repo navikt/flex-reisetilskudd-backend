@@ -1,8 +1,6 @@
 package no.nav.helse.flex.application.cronjob
 
-import no.nav.helse.flex.application.metrics.SENDBARE_REISETILSKUDD
-import no.nav.helse.flex.application.metrics.ÅPNE_REISETILSKUDD
-import no.nav.helse.flex.db.DatabaseInterface
+import no.nav.helse.flex.application.DatabaseInterface
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.log
 import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalBliSendbar
@@ -13,12 +11,16 @@ import no.nav.helse.flex.reisetilskudd.db.åpneReisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.springframework.stereotype.Component
 import java.time.LocalDate
 
+@Component
 class AktiverService(
     private val database: DatabaseInterface,
     private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
 ) {
+    val log = log()
+
     fun åpneReisetilskudd(now: LocalDate = LocalDate.now()): Int {
         log.info("Leter etter reisetilskudd som skal bli ÅPNE")
 
@@ -38,7 +40,7 @@ class AktiverService(
                         reisetilskudd
                     )
                 ).get()
-                ÅPNE_REISETILSKUDD.inc()
+                // TODO      ÅPNE_REISETILSKUDD.inc()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
             }
@@ -67,7 +69,7 @@ class AktiverService(
                         reisetilskudd
                     )
                 ).get()
-                SENDBARE_REISETILSKUDD.inc()
+                // TODO    SENDBARE_REISETILSKUDD.inc()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
             }
