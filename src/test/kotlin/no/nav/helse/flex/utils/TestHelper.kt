@@ -3,6 +3,7 @@ package no.nav.helse.flex.utils
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.helse.flex.objectMapper
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.Svar
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -38,6 +39,18 @@ fun TestHelper.gjenåpneSøknad(fnr: String, reisetilskuddId: String): Reisetils
     val json = this.mockMvc.perform(
         MockMvcRequestBuilders.post("/api/v1/reisetilskudd/$reisetilskuddId/gjenapne")
             .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
+            .contentType(MediaType.APPLICATION_JSON)
+    ).andExpect(MockMvcResultMatchers.status().isOk).andReturn().response.contentAsString
+
+    return objectMapper.readValue(json)
+}
+
+
+fun TestHelper.svar(fnr: String, reisetilskuddId: String, svar: Svar): Reisetilskudd {
+    val json = this.mockMvc.perform(
+        MockMvcRequestBuilders.put("/api/v1/reisetilskudd/$reisetilskuddId", svar)
+            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
+            .content(objectMapper.writeValueAsString(svar))
             .contentType(MediaType.APPLICATION_JSON)
     ).andExpect(MockMvcResultMatchers.status().isOk).andReturn().response.contentAsString
 
