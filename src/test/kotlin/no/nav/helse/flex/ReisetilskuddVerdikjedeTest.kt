@@ -187,83 +187,38 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val oppdatertReisetilskudd = this.hentSoknader(fnr).first()
         oppdatertReisetilskudd.kvitteringer.shouldNotBeEmpty()
     }
-/*
+
     @Test
     @Order(7)
     fun `Vi kan se den opplastede kvitteringen`() {
-        with(testApp) {
-            val kvitteringer = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                medSelvbetjeningToken(fnr)
-            }.response.content!!.tilReisetilskuddListe()[0].kvitteringer
+        val kvitteringer = this.hentSoknader(fnr).first().kvitteringer
 
-            kvitteringer.size `should be equal to` 1
-            val kvittering = kvitteringer.first()
+        kvitteringer.size `should be equal to` 1
+        val kvittering = kvitteringer.first()
 
-            kvittering.datoForReise.`should be equal to`(LocalDate.now())
-            kvittering.kvitteringId.shouldNotBeNull()
-            kvittering.storrelse.`should be equal to`(12)
-            kvittering.belop.`should be equal to`(133700)
-        }
+        kvittering.datoForReise.`should be equal to`(LocalDate.now())
+        kvittering.kvitteringId.shouldNotBeNull()
+        kvittering.storrelse.`should be equal to`(12)
+        kvittering.belop.`should be equal to`(133700)
     }
 
     @Test
     @Order(8)
     fun `Vi kan slette en kvittering`() {
-        with(testApp) {
-            val reisetilskudd = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                medSelvbetjeningToken(fnr)
-            }.response.content!!.tilReisetilskuddListe()[0]
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        reisetilskudd.kvitteringer.size `should be equal to` 1
+        this.slettKvittering(fnr, reisetilskudd.reisetilskuddId, reisetilskudd.kvitteringer[0].kvitteringId!!)
 
-            reisetilskudd.kvitteringer.size.`should be equal to`(1)
-
-            with(
-                engine.handleRequest(
-                    HttpMethod.Delete,
-                    "/api/v1/reisetilskudd/${reisetilskudd.reisetilskuddId}/kvittering/${reisetilskudd.kvitteringer[0].kvitteringId}"
-                ) {
-                    medSelvbetjeningToken(fnr)
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.OK
-            }
-
-            val reisetilskuddEtter = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                medSelvbetjeningToken(fnr)
-            }.response.content!!.tilReisetilskuddListe()[0]
-
-            reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
-        }
+        val reisetilskuddEtter = this.hentSoknader(fnr).first()
+        reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
     }
 
     @Test
     @Order(9)
     fun `Vi kan sende inn søknaden`() {
-        with(testApp) {
-            val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                medSelvbetjeningToken(fnr)
-            }.response.content!!.tilReisetilskuddListe()[0].reisetilskuddId
-            with(
-                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/$id/send") {
-                    medSelvbetjeningToken(fnr)
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.OK
-            }
-            with(
-                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                    medSelvbetjeningToken(fnr)
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.OK
-                val reisetilskudd = response.content!!.tilReisetilskuddListe()
-                reisetilskudd.size `should be equal to` 1
-
-                reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
-                reisetilskudd[0].sendt.shouldNotBeNull()
-            }
-        }
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.reisetilskuddId)
+        sendtSøknad.status shouldBeEqualTo ReisetilskuddStatus.SENDT
+        sendtSøknad.sendt.shouldNotBeNull()
     }
-
-
-    */
 }

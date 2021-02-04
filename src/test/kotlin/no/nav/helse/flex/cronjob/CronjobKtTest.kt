@@ -1,48 +1,47 @@
-package no.nav.helse.flex.application.cronjob
+package no.nav.helse.flex.cronjob
 
-/*
-@KtorExperimentalAPI
+import no.nav.helse.flex.KafkaContainerWithProps
+import no.nav.helse.flex.PostgreSQLContainerWithProps
+import no.nav.helse.flex.application.DatabaseInterface
+import no.nav.helse.flex.reisetilskudd.db.hentReisetilskuddene
+import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
+import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldBeEqualTo
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import java.time.Instant
+import java.time.LocalDate
+import java.util.*
+
+@SpringBootTest
+@Testcontainers
+@DirtiesContext
+@EnableMockOAuth2Server
 internal class CronjobKtTest {
+
     companion object {
-        val applicationState = ApplicationState()
-        val db = TestDB()
-        val env = mockk<Environment>()
-        val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
-            .withNetwork(Network.newNetwork())
-        val aivenKafkaConfig = mockk<AivenKafkaConfig>()
-        val podLeaderCoordinator = mockk<PodLeaderCoordinator>()
-        val cronjob = Cronjob(
-            applicationState = applicationState,
-            env = env,
-            database = db,
-            aivenKafkaConfig = aivenKafkaConfig,
-            podLeaderCoordinator = podLeaderCoordinator
-        )
+        @Container
+        val postgreSQLContainer = PostgreSQLContainerWithProps()
 
-        @BeforeAll
-        @JvmStatic
-        internal fun beforeAll() {
-            kafka.start()
-        }
+        @Container
+        val kafkaContainer = KafkaContainerWithProps()
+
+        val fnr = "12345678901"
     }
 
-    @BeforeEach
-    fun beforeEach() {
-        val producerProperties = mapOf(
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
-        )
+    @Autowired
+    lateinit var db: DatabaseInterface
 
-        clearAllMocks()
-        every { env.cluster } returns "test"
-        every { env.electorPath } returns "dont_look_for_leader"
-        every { aivenKafkaConfig.producer() } returns KafkaProducer(producerProperties)
-        every { podLeaderCoordinator.isLeader() } returns true
-
-        applicationState.alive = true
-        applicationState.ready = true
-    }
+    @Autowired
+    lateinit var cronjob: Cronjob
 
     @Test
     fun `aktivering av reisetilskudd`() {
@@ -117,4 +116,3 @@ internal class CronjobKtTest {
         opprettet = Instant.now(),
     )
 }
-*/ // TODO

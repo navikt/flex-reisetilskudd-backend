@@ -21,6 +21,7 @@ management:
 
 logging.config: "classpath:logback.xml"
 
+cronjob: "0 0 5 * * ?"
 
 no.nav.security.jwt:
   issuer:

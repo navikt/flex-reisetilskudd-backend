@@ -1,7 +1,6 @@
 package no.nav.helse.flex.reisetilskudd.api
 
-import no.nav.helse.flex.application.OIDCIssuer.SELVBETJENING
-import no.nav.helse.flex.logger
+import no.nav.helse.flex.config.OIDCIssuer.SELVBETJENING
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
@@ -21,8 +20,6 @@ class SoknadController(
     private val reisetilskuddService: ReisetilskuddService
 ) {
 
-    private val log = logger()
-
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @GetMapping(value = ["/reisetilskudd"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -30,6 +27,13 @@ class SoknadController(
         val fnr = tokenValidationContextHolder.fnrFraOIDC()
 
         return reisetilskuddService.hentReisetilskuddene(fnr)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseBody
+    @GetMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentSoknad(@PathVariable id: String): Reisetilskudd {
+        return hentOgSjekkTilgangTilSoknad(id)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -74,6 +78,20 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
         return reisetilskuddService.lagreKvittering(svar, soknad.reisetilskuddId)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping(
+        value = ["/reisetilskudd/{id}/kvittering/{kvitteringId}"]
+    )
+    fun slettKvittering(@PathVariable("id") id: String, @PathVariable kvitteringId: String) {
+        val soknad = hentOgSjekkTilgangTilSoknad(id)
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
+        reisetilskuddService.slettKvittering(
+            kvitteringId = kvitteringId,
+            reisetilskuddId = id
+        )
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
