@@ -1,4 +1,4 @@
-package no.nav.helse.flex.application.cronjob
+package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.application.DatabaseInterface
 import no.nav.helse.flex.application.metrics.Metrikk

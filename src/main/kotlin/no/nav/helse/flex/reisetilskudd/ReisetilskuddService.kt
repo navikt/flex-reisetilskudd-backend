@@ -1,6 +1,7 @@
 package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.application.DatabaseInterface
+import no.nav.helse.flex.application.metrics.Metrikk
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.reisetilskuddPerioder
@@ -22,7 +23,8 @@ import java.util.*
 @Transactional
 class ReisetilskuddService(
     private val database: DatabaseInterface,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
+    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
+    private val metrikk: Metrikk,
 
 ) {
     private val log = logger()
@@ -47,7 +49,6 @@ class ReisetilskuddService(
                     )
                 }
                 .forEach { reisetilskudd ->
-                    // TODO: Transaksjons håndtering
                     lagreReisetilskudd(reisetilskudd)
                     kafkaProducer.send(
                         ProducerRecord(
@@ -89,7 +90,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
-        // TODO    SENDT_REISETILSKUDD.inc()
+        metrikk.SENDT_REISETILSKUDD.increment()
         log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
@@ -102,7 +103,8 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
-        // TODO   AVBRUTT_REISETILSKUDD.inc()
+        metrikk.AVBRUTT_REISETILSKUDD.increment()
+
         log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 
@@ -115,7 +117,7 @@ class ReisetilskuddService(
                 reisetilskudd
             )
         ).get()
-        // TODO   GJENÅPNET_REISETILSKUDD.inc()
+        metrikk.GJENÅPNET_REISETILSKUDD.increment()
         log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
     }
 

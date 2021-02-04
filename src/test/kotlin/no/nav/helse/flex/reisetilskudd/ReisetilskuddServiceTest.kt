@@ -1,34 +1,41 @@
 package no.nav.helse.flex.reisetilskudd
 
-/*
-@KtorExperimentalAPI
+import no.nav.helse.flex.KafkaContainerWithProps
+import no.nav.helse.flex.PostgreSQLContainerWithProps
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.utils.lagSykmeldingMessage
+import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
+import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
+import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldBeEqualTo
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+
+@SpringBootTest
+@Testcontainers
+@DirtiesContext
+@EnableMockOAuth2Server
 internal class ReisetilskuddServiceTest {
+
     companion object {
-        val db = TestDB()
-        val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
-            .withNetwork(Network.newNetwork())
-        val aivenKafkaConfig = mockk<AivenKafkaConfig>()
-        val reisetilskuddService = ReisetilskuddService(
-            database = db,
-            aivenKafkaConfig = aivenKafkaConfig
-        )
+        @Container
+        val postgreSQLContainer = PostgreSQLContainerWithProps()
 
-        @BeforeAll
-        @JvmStatic
-        internal fun beforeAll() {
-            kafka.start()
+        @Container
+        val kafkaContainer = KafkaContainerWithProps()
 
-            every { aivenKafkaConfig.producer() } returns KafkaProducer(
-                mapOf(
-                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to kafka.bootstrapServers,
-                    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-                    ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JacksonKafkaSerializer::class.java
-                )
-            )
-
-            reisetilskuddService.settOppKafkaProducer()
-        }
+        val fnr = "12345678901"
     }
+
+    @Autowired
+    private lateinit var reisetilskuddService: ReisetilskuddService
 
     @Test
     fun `Vi mottar en sykmelding med reisetilskudd`() {
@@ -134,4 +141,3 @@ internal class ReisetilskuddServiceTest {
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
     }
 }
-*/ // TODO

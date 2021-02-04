@@ -1,92 +1,100 @@
 package no.nav.helse.flex
 
-/*
-@KtorExperimentalAPI
+import no.nav.helse.flex.application.DatabaseInterface
+import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.FREMTIDIG
+import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.ÅPEN
+import no.nav.helse.flex.utils.TestHelper
+import no.nav.helse.flex.utils.hentSøknadResultActions
+import no.nav.helse.flex.utils.sendSøknadResultActions
+import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.amshove.kluent.`should be equal to`
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import java.time.Instant
+import java.time.LocalDate
+import java.util.*
+
+@SpringBootTest
+@Testcontainers
+@DirtiesContext
+@EnableMockOAuth2Server
+@AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class ReisetilskuddInputValideringTest {
+internal class ReisetilskuddInputValideringTest : TestHelper {
 
     companion object {
-        lateinit var testApp: TestApp
+        @Container
+        val postgreSQLContainer = PostgreSQLContainerWithProps()
+
+        @Container
+        val kafkaContainer = KafkaContainerWithProps()
+
         val fnr = "12345678901"
-
-        @BeforeAll
-        @JvmStatic
-        internal fun beforeAll() {
-            testApp = skapTestApplication()
-        }
     }
 
-    @AfterEach
-    internal fun afterEach() {
-        testApp.testDb.connection.dropData()
-    }
+    @Autowired
+    override lateinit var server: MockOAuth2Server
+
+    @Autowired
+    override lateinit var mockMvc: MockMvc
+
+    @Autowired
+    lateinit var database: DatabaseInterface
 
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
-        with(testApp) {
-            val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-                testDb.lagreReisetilskudd(it)
-            }
-
-            val reisetilskudd2 = reisetilskudd(ÅPEN)
-                .also {
-                    testDb.lagreReisetilskudd(it)
-                }
-
-            with(
-                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/${reisetilskudd.reisetilskuddId}/send") {
-                    medSelvbetjeningToken(fnr)
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.BadRequest
-                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
-                response.content!! `should be equal to` "{\"message\":\"Operasjonen støttes ikke på søknad med status FREMTIDIG\"}"
-            }
-
-            with(
-                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/${reisetilskudd2.reisetilskuddId}/send") {
-                    medSelvbetjeningToken(fnr)
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.BadRequest
-                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
-                response.content!! `should be equal to` "{\"message\":\"Operasjonen støttes ikke på søknad med status ÅPEN\"}"
-            }
+        val reisetilskudd = reisetilskudd(FREMTIDIG).also {
+            database.lagreReisetilskudd(it)
         }
+
+        val reisetilskudd2 = reisetilskudd(ÅPEN)
+            .also {
+                database.lagreReisetilskudd(it)
+            }
+
+        val json1 = this.sendSøknadResultActions(reisetilskudd.reisetilskuddId, fnr)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andReturn().response.contentAsString
+        json1 `should be equal to` "{\"reason\":\"FREMTIDIG ikke støttet for operasjon send\"}"
+
+        val json2 = this.sendSøknadResultActions(reisetilskudd2.reisetilskuddId, fnr)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andReturn().response.contentAsString
+        json2 `should be equal to` "{\"reason\":\"ÅPEN ikke støttet for operasjon send\"}"
     }
 
     @Test
     fun `Ukjent id gir 404`() {
-        with(testApp) {
 
-            with(
-                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd/${UUID.randomUUID()}") {
-                    medSelvbetjeningToken(fnr)
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.NotFound
-                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
-                response.content!! `should be equal to` "{\"message\":\"Søknad ikke funnet\"}"
-            }
-        }
+        val json1 = this.hentSøknadResultActions(UUID.randomUUID().toString(), fnr)
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
+            .andReturn().response.contentAsString
+        json1 `should be equal to` "{\"reason\":\"Søknad ikke funnet\"}"
     }
 
     @Test
     fun `En annen persons reisetilskudd id gir 403`() {
-        with(testApp) {
-            val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-                testDb.lagreReisetilskudd(it)
-            }
-            with(
-                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd/${reisetilskudd.reisetilskuddId}") {
-                    medSelvbetjeningToken("01010132548")
-                }
-            ) {
-                response.status() shouldBeEqualTo Forbidden
-                response.headers["Content-Type"]!! `should be equal to` "application/json; charset=UTF-8"
-                response.content!! `should be equal to` "{\"message\":\"Bruker eier ikke søknaden\"}"
-            }
+        val reisetilskudd = reisetilskudd(FREMTIDIG).also {
+            database.lagreReisetilskudd(it)
         }
+
+        val json1 = this.hentSøknadResultActions(reisetilskudd.reisetilskuddId, "123423232")
+            .andExpect(MockMvcResultMatchers.status().isForbidden)
+            .andReturn().response.contentAsString
+        json1 `should be equal to` "{\"reason\":\"Er ikke eier\"}"
     }
 
     fun reisetilskudd(status: ReisetilskuddStatus): Reisetilskudd {
@@ -104,5 +112,3 @@ internal class ReisetilskuddInputValideringTest {
         )
     }
 }
-*/
-// TODO
