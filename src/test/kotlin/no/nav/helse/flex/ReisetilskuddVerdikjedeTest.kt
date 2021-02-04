@@ -160,8 +160,6 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         val besvart = this.svar(fnr, reisetilskudd.reisetilskuddId, Svar(sykler = true))
         besvart.sykler?.shouldBeTrue()
-
-        val a = "test"
     }
 
     @Test
