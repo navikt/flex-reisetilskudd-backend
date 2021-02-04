@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Connection
+import java.sql.Date
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDate
@@ -62,6 +63,28 @@ class Database(
         )
         return hentReisetilskudd(reisetilskuddId)
     }
+
+    fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+        val now = Instant.now()
+
+        namedParameterJdbcTemplate.update(
+            """
+           UPDATE reisetilskudd 
+           SET (status, avbrutt) = ('AVBRUTT', :avbrutt)
+           WHERE reisetilskudd_id = :id
+           AND fnr = :fnr
+           AND sendt is null
+           AND (status = 'ÅPEN' OR status = 'FREMTIDIG' OR status = 'SENDBAR')
+        """,
+            MapSqlParameterSource()
+                .addValue("avbrutt", Timestamp.from(now))
+                .addValue("id", reisetilskuddId)
+                .addValue("fnr", fnr)
+        )
+
+        return hentReisetilskudd(reisetilskuddId)
+    }
+
     fun hentReisetilskudd(reisetilskuddId: String): Reisetilskudd {
         return finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
     }
@@ -79,6 +102,41 @@ class Database(
         return reisetilskudd.map {
             it.copy(kvitteringer = hentKvitteringer(it.reisetilskuddId))
         }.firstOrNull()
+    }
+
+    fun lagreReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
+        finnReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return it }
+        namedParameterJdbcTemplate.update(
+            """
+          INSERT INTO reisetilskudd (
+           reisetilskudd_id, 
+           sykmelding_id, 
+           fnr, 
+           fom, 
+           tom, 
+           arbeidsgiver_orgnummer, 
+           arbeidsgiver_navn, 
+           opprettet, 
+           endret, 
+           status, 
+           oppfolgende) 
+           VALUES(
+           :1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11)
+        """,
+            MapSqlParameterSource()
+                .addValue("1", reisetilskudd.reisetilskuddId)
+                .addValue("2", reisetilskudd.sykmeldingId)
+                .addValue("3", reisetilskudd.fnr)
+                .addValue("4", Date.valueOf(reisetilskudd.fom))
+                .addValue("5", Date.valueOf(reisetilskudd.tom))
+                .addValue("6", reisetilskudd.orgNummer)
+                .addValue("7", reisetilskudd.orgNavn)
+                .addValue("8", Timestamp.from(reisetilskudd.opprettet))
+                .addValue("9", Timestamp.from(reisetilskudd.opprettet))
+                .addValue("10", reisetilskudd.status.name)
+                .addValue("11", reisetilskudd.oppfølgende.toInt())
+        )
+        return hentReisetilskudd(reisetilskudd.reisetilskuddId)
     }
 
     private fun hentKvitteringer(reisetilskuddId: String): List<Kvittering> {

@@ -3,7 +3,6 @@ package no.nav.helse.flex.cronjob
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
 import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.db.lagreReisetilskudd
 import no.nav.helse.flex.domain.Reisetilskudd
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus

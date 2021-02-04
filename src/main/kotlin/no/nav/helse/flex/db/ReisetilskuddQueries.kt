@@ -11,20 +11,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
-fun Database.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-    this.finnReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
-    return this.connection.lagreReisetilskudd(reisetilskudd)
-}
-
 fun Database.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
     this.connection.oppdaterReisetilskudd(reisetilskudd)
     return this.finnReisetilskudd(reisetilskudd.reisetilskuddId)!!
-}
-
-fun Database.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
-
-    this.connection.avbrytReisetilskudd(fnr, reisetilskuddId)
-    return this.finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
 fun Database.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
@@ -63,26 +52,6 @@ fun Database.sendbarReisetilskudd(id: String) {
     this.connection.sendbarReisetilskudd(id)
 }
 
-private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
-    val now = Instant.now()
-    this.prepareStatement(
-        """
-           UPDATE reisetilskudd 
-           SET (status, avbrutt) = (?, ?)
-           WHERE reisetilskudd_id = ?
-           AND fnr = ?
-           AND sendt is null
-           AND (status = 'ÅPEN' OR status = 'FREMTIDIG' OR status = 'SENDBAR')
-        """
-    ).use {
-        it.setString(1, ReisetilskuddStatus.AVBRUTT.name)
-        it.setTimestamp(2, Timestamp.from(now))
-        it.setString(3, reisetilskuddId)
-        it.setString(4, fnr)
-        it.executeUpdate()
-    }
-}
-
 private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String, status: ReisetilskuddStatus) {
     this.prepareStatement(
         """
@@ -98,41 +67,6 @@ private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: Strin
         it.setTimestamp(2, null)
         it.setString(3, reisetilskuddId)
         it.setString(4, fnr)
-        it.executeUpdate()
-    }
-}
-
-private fun Connection.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-
-    this.prepareStatement(
-        """
-           INSERT INTO reisetilskudd (
-           reisetilskudd_id, 
-           sykmelding_id, 
-           fnr, 
-           fom, 
-           tom, 
-           arbeidsgiver_orgnummer, 
-           arbeidsgiver_navn, 
-           opprettet, 
-           endret, 
-           status, 
-           oppfolgende) 
-           VALUES(
-           ?,?,?,?,?,?,?,?,?,?,?)
-        """
-    ).use {
-        it.setString(1, reisetilskudd.reisetilskuddId)
-        it.setString(2, reisetilskudd.sykmeldingId)
-        it.setString(3, reisetilskudd.fnr)
-        it.setDate(4, Date.valueOf(reisetilskudd.fom))
-        it.setDate(5, Date.valueOf(reisetilskudd.tom))
-        it.setString(6, reisetilskudd.orgNummer)
-        it.setString(7, reisetilskudd.orgNavn)
-        it.setTimestamp(8, Timestamp.from(reisetilskudd.opprettet))
-        it.setTimestamp(9, Timestamp.from(reisetilskudd.opprettet))
-        it.setString(10, reisetilskudd.status.name)
-        it.setInt(11, reisetilskudd.oppfølgende.toInt())
         it.executeUpdate()
     }
 }
