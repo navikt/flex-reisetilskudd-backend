@@ -22,6 +22,7 @@ buildscript {
 }
 
 ext["nimbus-jose-jwt.version"] = "8.20" // https://nav-it.slack.com/archives/C01381BAT62/p1611056940004800
+ext["okhttp3.version"] = "4.9.0" // For at token support testen kjører (tror jeg)
 
 val githubUser: String by project
 val githubPassword: String by project
@@ -29,6 +30,7 @@ val githubPassword: String by project
 apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
 repositories {
+    jcenter()
     mavenCentral()
     maven {
         url = uri("https://maven.pkg.github.com/navikt/maven-release")
@@ -50,6 +52,7 @@ val testContainersVersion = "1.15.1"
 val tokenSupportVersion = "1.3.3"
 val logstashLogbackEncoderVersion = "6.6"
 val smCommonVersion = "1.c22544d"
+val kluentVersion = "1.65"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
@@ -72,11 +75,13 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("no.nav.security:token-validation-spring-test:$tokenSupportVersion")
     testImplementation("org.testcontainers:postgresql:$testContainersVersion")
     testImplementation("org.testcontainers:kafka:$testContainersVersion")
     testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
     testImplementation("org.awaitility:awaitility")
     testImplementation("org.hamcrest:hamcrest-library")
+    testImplementation("org.amshove.kluent:kluent:$kluentVersion")
 }
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {

@@ -8,3 +8,9 @@ SERVICEUSER_USERNAME: "user"
 SERVICEUSER_PASSWORD: "pwd"
 
 NAIS_CLUSTER_NAME: "test"
+
+no.nav.security.jwt:
+  issuer:
+    selvbetjening:
+      discoveryurl: http://localhost:${mock-oauth2-server.port}/selvbetjening/.well-known/openid-configuration
+      accepted_audience: loginservice-client-id

@@ -3,7 +3,7 @@ package no.nav.helse.flex.application.cronjob
 import no.nav.helse.flex.application.DatabaseInterface
 import no.nav.helse.flex.application.metrics.Metrikk
 import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.log
+import no.nav.helse.flex.logger
 import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalBliSendbar
 import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalÅpnes
 import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
@@ -21,7 +21,7 @@ class AktiverService(
     private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
     private val metrikk: Metrikk
 ) {
-    val log = log()
+    val log = logger()
 
     fun åpneReisetilskudd(now: LocalDate = LocalDate.now()): Int {
         log.info("Leter etter reisetilskudd som skal bli ÅPNE")

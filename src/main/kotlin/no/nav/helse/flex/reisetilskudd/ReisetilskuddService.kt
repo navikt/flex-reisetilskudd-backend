@@ -6,7 +6,7 @@ import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.reisetilskuddPerioder
 import no.nav.helse.flex.kafka.splittLangeSykmeldingperioder
 import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
-import no.nav.helse.flex.log
+import no.nav.helse.flex.logger
 import no.nav.helse.flex.reisetilskudd.db.*
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
@@ -14,16 +14,18 @@ import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.*
 
 @Component
+@Transactional
 class ReisetilskuddService(
     private val database: DatabaseInterface,
     private val kafkaProducer: KafkaProducer<String, Reisetilskudd>
 
 ) {
-    private val log = log()
+    private val log = logger()
     fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
         sykmeldingMessage.runCatching {
             this.reisetilskuddPerioder()

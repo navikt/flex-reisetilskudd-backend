@@ -1,6 +1,6 @@
 package no.nav.helse.flex.kafka
 
-import no.nav.helse.flex.log
+import no.nav.helse.flex.logger
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmeldingstatus.ShortNameDTO
@@ -14,7 +14,7 @@ class SykmeldingKafkaService(
 
     private val reisetilskuddService: ReisetilskuddService,
 ) {
-    val log = log()
+    val log = logger()
 
     fun run(sykmeldingMessage: SykmeldingMessage?, topic: String, key: String) {
 

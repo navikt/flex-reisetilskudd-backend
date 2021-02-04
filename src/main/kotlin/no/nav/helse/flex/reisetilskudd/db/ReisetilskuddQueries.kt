@@ -17,75 +17,73 @@ import java.time.OffsetDateTime
 import java.util.*
 
 fun DatabaseInterface.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
-    connection.use { return it.hentReisetilskuddene(fnr) }
+    return this.connection.hentReisetilskuddene(fnr)
 }
 
 fun DatabaseInterface.hentReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
-    connection.use { return it.hentReisetilskudd(reisetilskuddId) }
+    return this.connection.hentReisetilskudd(reisetilskuddId)
 }
 
 fun DatabaseInterface.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-    connection.use {
-        it.hentReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
-        it.lagreReisetilskudd(reisetilskudd)
-    }
+    this.connection.hentReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
+    return this.connection.lagreReisetilskudd(reisetilskudd)
 }
 
 fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
-    connection.use {
-        it.oppdaterReisetilskudd(reisetilskudd)
-        return it.hentReisetilskudd(reisetilskudd.reisetilskuddId)!!
-    }
+    this.connection.oppdaterReisetilskudd(reisetilskudd)
+    return this.connection.hentReisetilskudd(reisetilskudd.reisetilskuddId)!!
 }
 
 fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
-    connection.use {
-        it.sendReisetilskudd(fnr, reisetilskuddId)
-        return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
-    }
+
+    this.connection.sendReisetilskudd(fnr, reisetilskuddId)
+    return this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
 fun DatabaseInterface.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
-    connection.use {
-        it.avbrytReisetilskudd(fnr, reisetilskuddId)
-        return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
-    }
+
+    this.connection.avbrytReisetilskudd(fnr, reisetilskuddId)
+    return this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
 fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
-    connection.use {
-        val reisetilskudd = it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
-        it.gjenapneReisetilskudd(fnr, reisetilskuddId, reisetilskuddStatus(reisetilskudd.fom, reisetilskudd.tom))
-        return it.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
-    }
+
+    val reisetilskudd =
+        this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
+    this.connection.gjenapneReisetilskudd(
+        fnr,
+        reisetilskuddId,
+        reisetilskuddStatus(reisetilskudd.fom, reisetilskudd.tom)
+    )
+    return this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
 fun DatabaseInterface.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
-    connection.use { return it.lagreKvittering(kvittering, reisetilskuddId) }
+    return this.connection.lagreKvittering(kvittering, reisetilskuddId)
 }
 
 fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
-    connection.use { return it.eierReisetilskudd(fnr, id) }
+    return this.connection.eierReisetilskudd(fnr, id)
 }
 
 fun DatabaseInterface.slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
-    connection.use { return it.slettKvittering(kvitteringId, reisetilskuddId) }
+    return this.connection.slettKvittering(kvitteringId, reisetilskuddId)
 }
 
 fun DatabaseInterface.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> {
-    connection.use { return it.finnReisetilskuddSomSkalÅpnes(now) }
+    return this.connection.finnReisetilskuddSomSkalÅpnes(now)
 }
 
 fun DatabaseInterface.finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<String> {
-    connection.use { return it.finnReisetilskuddSomSkalBliSendbar(now) }
+    return this.connection.finnReisetilskuddSomSkalBliSendbar(now)
 }
 
 fun DatabaseInterface.åpneReisetilskudd(id: String) {
-    connection.use { it.åpneReisetilskudd(id) }
+    this.connection.åpneReisetilskudd(id)
 }
 
 fun DatabaseInterface.sendbarReisetilskudd(id: String) {
-    connection.use { it.sendbarReisetilskudd(id) }
+    this.connection.sendbarReisetilskudd(id)
 }
 
 private fun Connection.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
@@ -148,7 +146,6 @@ private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
         it.setString(3, fnr)
         it.executeUpdate()
     }
-    this.commit()
 }
 
 private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
@@ -169,7 +166,6 @@ private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String)
         it.setString(4, fnr)
         it.executeUpdate()
     }
-    this.commit()
 }
 
 private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String, status: ReisetilskuddStatus) {
@@ -189,7 +185,6 @@ private fun Connection.gjenapneReisetilskudd(fnr: String, reisetilskuddId: Strin
         it.setString(4, fnr)
         it.executeUpdate()
     }
-    this.commit()
 }
 
 private fun Connection.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
@@ -225,7 +220,6 @@ private fun Connection.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
         it.setInt(11, reisetilskudd.oppfølgende.toInt())
         it.executeUpdate()
     }
-    this.commit()
 }
 
 private fun Connection.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
@@ -248,7 +242,6 @@ private fun Connection.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd) {
         it.setString(7, reisetilskudd.reisetilskuddId)
         it.executeUpdate()
     }
-    this.commit()
 }
 
 private fun Connection.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
@@ -273,7 +266,6 @@ private fun Connection.lagreKvittering(kvittering: Kvittering, reisetilskuddId: 
         it.setTimestamp(9, Timestamp.from(now))
         it.executeUpdate()
     }
-    this.commit()
     return kvittering.copy(kvitteringId = id)
 }
 
@@ -289,7 +281,6 @@ private fun Connection.slettKvittering(kvitteringId: String, reisetilskuddId: St
         it.setString(1, kvitteringId)
         it.setString(2, reisetilskuddId)
         val executeUpdate = it.executeUpdate()
-        this.commit()
         return executeUpdate
     }
 }
@@ -352,7 +343,6 @@ private fun Connection.åpneReisetilskudd(id: String) {
         it.setString(3, ReisetilskuddStatus.FREMTIDIG.name)
         it.executeUpdate()
     }
-    this.commit()
 }
 
 private fun Connection.sendbarReisetilskudd(id: String) {
@@ -369,7 +359,6 @@ private fun Connection.sendbarReisetilskudd(id: String) {
         it.setString(3, ReisetilskuddStatus.ÅPEN.name)
         it.executeUpdate()
     }
-    this.commit()
 }
 
 fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Reisetilskudd {

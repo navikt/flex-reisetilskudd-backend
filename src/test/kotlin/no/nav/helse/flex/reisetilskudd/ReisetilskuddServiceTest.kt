@@ -1,28 +1,6 @@
 package no.nav.helse.flex.reisetilskudd
 
-import io.ktor.util.*
-import io.mockk.every
-import io.mockk.mockk
-import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.JacksonKafkaSerializer
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.utils.TestDB
-import no.nav.helse.flex.utils.lagSykmeldingMessage
-import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
-import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
-import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldBeEqualTo
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringSerializer
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.testcontainers.containers.KafkaContainer
-import org.testcontainers.containers.Network
-import org.testcontainers.utility.DockerImageName
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-
+/*
 @KtorExperimentalAPI
 internal class ReisetilskuddServiceTest {
     companion object {
@@ -156,3 +134,4 @@ internal class ReisetilskuddServiceTest {
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
     }
 }
+*/ // TODO
