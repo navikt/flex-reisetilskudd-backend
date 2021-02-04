@@ -1,5 +1,6 @@
 package no.nav.helse.flex.utils
 
+import no.nav.helse.flex.kafka.Arbeidssituasjon
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.syfo.model.sykmelding.kafka.EnkelSykmelding
 import no.nav.syfo.model.sykmelding.model.AdresseDTO

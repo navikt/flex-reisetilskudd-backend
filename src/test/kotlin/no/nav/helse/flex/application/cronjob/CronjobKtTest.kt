@@ -1,34 +1,6 @@
 package no.nav.helse.flex.application.cronjob
 
-import io.ktor.util.*
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import no.nav.helse.flex.Environment
-import no.nav.helse.flex.application.ApplicationState
-import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.JacksonKafkaSerializer
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskuddene
-import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
-import no.nav.helse.flex.utils.TestDB
-import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldBeEqualTo
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringSerializer
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.testcontainers.containers.KafkaContainer
-import org.testcontainers.containers.Network
-import org.testcontainers.utility.DockerImageName
-import java.time.Instant
-import java.time.LocalDate
-import java.util.*
-
+/*
 @KtorExperimentalAPI
 internal class CronjobKtTest {
     companion object {
@@ -145,3 +117,4 @@ internal class CronjobKtTest {
         opprettet = Instant.now(),
     )
 }
+*/ // TODO

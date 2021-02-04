@@ -2,11 +2,16 @@ package no.nav.helse.flex.kafka
 
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory
+import org.springframework.kafka.listener.ContainerProperties
+import java.io.Serializable
+import java.time.Duration
 
 @Configuration
 class OnPremKafkaConfig(
@@ -16,7 +21,7 @@ class OnPremKafkaConfig(
     @Value("\${SERVICEUSER_USERNAME}") private val serviceuserUsername: String,
     @Value("\${SERVICEUSER_PASSWORD}") private val serviceuserPassword: String,
 ) {
-    private fun commonConfig(): Map<String, String> {
+    fun commonConfig(): Map<String, String> {
         return mapOf(
             CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to kafkaBootstrapServers,
             CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to kafkaSecurityProtocol,
@@ -25,7 +30,7 @@ class OnPremKafkaConfig(
         )
     }
 
-    fun skapSykmeldingKafkaConsumer(): KafkaConsumer<String, SykmeldingMessage?> {
+    fun skapSykmeldingKafkaConsumerConfig(): Map<String, Serializable> {
 
         val config = mapOf(
             ConsumerConfig.GROUP_ID_CONFIG to "flex-reisetilskudd-backend-consumer",
@@ -35,6 +40,16 @@ class OnPremKafkaConfig(
             ConsumerConfig.MAX_POLL_RECORDS_CONFIG to "1"
         ) + commonConfig()
 
-        return KafkaConsumer(config)
+        return config
+    }
+
+    @Bean
+    fun sykmeldingKafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, String> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
+        factory.consumerFactory = DefaultKafkaConsumerFactory(skapSykmeldingKafkaConsumerConfig())
+        factory.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL_IMMEDIATE
+        factory.containerProperties.authorizationExceptionRetryInterval = Duration.ofSeconds(2)
+
+        return factory
     }
 }

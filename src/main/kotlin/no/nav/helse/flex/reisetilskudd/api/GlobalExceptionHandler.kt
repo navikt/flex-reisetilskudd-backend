@@ -1,6 +1,8 @@
 package no.nav.helse.flex.reisetilskudd.api
 
-import no.nav.helse.flex.log
+import no.nav.helse.flex.logger
+import no.nav.security.token.support.core.exceptions.JwtTokenInvalidClaimException
+import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -10,13 +12,28 @@ import javax.servlet.http.HttpServletRequest
 @ControllerAdvice
 class GlobalExceptionHandler {
 
-    private val log = log()
+    private val log = logger()
 
     @ExceptionHandler(java.lang.Exception::class)
     fun handleException(ex: Exception, request: HttpServletRequest): ResponseEntity<Any> {
+        return when (ex) {
+            is AbstractApiError -> {
+                when (ex.loglevel) {
+                    LogLevel.WARN -> log.warn(ex.message, ex)
+                    LogLevel.ERROR -> log.error(ex.message, ex)
+                    LogLevel.OFF -> {
+                    }
+                }
 
-        log.error("Internal server error - ${ex.message} - ${request.method}: ${request.requestURI}", ex)
-        return skapResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+                ResponseEntity(ApiError(ex.reason), ex.httpStatus)
+            }
+            is JwtTokenInvalidClaimException -> skapResponseEntity(HttpStatus.UNAUTHORIZED)
+            is JwtTokenUnauthorizedException -> skapResponseEntity(HttpStatus.UNAUTHORIZED)
+            else -> {
+                log.error("Internal server error - ${ex.message} - ${request.method}: ${request.requestURI}", ex)
+                skapResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+            }
+        }
     }
 }
 
@@ -24,3 +41,14 @@ private fun skapResponseEntity(status: HttpStatus): ResponseEntity<Any> =
     ResponseEntity(ApiError(status.reasonPhrase), status)
 
 private data class ApiError(val reason: String)
+
+abstract class AbstractApiError(
+    message: String,
+    val httpStatus: HttpStatus,
+    val reason: String,
+    val loglevel: LogLevel
+) : RuntimeException(message)
+
+enum class LogLevel {
+    WARN, ERROR, OFF
+}
