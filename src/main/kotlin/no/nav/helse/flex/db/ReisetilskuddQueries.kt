@@ -12,37 +12,31 @@ import java.time.LocalDate
 import java.util.*
 
 fun Database.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-    this.hentReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
+    this.finnReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
     return this.connection.lagreReisetilskudd(reisetilskudd)
 }
 
 fun Database.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
     this.connection.oppdaterReisetilskudd(reisetilskudd)
-    return this.hentReisetilskudd(reisetilskudd.reisetilskuddId)!!
-}
-
-fun Database.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
-
-    this.connection.sendReisetilskudd(fnr, reisetilskuddId)
-    return this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    return this.finnReisetilskudd(reisetilskudd.reisetilskuddId)!!
 }
 
 fun Database.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
 
     this.connection.avbrytReisetilskudd(fnr, reisetilskuddId)
-    return this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    return this.finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
 fun Database.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
 
     val reisetilskudd =
-        this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
+        this.finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
     this.connection.gjenapneReisetilskudd(
         fnr,
         reisetilskuddId,
         reisetilskuddStatus(reisetilskudd.fom, reisetilskudd.tom)
     )
-    return this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    return this.finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
 fun Database.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
@@ -67,26 +61,6 @@ fun Database.åpneReisetilskudd(id: String) {
 
 fun Database.sendbarReisetilskudd(id: String) {
     this.connection.sendbarReisetilskudd(id)
-}
-
-private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
-    val now = Instant.now()
-
-    this.prepareStatement(
-        """
-           UPDATE reisetilskudd 
-           SET (sendt, status) = (?,'SENDT')
-           WHERE reisetilskudd_id = ?
-           AND fnr = ?
-           AND sendt is null
-           AND status = 'SENDBAR'
-        """
-    ).use {
-        it.setTimestamp(1, Timestamp.from(now))
-        it.setString(2, reisetilskuddId)
-        it.setString(3, fnr)
-        it.executeUpdate()
-    }
 }
 
 private fun Connection.avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {

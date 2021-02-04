@@ -33,7 +33,7 @@ class AktiverService(
             try {
                 database.åpneReisetilskudd(id)
                 i++
-                val reisetilskudd = database.hentReisetilskudd(id)
+                val reisetilskudd = database.finnReisetilskudd(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
@@ -62,7 +62,7 @@ class AktiverService(
             try {
                 database.sendbarReisetilskudd(id)
                 i++
-                val reisetilskudd = database.hentReisetilskudd(id)
+                val reisetilskudd = database.finnReisetilskudd(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
