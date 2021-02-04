@@ -69,7 +69,7 @@ class ReisetilskuddService(
         database.hentReisetilskuddene(fnr)
 
     fun hentReisetilskudd(reisetilskuddId: String) =
-        database.hentReisetilskudd(reisetilskuddId)
+        database.finnReisetilskudd(reisetilskuddId)
 
     private fun lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
         database.lagreReisetilskudd(reisetilskudd)

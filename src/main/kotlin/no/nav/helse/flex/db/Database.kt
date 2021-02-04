@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Connection
+import java.sql.Timestamp
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import javax.sql.DataSource
@@ -31,7 +33,8 @@ class Database(
             SELECT * FROM reisetilskudd
             WHERE fnr = :fnr
         """,
-            MapSqlParameterSource().addValue("fnr", fnr),
+            MapSqlParameterSource()
+                .addValue("fnr", fnr),
             reisetilskuddRowMapper()
         )
 
@@ -40,7 +43,30 @@ class Database(
         }
     }
 
-    fun hentReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
+    fun sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+        val now = Instant.now()
+
+        namedParameterJdbcTemplate.update(
+            """
+           UPDATE reisetilskudd 
+           SET (sendt, status) = (:sendt,'SENDT')
+           WHERE reisetilskudd_id = :id
+           AND fnr = :fnr
+           AND sendt is null
+           AND status = 'SENDBAR'
+        """,
+            MapSqlParameterSource()
+                .addValue("sendt", Timestamp.from(now))
+                .addValue("id", reisetilskuddId)
+                .addValue("fnr", fnr)
+        )
+        return hentReisetilskudd(reisetilskuddId)
+    }
+    fun hentReisetilskudd(reisetilskuddId: String): Reisetilskudd {
+        return finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
+    }
+
+    fun finnReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
         val reisetilskudd = namedParameterJdbcTemplate.query(
             """
             SELECT * FROM reisetilskudd
