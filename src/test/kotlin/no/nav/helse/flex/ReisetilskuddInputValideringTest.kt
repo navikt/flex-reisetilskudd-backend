@@ -1,7 +1,6 @@
 package no.nav.helse.flex
 
 import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.db.lagreReisetilskudd
 import no.nav.helse.flex.domain.Reisetilskudd
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.ReisetilskuddStatus.FREMTIDIG
