@@ -2,9 +2,8 @@ package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
-import no.nav.helse.flex.application.DatabaseInterface
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskuddene
-import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
+import no.nav.helse.flex.db.Database
+import no.nav.helse.flex.db.lagreReisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
@@ -38,7 +37,7 @@ internal class CronjobKtTest {
     }
 
     @Autowired
-    lateinit var db: DatabaseInterface
+    lateinit var db: Database
 
     @Autowired
     lateinit var cronjob: Cronjob

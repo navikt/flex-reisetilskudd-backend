@@ -1,7 +1,7 @@
 package no.nav.helse.flex
 
-import no.nav.helse.flex.application.DatabaseInterface
-import no.nav.helse.flex.reisetilskudd.db.lagreReisetilskudd
+import no.nav.helse.flex.db.Database
+import no.nav.helse.flex.db.lagreReisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.FREMTIDIG
@@ -52,7 +52,7 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     override lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var database: DatabaseInterface
+    lateinit var database: Database
 
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {

@@ -1,14 +1,13 @@
 package no.nav.helse.flex.cronjob
 
-import no.nav.helse.flex.application.DatabaseInterface
 import no.nav.helse.flex.application.metrics.Metrikk
+import no.nav.helse.flex.db.Database
+import no.nav.helse.flex.db.finnReisetilskuddSomSkalBliSendbar
+import no.nav.helse.flex.db.finnReisetilskuddSomSkalÅpnes
+import no.nav.helse.flex.db.sendbarReisetilskudd
+import no.nav.helse.flex.db.åpneReisetilskudd
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.logger
-import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalBliSendbar
-import no.nav.helse.flex.reisetilskudd.db.finnReisetilskuddSomSkalÅpnes
-import no.nav.helse.flex.reisetilskudd.db.hentReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.sendbarReisetilskudd
-import no.nav.helse.flex.reisetilskudd.db.åpneReisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -17,7 +16,7 @@ import java.time.LocalDate
 
 @Component
 class AktiverService(
-    private val database: DatabaseInterface,
+    private val database: Database,
     private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
     private val metrikk: Metrikk
 ) {

@@ -1,132 +1,73 @@
-package no.nav.helse.flex.reisetilskudd.db
+package no.nav.helse.flex.db
 
-import no.nav.helse.flex.application.DatabaseInterface
-import no.nav.helse.flex.db.toList
 import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
 import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
 import java.sql.Connection
 import java.sql.Date
-import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDate
-import java.time.OffsetDateTime
 import java.util.*
 
-fun DatabaseInterface.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
-    return this.connection.hentReisetilskuddene(fnr)
-}
-
-fun DatabaseInterface.hentReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
-    return this.connection.hentReisetilskudd(reisetilskuddId)
-}
-
-fun DatabaseInterface.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-    this.connection.hentReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
+fun Database.lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
+    this.hentReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return }
     return this.connection.lagreReisetilskudd(reisetilskudd)
 }
 
-fun DatabaseInterface.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
+fun Database.oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
     this.connection.oppdaterReisetilskudd(reisetilskudd)
-    return this.connection.hentReisetilskudd(reisetilskudd.reisetilskuddId)!!
+    return this.hentReisetilskudd(reisetilskudd.reisetilskuddId)!!
 }
 
-fun DatabaseInterface.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+fun Database.sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
 
     this.connection.sendReisetilskudd(fnr, reisetilskuddId)
-    return this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    return this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
-fun DatabaseInterface.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+fun Database.avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
 
     this.connection.avbrytReisetilskudd(fnr, reisetilskuddId)
-    return this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    return this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
-fun DatabaseInterface.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+fun Database.gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
 
     val reisetilskudd =
-        this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
+        this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
     this.connection.gjenapneReisetilskudd(
         fnr,
         reisetilskuddId,
         reisetilskuddStatus(reisetilskudd.fom, reisetilskudd.tom)
     )
-    return this.connection.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
+    return this.hentReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd id skal finnes")
 }
 
-fun DatabaseInterface.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
+fun Database.lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
     return this.connection.lagreKvittering(kvittering, reisetilskuddId)
 }
 
-fun DatabaseInterface.eierReisetilskudd(fnr: String, id: String): Boolean {
-    return this.connection.eierReisetilskudd(fnr, id)
-}
-
-fun DatabaseInterface.slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
+fun Database.slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
     return this.connection.slettKvittering(kvitteringId, reisetilskuddId)
 }
 
-fun DatabaseInterface.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> {
+fun Database.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> {
     return this.connection.finnReisetilskuddSomSkalÅpnes(now)
 }
 
-fun DatabaseInterface.finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<String> {
+fun Database.finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<String> {
     return this.connection.finnReisetilskuddSomSkalBliSendbar(now)
 }
 
-fun DatabaseInterface.åpneReisetilskudd(id: String) {
+fun Database.åpneReisetilskudd(id: String) {
     this.connection.åpneReisetilskudd(id)
 }
 
-fun DatabaseInterface.sendbarReisetilskudd(id: String) {
+fun Database.sendbarReisetilskudd(id: String) {
     this.connection.sendbarReisetilskudd(id)
 }
-
-private fun Connection.hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
-    val reisetilskudd = this.prepareStatement(
-        """
-            SELECT * FROM reisetilskudd
-            WHERE fnr = ?
-        """
-    ).use {
-        it.setString(1, fnr)
-        it.executeQuery().toList { toReisetilskudd() }
-    }
-    return reisetilskudd.map {
-        it.copy(kvitteringer = hentKvitteringer(it.reisetilskuddId))
-    }
-}
-
-private fun Connection.hentReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
-    val kvitteringer = hentKvitteringer(reisetilskuddId)
-    return this.prepareStatement(
-        """
-            SELECT * FROM reisetilskudd
-            WHERE reisetilskudd_id = ?
-        """
-    ).use {
-        it.setString(1, reisetilskuddId)
-        it.executeQuery().toList { toReisetilskudd(kvitteringer) }.firstOrNull()
-    }
-}
-
-private fun Connection.eierReisetilskudd(fnr: String, id: String): Boolean =
-    this.prepareStatement(
-        """
-            select * FROM reisetilskudd
-            WHERE fnr = ? AND reisetilskudd_id = ?
-    """
-    ).use {
-        it.setString(1, fnr)
-        it.setString(2, id)
-        it.executeQuery().toList {
-            getString("reisetilskudd_id")
-        }.isNotEmpty()
-    }
 
 private fun Connection.sendReisetilskudd(fnr: String, reisetilskuddId: String) {
     val now = Instant.now()
@@ -285,20 +226,6 @@ private fun Connection.slettKvittering(kvitteringId: String, reisetilskuddId: St
     }
 }
 
-private fun Connection.hentKvitteringer(reisetilskuddId: String): List<Kvittering> {
-    return this.prepareStatement(
-        """
-            SELECT * FROM kvitteringer
-            WHERE reisetilskudd_id = ?
-        """
-    ).use {
-        it.setString(1, reisetilskuddId)
-        it.executeQuery().toList {
-            toKvitteringDTO()
-        }
-    }
-}
-
 private fun Connection.finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> =
     this.prepareStatement(
         """
@@ -359,41 +286,6 @@ private fun Connection.sendbarReisetilskudd(id: String) {
         it.setString(3, ReisetilskuddStatus.ÅPEN.name)
         it.executeUpdate()
     }
-}
-
-fun ResultSet.toReisetilskudd(kvitteringer: List<Kvittering> = emptyList()): Reisetilskudd {
-    return Reisetilskudd(
-        sykmeldingId = getString("sykmelding_id"),
-        fnr = getString("fnr"),
-        reisetilskuddId = getString("reisetilskudd_id"),
-        fom = getObject("fom", LocalDate::class.java),
-        tom = getObject("tom", LocalDate::class.java),
-        orgNummer = getString("arbeidsgiver_orgnummer"),
-        orgNavn = getString("arbeidsgiver_navn"),
-        sendt = getObject("sendt", OffsetDateTime::class.java)?.toInstant(),
-        avbrutt = getObject("avbrutt", OffsetDateTime::class.java)?.toInstant(),
-        opprettet = getObject("opprettet", OffsetDateTime::class.java).toInstant(),
-        utbetalingTilArbeidsgiver = getInt("utbetaling_til_arbeidsgiver").toOptionalBoolean(),
-        går = getInt("gar").toOptionalBoolean(),
-        sykler = getInt("sykler").toOptionalBoolean(),
-        egenBil = getDouble("egen_bil"),
-        kollektivtransport = getDouble("kollektivtransport"),
-        kvitteringer = kvitteringer,
-        oppfølgende = getInt("oppfolgende").toBoolean(),
-        status = ReisetilskuddStatus.valueOf(getString("status"))
-    )
-}
-
-fun ResultSet.toKvitteringDTO(): Kvittering {
-    return Kvittering(
-        kvitteringId = getString("kvittering_id"),
-        blobId = getString("blob_id"),
-        navn = getString("navn"),
-        datoForReise = getObject("dato_for_reise", LocalDate::class.java),
-        belop = getInt("belop"),
-        storrelse = getLong("storrelse"),
-        transportmiddel = Transportmiddel.valueOf(getString("transportmiddel"))
-    )
 }
 
 fun Boolean?.toInt(): Int {
