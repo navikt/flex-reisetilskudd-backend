@@ -1,8 +1,10 @@
 package no.nav.helse.flex
 
 import no.nav.helse.flex.kafka.SykmeldingMessage
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.Svar
+import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
 import no.nav.helse.flex.utils.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -158,41 +160,36 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         val besvart = this.svar(fnr, reisetilskudd.reisetilskuddId, Svar(sykler = true))
         besvart.sykler?.shouldBeTrue()
-        val aasd = 2
 
+        val a = "test"
     }
 
-/*
     @Test
     @Order(6)
     fun `Vi kan laste opp en kvittering`() {
-        with(testApp) {
-            val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                medSelvbetjeningToken(fnr)
-            }.response.content!!.tilReisetilskuddListe()[0].reisetilskuddId
-            with(
-                engine.handleRequest(HttpMethod.Post, "/api/v1/reisetilskudd/$id/kvittering") {
-                    medSelvbetjeningToken(fnr)
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    val kvittering = Kvittering(
-                        blobId = "123456",
-                        belop = 133700,
-                        storrelse = 12,
-                        transportmiddel = Transportmiddel.EGEN_BIL,
-                        datoForReise = LocalDate.now(),
-                        navn = "bilde123.jpg"
-                    )
-                    setBody(kvittering.serialisertTilString())
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.Created
-                val kvittering = response.content.tilKvittering()
-                kvittering.datoForReise.`should be equal to`(LocalDate.now())
-                kvittering.kvitteringId.shouldNotBeNull()
-            }
-        }
-    }
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        reisetilskudd.kvitteringer.shouldBeEmpty()
 
+        val kvittering = this.lagreKvittering(
+            fnr,
+            reisetilskudd.reisetilskuddId,
+            Kvittering(
+                blobId = "123456",
+                belop = 133700,
+                storrelse = 12,
+                transportmiddel = Transportmiddel.EGEN_BIL,
+                datoForReise = LocalDate.now(),
+                navn = "bilde123.jpg"
+            )
+        )
+
+        kvittering.datoForReise.`should be equal to`(LocalDate.now())
+        kvittering.kvitteringId.shouldNotBeNull()
+
+        val oppdatertReisetilskudd = this.hentSoknader(fnr).first()
+        oppdatertReisetilskudd.kvitteringer.shouldNotBeEmpty()
+    }
+/*
     @Test
     @Order(7)
     fun `Vi kan se den opplastede kvitteringen`() {

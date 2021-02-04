@@ -2,6 +2,7 @@ package no.nav.helse.flex.utils
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.helse.flex.objectMapper
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.Svar
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -45,7 +46,6 @@ fun TestHelper.gjenåpneSøknad(fnr: String, reisetilskuddId: String): Reisetils
     return objectMapper.readValue(json)
 }
 
-
 fun TestHelper.svar(fnr: String, reisetilskuddId: String, svar: Svar): Reisetilskudd {
     val json = this.mockMvc.perform(
         MockMvcRequestBuilders.put("/api/v1/reisetilskudd/$reisetilskuddId", svar)
@@ -53,6 +53,17 @@ fun TestHelper.svar(fnr: String, reisetilskuddId: String, svar: Svar): Reisetils
             .content(objectMapper.writeValueAsString(svar))
             .contentType(MediaType.APPLICATION_JSON)
     ).andExpect(MockMvcResultMatchers.status().isOk).andReturn().response.contentAsString
+
+    return objectMapper.readValue(json)
+}
+
+fun TestHelper.lagreKvittering(fnr: String, reisetilskuddId: String, kvittering: Kvittering): Kvittering {
+    val json = this.mockMvc.perform(
+        MockMvcRequestBuilders.post("/api/v1/reisetilskudd/$reisetilskuddId/kvittering", kvittering)
+            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
+            .content(objectMapper.writeValueAsString(kvittering))
+            .contentType(MediaType.APPLICATION_JSON)
+    ).andExpect(MockMvcResultMatchers.status().isCreated).andReturn().response.contentAsString
 
     return objectMapper.readValue(json)
 }
