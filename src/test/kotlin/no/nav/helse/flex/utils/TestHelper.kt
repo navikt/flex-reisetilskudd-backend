@@ -1,10 +1,10 @@
 package no.nav.helse.flex.utils
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import no.nav.helse.flex.domain.Kvittering
+import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.objectMapper
-import no.nav.helse.flex.reisetilskudd.domain.Kvittering
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.Svar
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc

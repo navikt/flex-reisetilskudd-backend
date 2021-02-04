@@ -1,4 +1,4 @@
-package no.nav.helse.flex.reisetilskudd.domain
+package no.nav.helse.flex.domain
 
 import java.time.LocalDate
 

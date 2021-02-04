@@ -1,9 +1,9 @@
 package no.nav.helse.flex.db
 
-import no.nav.helse.flex.reisetilskudd.domain.Kvittering
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
+import no.nav.helse.flex.domain.Kvittering
+import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.Transportmiddel
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.sql.Connection
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.util.*
 import javax.sql.DataSource
 
 @Service

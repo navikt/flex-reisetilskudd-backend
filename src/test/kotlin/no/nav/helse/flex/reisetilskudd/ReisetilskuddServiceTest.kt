@@ -2,7 +2,7 @@ package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.utils.lagSykmeldingMessage
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO

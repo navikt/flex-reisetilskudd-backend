@@ -1,14 +1,14 @@
 package no.nav.helse.flex.cronjob
 
-import no.nav.helse.flex.application.metrics.Metrikk
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.db.finnReisetilskuddSomSkalBliSendbar
 import no.nav.helse.flex.db.finnReisetilskuddSomSkalÅpnes
 import no.nav.helse.flex.db.sendbarReisetilskudd
 import no.nav.helse.flex.db.åpneReisetilskudd
+import no.nav.helse.flex.domain.Reisetilskudd
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.logger
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.metrikk.Metrikk
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.stereotype.Component

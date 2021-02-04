@@ -1,4 +1,4 @@
-package no.nav.helse.flex.reisetilskudd.api
+package no.nav.helse.flex.controller
 
 import no.nav.helse.flex.logger
 import no.nav.security.token.support.core.exceptions.JwtTokenInvalidClaimException

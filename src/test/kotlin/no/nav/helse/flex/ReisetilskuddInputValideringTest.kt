@@ -2,10 +2,10 @@ package no.nav.helse.flex
 
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.db.lagreReisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.FREMTIDIG
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.ÅPEN
+import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.ReisetilskuddStatus.FREMTIDIG
+import no.nav.helse.flex.domain.ReisetilskuddStatus.ÅPEN
 import no.nav.helse.flex.utils.TestHelper
 import no.nav.helse.flex.utils.hentSøknadResultActions
 import no.nav.helse.flex.utils.sendSøknadResultActions

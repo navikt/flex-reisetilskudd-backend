@@ -1,6 +1,6 @@
 package no.nav.helse.flex.kafka
 
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
+import no.nav.helse.flex.domain.Reisetilskudd
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG

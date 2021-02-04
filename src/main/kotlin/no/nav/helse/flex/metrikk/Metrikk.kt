@@ -1,4 +1,4 @@
-package no.nav.helse.flex.application.metrics
+package no.nav.helse.flex.metrikk
 
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.stereotype.Component
