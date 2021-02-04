@@ -3,6 +3,7 @@ package no.nav.helse.flex.reisetilskudd.api
 import no.nav.helse.flex.application.OIDCIssuer.SELVBETJENING
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
+import no.nav.helse.flex.reisetilskudd.domain.Kvittering
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.*
@@ -33,7 +34,11 @@ class SoknadController(
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
-    @PutMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping(
+        value = ["/reisetilskudd/{id}"],
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+        consumes = [MediaType.APPLICATION_JSON_VALUE]
+    )
     fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): Reisetilskudd {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
@@ -55,6 +60,20 @@ class SoknadController(
             reisetilskudd = reisetilskudd.copy(kollektivtransport = svar.kollektivtransport)
         }
         return reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseBody
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(
+        value = ["/reisetilskudd/{id}/kvittering"],
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+        consumes = [MediaType.APPLICATION_JSON_VALUE]
+    )
+    fun lagreKvittering(@PathVariable("id") id: String, @RequestBody svar: Kvittering): Kvittering {
+        val soknad = hentOgSjekkTilgangTilSoknad(id)
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
+        return reisetilskuddService.lagreKvittering(svar, soknad.reisetilskuddId)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
