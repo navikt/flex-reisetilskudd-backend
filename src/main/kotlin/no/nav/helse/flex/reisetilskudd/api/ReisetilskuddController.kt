@@ -6,6 +6,7 @@ import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.*
+import no.nav.helse.flex.reisetilskudd.domain.Svar
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import no.nav.security.token.support.core.context.TokenValidationContextHolder
 import org.springframework.http.HttpStatus
@@ -32,6 +33,43 @@ class SoknadController(
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
+    @PutMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): Reisetilskudd {
+        val soknad = hentOgSjekkTilgangTilSoknad(id)
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
+        var reisetilskudd = soknad
+        if (svar.går != null) {
+            reisetilskudd = reisetilskudd.copy(går = svar.går)
+        }
+        if (svar.sykler != null) {
+            reisetilskudd = reisetilskudd.copy(sykler = svar.sykler)
+        }
+        if (svar.utbetalingTilArbeidsgiver != null) {
+            reisetilskudd =
+                reisetilskudd.copy(utbetalingTilArbeidsgiver = svar.utbetalingTilArbeidsgiver)
+        }
+        if (svar.egenBil != null) {
+            reisetilskudd = reisetilskudd.copy(egenBil = svar.egenBil)
+        }
+        if (svar.kollektivtransport != null) {
+            reisetilskudd = reisetilskudd.copy(kollektivtransport = svar.kollektivtransport)
+        }
+        return reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseBody
+    @PostMapping(value = ["/reisetilskudd/{id}/send"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun sendSoknad(@PathVariable("id") id: String): Reisetilskudd {
+        val soknad = hentOgSjekkTilgangTilSoknad(id)
+        soknad.sjekkGyldigStatus(listOf(SENDBAR), "send")
+
+        reisetilskuddService.sendReisetilskudd(soknad.fnr, soknad.reisetilskuddId)
+        return reisetilskuddService.hentReisetilskudd(soknad.reisetilskuddId) ?: throw IllegalStateException()
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseBody
     @PostMapping(value = ["/reisetilskudd/{id}/avbryt"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun avbrytSoknad(@PathVariable("id") id: String): Reisetilskudd {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
@@ -46,7 +84,7 @@ class SoknadController(
     @PostMapping(value = ["/reisetilskudd/{id}/gjenapne"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun gjenapneSoknad(@PathVariable("id") id: String): Reisetilskudd {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(AVBRUTT), "avbryt")
+        soknad.sjekkGyldigStatus(listOf(AVBRUTT), "gjenåpne")
 
         reisetilskuddService.gjenapneReisetilskudd(soknad.fnr, soknad.reisetilskuddId)
         return reisetilskuddService.hentReisetilskudd(soknad.reisetilskuddId) ?: throw IllegalStateException()

@@ -2,6 +2,7 @@ package no.nav.helse.flex
 
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.reisetilskudd.domain.Svar
 import no.nav.helse.flex.utils.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -148,28 +149,20 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         gjenåpnet.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         gjenåpnet.avbrutt.shouldBeNull()
     }
-/*
+
     @Test
     @Order(5)
     fun `Vi kan besvare et av spørsmålene`() {
-        with(testApp) {
-            val id = engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                medSelvbetjeningToken(fnr)
-            }.response.content!!.tilReisetilskuddListe()[0].reisetilskuddId
-            with(
-                engine.handleRequest(HttpMethod.Put, "/api/v1/reisetilskudd/$id") {
-                    medSelvbetjeningToken(fnr)
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    setBody(Svar(sykler = true).serialisertTilString())
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.OK
-                val reisetilskudd = response.content.tilReisetilskudd()
-                reisetilskudd.sykler?.shouldBeTrue()
-            }
-        }
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        reisetilskudd.sykler.shouldBeNull()
+
+        val besvart = this.svar(fnr, reisetilskudd.reisetilskuddId, Svar(sykler = true))
+        besvart.sykler?.shouldBeTrue()
+        val aasd = 2
+
     }
 
+/*
     @Test
     @Order(6)
     fun `Vi kan laste opp en kvittering`() {
