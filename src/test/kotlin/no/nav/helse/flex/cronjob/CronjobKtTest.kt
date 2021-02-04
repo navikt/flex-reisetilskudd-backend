@@ -4,9 +4,9 @@ import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
 import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.db.lagreReisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
+import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo

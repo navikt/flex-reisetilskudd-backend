@@ -1,10 +1,10 @@
 package no.nav.helse.flex
 
+import no.nav.helse.flex.domain.Kvittering
+import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.Svar
+import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.reisetilskudd.domain.Kvittering
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.domain.Svar
-import no.nav.helse.flex.reisetilskudd.domain.Transportmiddel
 import no.nav.helse.flex.utils.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server

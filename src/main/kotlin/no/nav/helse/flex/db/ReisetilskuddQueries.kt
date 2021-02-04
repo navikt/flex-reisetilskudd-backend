@@ -1,9 +1,9 @@
 package no.nav.helse.flex.db
 
-import no.nav.helse.flex.reisetilskudd.domain.Kvittering
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.util.reisetilskuddStatus
+import no.nav.helse.flex.domain.Kvittering
+import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
 import java.sql.Connection
 import java.sql.Date
 import java.sql.Timestamp

@@ -1,6 +1,6 @@
-package no.nav.helse.flex.reisetilskudd.util
+package no.nav.helse.flex.reisetilskudd
 
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.ReisetilskuddStatus
 import java.time.LocalDate
 
 fun reisetilskuddStatus(fom: LocalDate, tom: LocalDate): ReisetilskuddStatus {

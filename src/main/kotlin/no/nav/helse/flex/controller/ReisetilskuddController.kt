@@ -1,12 +1,12 @@
-package no.nav.helse.flex.reisetilskudd.api
+package no.nav.helse.flex.controller
 
 import no.nav.helse.flex.config.OIDCIssuer.SELVBETJENING
+import no.nav.helse.flex.domain.Kvittering
+import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.ReisetilskuddStatus.*
+import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
-import no.nav.helse.flex.reisetilskudd.domain.Kvittering
-import no.nav.helse.flex.reisetilskudd.domain.Reisetilskudd
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus
-import no.nav.helse.flex.reisetilskudd.domain.ReisetilskuddStatus.*
-import no.nav.helse.flex.reisetilskudd.domain.Svar
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import no.nav.security.token.support.core.context.TokenValidationContextHolder
 import org.springframework.http.HttpStatus
