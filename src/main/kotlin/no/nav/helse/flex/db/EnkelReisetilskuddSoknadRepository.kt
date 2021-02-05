@@ -3,7 +3,6 @@ package no.nav.helse.flex.db
 import no.nav.helse.flex.domain.EnkelReisetilskuddSoknad
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
-import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 
@@ -17,7 +16,7 @@ interface EnkelReisetilskuddSoknadRepository : CrudRepository<EnkelReisetilskudd
             AND tom < :now
         """
     )
-    fun finnReisetilskuddSomSkalBliSendbar(@Param("now") now: LocalDate): List<EnkelReisetilskuddSoknad>
+    fun finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<EnkelReisetilskuddSoknad>
 
     @Query(
         """
@@ -26,5 +25,5 @@ interface EnkelReisetilskuddSoknadRepository : CrudRepository<EnkelReisetilskudd
             AND fom <= :now
         """
     )
-    fun finnReisetilskuddSomSkalÅpnes(@Param("now") now: LocalDate): List<EnkelReisetilskuddSoknad>
+    fun finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<EnkelReisetilskuddSoknad>
 }
