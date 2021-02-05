@@ -19,7 +19,7 @@ data class ReisetilskuddSoknad(
     val avbrutt: Instant? = null,
     val arbeidsgiverOrgnummer: String?,
     val arbeidsgiverNavn: String?,
-    @MappedCollection(keyColumn = "REISETILSKUDD_SOKNAD_ID")
+    @MappedCollection(keyColumn = "reisetilskudd_soknad_id", idColumn = "reisetilskudd_soknad_id")
     val kvitteringer: List<Kvittering> = emptyList()
 )
 

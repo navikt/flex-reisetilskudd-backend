@@ -2,7 +2,6 @@ package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
-import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
@@ -36,8 +35,6 @@ internal class CronjobKtTest {
         val fnr = "12345678901"
     }
 
-    @Autowired
-    lateinit var db: Database
     @Autowired
     lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository
     @Autowired

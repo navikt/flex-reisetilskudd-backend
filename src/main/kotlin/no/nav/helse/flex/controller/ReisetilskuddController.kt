@@ -12,6 +12,7 @@ import no.nav.security.token.support.core.context.TokenValidationContextHolder
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
+import java.time.Instant
 
 @RestController
 @RequestMapping(value = ["/api/v1"])
@@ -47,7 +48,6 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
 
-
         return soknad
     }
 
@@ -59,10 +59,10 @@ class SoknadController(
         produces = [MediaType.APPLICATION_JSON_VALUE],
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun lagreKvittering(@PathVariable("id") id: String, @RequestBody svar: Kvittering): Kvittering {
+    fun lagreKvittering(@PathVariable("id") id: String, @RequestBody kvittering: Kvittering): Kvittering {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(svar, soknad.id!!)
+        return reisetilskuddService.lagreKvittering(kvittering.copy(reisetilskuddSoknadId = id, opprettet = Instant.now()))
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -75,7 +75,7 @@ class SoknadController(
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
         reisetilskuddService.slettKvittering(
             kvitteringId = kvitteringId,
-            reisetilskuddId = id
+            soknad = soknad
         )
     }
 
@@ -86,8 +86,7 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR), "send")
 
-        reisetilskuddService.sendReisetilskudd(soknad.fnr, soknad.id!!)
-        return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
+        return reisetilskuddService.sendReisetilskudd(soknad)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -97,8 +96,7 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(ÅPEN, FREMTIDIG, SENDBAR), "avbryt")
 
-        reisetilskuddService.avbrytReisetilskudd(soknad.fnr, soknad.id!!)
-        return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
+        return reisetilskuddService.avbrytReisetilskudd(soknad)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -108,8 +106,7 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(AVBRUTT), "gjenåpne")
 
-        reisetilskuddService.gjenapneReisetilskudd(soknad.fnr, soknad.id!!)
-        return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
+        return reisetilskuddService.gjenapneReisetilskudd(soknad)
     }
 
     private fun hentOgSjekkTilgangTilSoknad(soknadId: String): ReisetilskuddSoknad {

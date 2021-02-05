@@ -1,6 +1,5 @@
 package no.nav.helse.flex
 
-import no.nav.helse.flex.db.Database
 import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
@@ -52,22 +51,13 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     override lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var database: Database
-
-    @Autowired
     lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository
-
 
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
-        val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-            reisetilskuddSoknadRepository.save(it)
-        }
+        val reisetilskudd = reisetilskuddSoknadRepository.save(reisetilskudd(FREMTIDIG))
 
-        val reisetilskudd2 = reisetilskudd(ÅPEN)
-            .also {
-                reisetilskuddSoknadRepository.save(it)
-            }
+        val reisetilskudd2 = reisetilskuddSoknadRepository.save(reisetilskudd(ÅPEN))
 
         val json1 = this.sendSøknadResultActions(reisetilskudd.id!!, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
@@ -91,9 +81,7 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
 
     @Test
     fun `En annen persons reisetilskudd id gir 403`() {
-        val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-            reisetilskuddSoknadRepository.save(it)
-        }
+        val reisetilskudd = reisetilskuddSoknadRepository.save(reisetilskudd(FREMTIDIG))
 
         val json1 = this.hentSøknadResultActions(reisetilskudd.id!!, "123423232")
             .andExpect(MockMvcResultMatchers.status().isForbidden)
