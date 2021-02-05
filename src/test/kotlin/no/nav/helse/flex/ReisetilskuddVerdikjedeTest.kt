@@ -2,7 +2,6 @@ package no.nav.helse.flex
 
 import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
-import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.utils.*
@@ -119,17 +118,12 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         reisetilskudd[0].tom shouldBeEqualTo tom
         reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         reisetilskudd[0].sykmeldingId shouldBeEqualTo sykmeldingId
-        reisetilskudd[0].egenBil shouldBeEqualTo 0.0
-        reisetilskudd[0].sykler.shouldBeNull()
-        reisetilskudd[0].kollektivtransport shouldBeEqualTo 0.0
-        reisetilskudd[0].oppfølgende.`should be false`()
+
         reisetilskudd[0].sendt.shouldBeNull()
         reisetilskudd[0].avbrutt.shouldBeNull()
-        reisetilskudd[0].går.shouldBeNull()
         reisetilskudd[0].kvitteringer.shouldBeEmpty()
-        reisetilskudd[0].orgNummer.shouldBeNull()
-        reisetilskudd[0].orgNavn.shouldBeNull()
-        reisetilskudd[0].utbetalingTilArbeidsgiver.shouldBeNull()
+        reisetilskudd[0].arbeidsgiverOrgnummer.shouldBeNull()
+        reisetilskudd[0].arbeidsgiverNavn.shouldBeNull()
     }
 
     @Test
@@ -137,7 +131,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan avbryte søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr)
 
-        val avbruttSøknad = this.avbrytSøknad(fnr, reisetilskudd.first().id)
+        val avbruttSøknad = this.avbrytSøknad(fnr, reisetilskudd.first().id!!)
         avbruttSøknad.status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
         avbruttSøknad.avbrutt.shouldNotBeNull()
     }
@@ -147,12 +141,12 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan gjenåpne søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr)
 
-        val gjenåpnet = this.gjenåpneSøknad(fnr, reisetilskudd.first().id)
+        val gjenåpnet = this.gjenåpneSøknad(fnr, reisetilskudd.first().id!!)
         gjenåpnet.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         gjenåpnet.avbrutt.shouldBeNull()
     }
 
-    @Test
+  /*  @Test
     @Order(5)
     fun `Vi kan besvare et av spørsmålene`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
@@ -160,7 +154,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         val besvart = this.svar(fnr, reisetilskudd.id, Svar(sykler = true))
         besvart.sykler?.shouldBeTrue()
-    }
+    } */
 
     @Test
     @Order(6)
@@ -170,14 +164,12 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         val kvittering = this.lagreKvittering(
             fnr,
-            reisetilskudd.id,
+            reisetilskudd.id!!,
             Kvittering(
                 blobId = "123456",
                 belop = 133700,
-                storrelse = 12,
                 typeUtgift = Transportmiddel.EGEN_BIL,
                 datoForUtgift = LocalDate.now(),
-                navn = "bilde123.jpg"
             )
         )
 
@@ -198,7 +190,6 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         kvittering.datoForUtgift.`should be equal to`(LocalDate.now())
         kvittering.id.shouldNotBeNull()
-        kvittering.storrelse.`should be equal to`(12)
         kvittering.belop.`should be equal to`(133700)
     }
 
@@ -207,7 +198,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan slette en kvittering`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
         reisetilskudd.kvitteringer.size `should be equal to` 1
-        this.slettKvittering(fnr, reisetilskudd.id, reisetilskudd.kvitteringer[0].id!!)
+        this.slettKvittering(fnr, reisetilskudd.id!!, reisetilskudd.kvitteringer[0].id!!)
 
         val reisetilskuddEtter = this.hentSoknader(fnr).first()
         reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
@@ -217,7 +208,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     @Order(9)
     fun `Vi kan sende inn søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
-        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id)
+        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id!!)
         sendtSøknad.status shouldBeEqualTo ReisetilskuddStatus.SENDT
         sendtSøknad.sendt.shouldNotBeNull()
     }

@@ -12,15 +12,16 @@ import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.util.*
 
 @Component
 @Transactional
 class ReisetilskuddService(
-    private val database: Database,
+    private val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
+    private val kvitteringRepository: KvitteringRepository,
     private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
     private val metrikk: Metrikk,
 
@@ -33,21 +34,19 @@ class ReisetilskuddService(
                 .tidligstePeriodeFoerst()
                 .mapIndexed { idx, periode ->
                     ReisetilskuddSoknad(
-                        id = UUID.nameUUIDFromBytes("${sykmeldingMessage.sykmelding.id}-${periode.fom}-${periode.tom}".toByteArray())
-                            .toString(),
                         sykmeldingId = sykmeldingMessage.sykmelding.id,
                         status = reisetilskuddStatus(periode.fom, periode.tom),
-                        oppfølgende = idx > 0,
                         fnr = sykmeldingMessage.kafkaMetadata.fnr,
                         fom = periode.fom,
                         tom = periode.tom,
-                        orgNavn = sykmeldingMessage.event.arbeidsgiver?.orgNavn,
-                        orgNummer = sykmeldingMessage.event.arbeidsgiver?.orgnummer,
-                        opprettet = Instant.now()
+                        arbeidsgiverNavn = sykmeldingMessage.event.arbeidsgiver?.orgNavn,
+                        arbeidsgiverOrgnummer = sykmeldingMessage.event.arbeidsgiver?.orgnummer,
+                        opprettet = Instant.now(),
+                        endret = Instant.now()
                     )
                 }
                 .forEach { reisetilskudd ->
-                    lagreReisetilskudd(reisetilskudd)
+                    reisetilskuddSoknadRepository.save(reisetilskudd)
                     kafkaProducer.send(
                         ProducerRecord(
                             AivenKafkaConfig.topic,
@@ -65,22 +64,12 @@ class ReisetilskuddService(
         }
     }
 
-    fun hentReisetilskuddene(fnr: String) =
-        database.hentReisetilskuddene(fnr)
 
-    fun hentReisetilskudd(reisetilskuddId: String) =
-        database.finnReisetilskudd(reisetilskuddId)
 
-    private fun lagreReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad) {
-        database.lagreReisetilskudd(reisetilskuddSoknad)
-    }
 
-    fun oppdaterReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
-        return database.oppdaterReisetilskudd(reisetilskuddSoknad)
-    }
 
     fun sendReisetilskudd(fnr: String, reisetilskuddId: String) {
-        val reisetilskudd = database.sendReisetilskudd(fnr, reisetilskuddId)
+        val reisetilskudd:ReisetilskuddSoknad = TODO()//database.sendReisetilskudd(fnr, reisetilskuddId)
         kafkaProducer.send(
             ProducerRecord(
                 AivenKafkaConfig.topic,
@@ -93,7 +82,7 @@ class ReisetilskuddService(
     }
 
     fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
-        val reisetilskudd = database.avbrytReisetilskudd(fnr, reisetilskuddId)
+        val reisetilskudd:ReisetilskuddSoknad = TODO()//.avbrytReisetilskudd(fnr, reisetilskuddId)
         kafkaProducer.send(
             ProducerRecord(
                 AivenKafkaConfig.topic,
@@ -107,7 +96,7 @@ class ReisetilskuddService(
     }
 
     fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
-        val reisetilskudd = database.gjenapneReisetilskudd(fnr, reisetilskuddId)
+        val reisetilskudd:ReisetilskuddSoknad = TODO()// database.gjenapneReisetilskudd(fnr, reisetilskuddId)
         kafkaProducer.send(
             ProducerRecord(
                 AivenKafkaConfig.topic,
@@ -120,10 +109,19 @@ class ReisetilskuddService(
     }
 
     fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {
-        return database.lagreKvittering(kvittering, reisetilskuddId)
+        return kvitteringRepository.save(kvittering)
     }
 
-    fun slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
-        return database.slettKvittering(kvitteringId, reisetilskuddId)
+    fun slettKvittering(kvitteringId: String, reisetilskuddId: String) {
+        kvitteringRepository.deleteById(kvitteringId)
+
+    }
+
+    fun hentReisetilskuddene(fnr: String): List<ReisetilskuddSoknad> {
+        return reisetilskuddSoknadRepository.findReisetilskuddSoknadByFnr(fnr)
+    }
+
+    fun hentReisetilskudd(id: String): ReisetilskuddSoknad? {
+        return reisetilskuddSoknadRepository.findByIdOrNull(id)
     }
 }

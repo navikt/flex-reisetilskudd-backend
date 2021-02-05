@@ -8,6 +8,7 @@ import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,12 +19,31 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
-@Service
-@Transactional
-@Repository
-class Database(
-    private val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
-) {
+@Component
+class Database {
+    fun finnReisetilskuddSomSkalÅpnes(now: LocalDate): List<String> {
+        return emptyList()
+    }
+
+    fun finnReisetilskuddSomSkalBliSendbar(now: LocalDate): List<String> {
+        return emptyList()
+    }
+
+    fun åpneReisetilskudd(id: ReisetilskuddSoknad) {
+        TODO("Not yet implemented")
+    }
+
+    fun åpneReisetilskudd(id: String) {
+        TODO("Not yet implemented")
+    }
+
+    fun sendbarReisetilskudd(id: String) {
+        TODO("Not yet implemented")
+    }
+
+}
+/*
+{
 
     fun hentReisetilskuddene(fnr: String): List<ReisetilskuddSoknad> {
         val reisetilskudd = namedParameterJdbcTemplate.query(
@@ -46,7 +66,7 @@ class Database(
 
         namedParameterJdbcTemplate.update(
             """
-           UPDATE reisetilskudd 
+           UPDATE reisetilskudd
            SET (sendt, status) = (:sendt,'SENDT')
            WHERE reisetilskudd_id = :id
            AND fnr = :fnr
@@ -66,7 +86,7 @@ class Database(
 
         namedParameterJdbcTemplate.update(
             """
-           UPDATE reisetilskudd 
+           UPDATE reisetilskudd
            SET (status, avbrutt) = ('AVBRUTT', :avbrutt)
            WHERE reisetilskudd_id = :id
            AND fnr = :fnr
@@ -82,28 +102,7 @@ class Database(
         return hentReisetilskudd(reisetilskuddId)
     }
 
-    fun oppdaterReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
-        val now = Instant.now()
 
-        namedParameterJdbcTemplate.update(
-            """
-              UPDATE reisetilskudd
-            SET (utbetaling_til_arbeidsgiver, gar, sykler, egen_bil, kollektivtransport, endret) = 
-                (:1, :2, :3, :4, :5, :6)                                
-            WHERE reisetilskudd_id = :7
-        """,
-            MapSqlParameterSource()
-                .addValue("1", reisetilskuddSoknad.utbetalingTilArbeidsgiver.toInt())
-                .addValue("2", reisetilskuddSoknad.går.toInt())
-                .addValue("3", reisetilskuddSoknad.sykler.toInt())
-                .addValue("4", reisetilskuddSoknad.egenBil)
-                .addValue("5", reisetilskuddSoknad.kollektivtransport)
-                .addValue("6", Timestamp.from(now))
-                .addValue("7", reisetilskuddSoknad.id)
-        )
-
-        return hentReisetilskudd(reisetilskuddSoknad.id)
-    }
 
     fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddSoknad {
 
@@ -113,7 +112,7 @@ class Database(
 
         namedParameterJdbcTemplate.update(
             """
-              UPDATE reisetilskudd 
+              UPDATE reisetilskudd
            SET (status, avbrutt) = (:1, :2)
            WHERE reisetilskudd_id = :3
            AND fnr = :4
@@ -133,9 +132,9 @@ class Database(
 
         namedParameterJdbcTemplate.update(
             """
-            UPDATE reisetilskudd 
-            SET status = :1 
-            WHERE reisetilskudd_id = :2 
+            UPDATE reisetilskudd
+            SET status = :1
+            WHERE reisetilskudd_id = :2
             AND status = :3
         """,
             MapSqlParameterSource()
@@ -148,9 +147,9 @@ class Database(
     fun sendbarReisetilskudd(id: String) {
         namedParameterJdbcTemplate.update(
             """
-            UPDATE reisetilskudd 
-            SET status = :1 
-            WHERE reisetilskudd_id = :2 
+            UPDATE reisetilskudd
+            SET status = :1
+            WHERE reisetilskudd_id = :2
             AND status = :3
         """,
             MapSqlParameterSource()
@@ -222,17 +221,17 @@ class Database(
         namedParameterJdbcTemplate.update(
             """
           INSERT INTO reisetilskudd (
-           reisetilskudd_id, 
-           sykmelding_id, 
-           fnr, 
-           fom, 
-           tom, 
-           arbeidsgiver_orgnummer, 
-           arbeidsgiver_navn, 
-           opprettet, 
-           endret, 
-           status, 
-           oppfolgende) 
+           reisetilskudd_id,
+           sykmelding_id,
+           fnr,
+           fom,
+           tom,
+           arbeidsgiver_orgnummer,
+           arbeidsgiver_navn,
+           opprettet,
+           endret,
+           status,
+           oppfolgende)
            VALUES(
            :1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11)
         """,
@@ -268,7 +267,7 @@ class Database(
         return namedParameterJdbcTemplate.query(
             """
               select * FROM reisetilskudd
-            WHERE status = :1 
+            WHERE status = :1
             AND tom < :2
         """,
             MapSqlParameterSource()
@@ -282,7 +281,7 @@ class Database(
         return namedParameterJdbcTemplate.query(
             """
                select * FROM reisetilskudd
-            WHERE status = :1 
+            WHERE status = :1
             AND fom <= :2
         """,
             MapSqlParameterSource()
@@ -365,3 +364,5 @@ private fun Int.toBoolean(): Boolean {
         else -> throw IllegalArgumentException("$this må være -1 eller 1")
     }
 }
+
+*/

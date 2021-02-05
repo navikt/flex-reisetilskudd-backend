@@ -46,24 +46,9 @@ class SoknadController(
     fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
-        var reisetilskudd = soknad
-        if (svar.går != null) {
-            reisetilskudd = reisetilskudd.copy(går = svar.går)
-        }
-        if (svar.sykler != null) {
-            reisetilskudd = reisetilskudd.copy(sykler = svar.sykler)
-        }
-        if (svar.utbetalingTilArbeidsgiver != null) {
-            reisetilskudd =
-                reisetilskudd.copy(utbetalingTilArbeidsgiver = svar.utbetalingTilArbeidsgiver)
-        }
-        if (svar.egenBil != null) {
-            reisetilskudd = reisetilskudd.copy(egenBil = svar.egenBil)
-        }
-        if (svar.kollektivtransport != null) {
-            reisetilskudd = reisetilskudd.copy(kollektivtransport = svar.kollektivtransport)
-        }
-        return reisetilskuddService.oppdaterReisetilskudd(reisetilskudd)
+
+
+        return soknad
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -77,7 +62,7 @@ class SoknadController(
     fun lagreKvittering(@PathVariable("id") id: String, @RequestBody svar: Kvittering): Kvittering {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(svar, soknad.id)
+        return reisetilskuddService.lagreKvittering(svar, soknad.id!!)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -101,7 +86,7 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR), "send")
 
-        reisetilskuddService.sendReisetilskudd(soknad.fnr, soknad.id)
+        reisetilskuddService.sendReisetilskudd(soknad.fnr, soknad.id!!)
         return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
     }
 
@@ -112,7 +97,7 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(ÅPEN, FREMTIDIG, SENDBAR), "avbryt")
 
-        reisetilskuddService.avbrytReisetilskudd(soknad.fnr, soknad.id)
+        reisetilskuddService.avbrytReisetilskudd(soknad.fnr, soknad.id!!)
         return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
     }
 
@@ -123,7 +108,7 @@ class SoknadController(
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(AVBRUTT), "gjenåpne")
 
-        reisetilskuddService.gjenapneReisetilskudd(soknad.fnr, soknad.id)
+        reisetilskuddService.gjenapneReisetilskudd(soknad.fnr, soknad.id!!)
         return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
     }
 

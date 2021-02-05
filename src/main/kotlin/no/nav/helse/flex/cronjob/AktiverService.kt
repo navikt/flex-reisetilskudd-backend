@@ -1,18 +1,21 @@
 package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.db.Database
+import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
 @Component
 class AktiverService(
     private val database: Database,
+    private val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
     private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
     private val metrikk: Metrikk
 ) {
@@ -29,7 +32,7 @@ class AktiverService(
             try {
                 database.åpneReisetilskudd(id)
                 i++
-                val reisetilskudd = database.finnReisetilskudd(id)
+                val reisetilskudd = reisetilskuddSoknadRepository.findByIdOrNull(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
@@ -58,7 +61,7 @@ class AktiverService(
             try {
                 database.sendbarReisetilskudd(id)
                 i++
-                val reisetilskudd = database.finnReisetilskudd(id)
+                val reisetilskudd = reisetilskuddSoknadRepository.findByIdOrNull(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
