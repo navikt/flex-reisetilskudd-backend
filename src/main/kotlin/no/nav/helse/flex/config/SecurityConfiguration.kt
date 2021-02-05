@@ -8,6 +8,5 @@ import org.springframework.context.annotation.Configuration
 class SecurityConfiguration
 
 object OIDCIssuer {
-    const val VEILEDER = "veileder"
     const val SELVBETJENING = "selvbetjening"
 }
