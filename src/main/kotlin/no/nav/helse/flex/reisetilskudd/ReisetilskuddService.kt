@@ -2,7 +2,7 @@ package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.Kvittering
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.kafka.reisetilskuddPerioder
@@ -21,10 +21,10 @@ import java.util.*
 @Transactional
 class ReisetilskuddService(
     private val database: Database,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
+    private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
     private val metrikk: Metrikk,
 
-) {
+    ) {
     private val log = logger()
     fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
         sykmeldingMessage.runCatching {
@@ -32,8 +32,8 @@ class ReisetilskuddService(
                 .splittLangeSykmeldingperioder()
                 .tidligstePeriodeFoerst()
                 .mapIndexed { idx, periode ->
-                    Reisetilskudd(
-                        reisetilskuddId = UUID.nameUUIDFromBytes("${sykmeldingMessage.sykmelding.id}-${periode.fom}-${periode.tom}".toByteArray())
+                    ReisetilskuddSoknad(
+                        id = UUID.nameUUIDFromBytes("${sykmeldingMessage.sykmelding.id}-${periode.fom}-${periode.tom}".toByteArray())
                             .toString(),
                         sykmeldingId = sykmeldingMessage.sykmelding.id,
                         status = reisetilskuddStatus(periode.fom, periode.tom),
@@ -51,11 +51,11 @@ class ReisetilskuddService(
                     kafkaProducer.send(
                         ProducerRecord(
                             AivenKafkaConfig.topic,
-                            reisetilskudd.reisetilskuddId,
+                            reisetilskudd.id,
                             reisetilskudd
                         )
                     ).get()
-                    log.info("Opprettet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+                    log.info("Opprettet reisetilskudd ${reisetilskudd.id}")
                 }
         }.onSuccess {
             log.info("Sykmelding ${sykmeldingMessage.sykmelding.id} ferdig behandlet")
@@ -71,12 +71,12 @@ class ReisetilskuddService(
     fun hentReisetilskudd(reisetilskuddId: String) =
         database.finnReisetilskudd(reisetilskuddId)
 
-    private fun lagreReisetilskudd(reisetilskudd: Reisetilskudd) {
-        database.lagreReisetilskudd(reisetilskudd)
+    private fun lagreReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad) {
+        database.lagreReisetilskudd(reisetilskuddSoknad)
     }
 
-    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
-        return database.oppdaterReisetilskudd(reisetilskudd)
+    fun oppdaterReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
+        return database.oppdaterReisetilskudd(reisetilskuddSoknad)
     }
 
     fun sendReisetilskudd(fnr: String, reisetilskuddId: String) {
@@ -84,12 +84,12 @@ class ReisetilskuddService(
         kafkaProducer.send(
             ProducerRecord(
                 AivenKafkaConfig.topic,
-                reisetilskudd.reisetilskuddId,
+                reisetilskudd.id,
                 reisetilskudd
             )
         ).get()
         metrikk.SENDT_REISETILSKUDD.increment()
-        log.info("Sendte reisetilskudd ${reisetilskudd.reisetilskuddId}")
+        log.info("Sendte reisetilskudd ${reisetilskudd.id}")
     }
 
     fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String) {
@@ -97,13 +97,13 @@ class ReisetilskuddService(
         kafkaProducer.send(
             ProducerRecord(
                 AivenKafkaConfig.topic,
-                reisetilskudd.reisetilskuddId,
+                reisetilskudd.id,
                 reisetilskudd
             )
         ).get()
         metrikk.AVBRUTT_REISETILSKUDD.increment()
 
-        log.info("Avbrøt reisetilskudd ${reisetilskudd.reisetilskuddId}")
+        log.info("Avbrøt reisetilskudd ${reisetilskudd.id}")
     }
 
     fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String) {
@@ -111,12 +111,12 @@ class ReisetilskuddService(
         kafkaProducer.send(
             ProducerRecord(
                 AivenKafkaConfig.topic,
-                reisetilskudd.reisetilskuddId,
+                reisetilskudd.id,
                 reisetilskudd
             )
         ).get()
         metrikk.GJENÅPNET_REISETILSKUDD.increment()
-        log.info("Gjenåpnet reisetilskudd ${reisetilskudd.reisetilskuddId}")
+        log.info("Gjenåpnet reisetilskudd ${reisetilskudd.id}")
     }
 
     fun lagreKvittering(kvittering: Kvittering, reisetilskuddId: String): Kvittering {

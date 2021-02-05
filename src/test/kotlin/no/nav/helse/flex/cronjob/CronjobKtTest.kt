@@ -3,7 +3,7 @@ package no.nav.helse.flex.cronjob
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
 import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -101,8 +101,8 @@ internal class CronjobKtTest {
         orgNavn: String = "min arbeidsplass",
         status: ReisetilskuddStatus? = null,
         oppfølgende: Boolean = false
-    ) = Reisetilskudd(
-        reisetilskuddId = reisetilskuddId,
+    ) = ReisetilskuddSoknad(
+        id = reisetilskuddId,
         sykmeldingId = sykmeldingId,
         fnr = fnr,
         fom = fom,

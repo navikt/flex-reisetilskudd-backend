@@ -1,7 +1,7 @@
 package no.nav.helse.flex.db
 
 import no.nav.helse.flex.domain.Kvittering
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
@@ -25,7 +25,7 @@ class Database(
     private val namedParameterJdbcTemplate: NamedParameterJdbcTemplate
 ) {
 
-    fun hentReisetilskuddene(fnr: String): List<Reisetilskudd> {
+    fun hentReisetilskuddene(fnr: String): List<ReisetilskuddSoknad> {
         val reisetilskudd = namedParameterJdbcTemplate.query(
             """
             SELECT * FROM reisetilskudd
@@ -37,11 +37,11 @@ class Database(
         )
 
         return reisetilskudd.map {
-            it.copy(kvitteringer = hentKvitteringer(it.reisetilskuddId))
+            it.copy(kvitteringer = hentKvitteringer(it.id))
         }
     }
 
-    fun sendReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+    fun sendReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddSoknad {
         val now = Instant.now()
 
         namedParameterJdbcTemplate.update(
@@ -61,7 +61,7 @@ class Database(
         return hentReisetilskudd(reisetilskuddId)
     }
 
-    fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+    fun avbrytReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddSoknad {
         val now = Instant.now()
 
         namedParameterJdbcTemplate.update(
@@ -82,7 +82,7 @@ class Database(
         return hentReisetilskudd(reisetilskuddId)
     }
 
-    fun oppdaterReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
+    fun oppdaterReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
         val now = Instant.now()
 
         namedParameterJdbcTemplate.update(
@@ -93,19 +93,19 @@ class Database(
             WHERE reisetilskudd_id = :7
         """,
             MapSqlParameterSource()
-                .addValue("1", reisetilskudd.utbetalingTilArbeidsgiver.toInt())
-                .addValue("2", reisetilskudd.går.toInt())
-                .addValue("3", reisetilskudd.sykler.toInt())
-                .addValue("4", reisetilskudd.egenBil)
-                .addValue("5", reisetilskudd.kollektivtransport)
+                .addValue("1", reisetilskuddSoknad.utbetalingTilArbeidsgiver.toInt())
+                .addValue("2", reisetilskuddSoknad.går.toInt())
+                .addValue("3", reisetilskuddSoknad.sykler.toInt())
+                .addValue("4", reisetilskuddSoknad.egenBil)
+                .addValue("5", reisetilskuddSoknad.kollektivtransport)
                 .addValue("6", Timestamp.from(now))
-                .addValue("7", reisetilskudd.reisetilskuddId)
+                .addValue("7", reisetilskuddSoknad.id)
         )
 
-        return hentReisetilskudd(reisetilskudd.reisetilskuddId)
+        return hentReisetilskudd(reisetilskuddSoknad.id)
     }
 
-    fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): Reisetilskudd {
+    fun gjenapneReisetilskudd(fnr: String, reisetilskuddId: String): ReisetilskuddSoknad {
 
         val reisetilskudd = hentReisetilskudd(reisetilskuddId)
 
@@ -175,14 +175,14 @@ class Database(
                 .addValue("2", reisetilskuddId)
                 .addValue("3", kvittering.navn)
                 .addValue("4", kvittering.belop)
-                .addValue("5", Date.valueOf(kvittering.datoForReise))
+                .addValue("5", Date.valueOf(kvittering.datoForUtgift))
                 .addValue("6", kvittering.blobId)
-                .addValue("7", kvittering.transportmiddel.name)
+                .addValue("7", kvittering.typeUtgift.name)
                 .addValue("8", kvittering.storrelse)
                 .addValue("9", Timestamp.from(now))
         )
 
-        return kvittering.copy(kvitteringId = id)
+        return kvittering.copy(id = id)
     }
 
     fun slettKvittering(kvitteringId: String, reisetilskuddId: String): Int {
@@ -198,11 +198,11 @@ class Database(
         )
     }
 
-    fun hentReisetilskudd(reisetilskuddId: String): Reisetilskudd {
+    fun hentReisetilskudd(reisetilskuddId: String): ReisetilskuddSoknad {
         return finnReisetilskudd(reisetilskuddId) ?: throw RuntimeException("Reisetilskudd skal finnes")
     }
 
-    fun finnReisetilskudd(reisetilskuddId: String): Reisetilskudd? {
+    fun finnReisetilskudd(reisetilskuddId: String): ReisetilskuddSoknad? {
         val reisetilskudd = namedParameterJdbcTemplate.query(
             """
             SELECT * FROM reisetilskudd
@@ -213,12 +213,12 @@ class Database(
         )
 
         return reisetilskudd.map {
-            it.copy(kvitteringer = hentKvitteringer(it.reisetilskuddId))
+            it.copy(kvitteringer = hentKvitteringer(it.id))
         }.firstOrNull()
     }
 
-    fun lagreReisetilskudd(reisetilskudd: Reisetilskudd): Reisetilskudd {
-        finnReisetilskudd(reisetilskudd.reisetilskuddId)?.let { return it }
+    fun lagreReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
+        finnReisetilskudd(reisetilskuddSoknad.id)?.let { return it }
         namedParameterJdbcTemplate.update(
             """
           INSERT INTO reisetilskudd (
@@ -237,19 +237,19 @@ class Database(
            :1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11)
         """,
             MapSqlParameterSource()
-                .addValue("1", reisetilskudd.reisetilskuddId)
-                .addValue("2", reisetilskudd.sykmeldingId)
-                .addValue("3", reisetilskudd.fnr)
-                .addValue("4", Date.valueOf(reisetilskudd.fom))
-                .addValue("5", Date.valueOf(reisetilskudd.tom))
-                .addValue("6", reisetilskudd.orgNummer)
-                .addValue("7", reisetilskudd.orgNavn)
-                .addValue("8", Timestamp.from(reisetilskudd.opprettet))
-                .addValue("9", Timestamp.from(reisetilskudd.opprettet))
-                .addValue("10", reisetilskudd.status.name)
-                .addValue("11", reisetilskudd.oppfølgende.toInt())
+                .addValue("1", reisetilskuddSoknad.id)
+                .addValue("2", reisetilskuddSoknad.sykmeldingId)
+                .addValue("3", reisetilskuddSoknad.fnr)
+                .addValue("4", Date.valueOf(reisetilskuddSoknad.fom))
+                .addValue("5", Date.valueOf(reisetilskuddSoknad.tom))
+                .addValue("6", reisetilskuddSoknad.orgNummer)
+                .addValue("7", reisetilskuddSoknad.orgNavn)
+                .addValue("8", Timestamp.from(reisetilskuddSoknad.opprettet))
+                .addValue("9", Timestamp.from(reisetilskuddSoknad.opprettet))
+                .addValue("10", reisetilskuddSoknad.status.name)
+                .addValue("11", reisetilskuddSoknad.oppfølgende.toInt())
         )
-        return hentReisetilskudd(reisetilskudd.reisetilskuddId)
+        return hentReisetilskudd(reisetilskuddSoknad.id)
     }
 
     private fun hentKvitteringer(reisetilskuddId: String): List<Kvittering> {
@@ -300,13 +300,13 @@ class Database(
         }
     }
 
-    private fun reisetilskuddRowMapper(): RowMapper<Reisetilskudd> {
+    private fun reisetilskuddRowMapper(): RowMapper<ReisetilskuddSoknad> {
         return RowMapper { resultSet, _ ->
             with(resultSet) {
-                Reisetilskudd(
+                ReisetilskuddSoknad(
                     sykmeldingId = getString("sykmelding_id"),
                     fnr = getString("fnr"),
-                    reisetilskuddId = getString("reisetilskudd_id"),
+                    id = getString("reisetilskudd_id"),
                     fom = getObject("fom", LocalDate::class.java),
                     tom = getObject("tom", LocalDate::class.java),
                     orgNummer = getString("arbeidsgiver_orgnummer"),
@@ -320,7 +320,6 @@ class Database(
                     egenBil = getDouble("egen_bil"),
                     kollektivtransport = getDouble("kollektivtransport"),
                     kvitteringer = emptyList(),
-                    oppfølgende = getInt("oppfolgende").toBoolean(),
                     status = ReisetilskuddStatus.valueOf(getString("status"))
                 )
             }
@@ -331,13 +330,12 @@ class Database(
         return RowMapper { resultSet, _ ->
             with(resultSet) {
                 Kvittering(
-                    kvitteringId = getString("kvittering_id"),
+                    id = getString("kvittering_id"),
                     blobId = getString("blob_id"),
                     navn = getString("navn"),
-                    datoForReise = getObject("dato_for_reise", LocalDate::class.java),
+                    datoForUtgift = getObject("dato_for_reise", LocalDate::class.java),
                     belop = getInt("belop"),
-                    storrelse = getLong("storrelse"),
-                    transportmiddel = Transportmiddel.valueOf(getString("transportmiddel"))
+                    typeUtgift = Transportmiddel.valueOf(getString("transportmiddel"))
                 )
             }
         }

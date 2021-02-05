@@ -2,7 +2,7 @@ package no.nav.helse.flex.controller
 
 import no.nav.helse.flex.config.OIDCIssuer.SELVBETJENING
 import no.nav.helse.flex.domain.Kvittering
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.ReisetilskuddStatus.*
 import no.nav.helse.flex.domain.Svar
@@ -23,7 +23,7 @@ class SoknadController(
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @GetMapping(value = ["/reisetilskudd"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentSoknader(): List<Reisetilskudd> {
+    fun hentSoknader(): List<ReisetilskuddSoknad> {
         val fnr = tokenValidationContextHolder.fnrFraOIDC()
 
         return reisetilskuddService.hentReisetilskuddene(fnr)
@@ -32,7 +32,7 @@ class SoknadController(
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @GetMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentSoknad(@PathVariable id: String): Reisetilskudd {
+    fun hentSoknad(@PathVariable id: String): ReisetilskuddSoknad {
         return hentOgSjekkTilgangTilSoknad(id)
     }
 
@@ -43,7 +43,7 @@ class SoknadController(
         produces = [MediaType.APPLICATION_JSON_VALUE],
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): Reisetilskudd {
+    fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
         var reisetilskudd = soknad
@@ -77,7 +77,7 @@ class SoknadController(
     fun lagreKvittering(@PathVariable("id") id: String, @RequestBody svar: Kvittering): Kvittering {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(svar, soknad.reisetilskuddId)
+        return reisetilskuddService.lagreKvittering(svar, soknad.id)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -97,37 +97,37 @@ class SoknadController(
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @PostMapping(value = ["/reisetilskudd/{id}/send"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun sendSoknad(@PathVariable("id") id: String): Reisetilskudd {
+    fun sendSoknad(@PathVariable("id") id: String): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR), "send")
 
-        reisetilskuddService.sendReisetilskudd(soknad.fnr, soknad.reisetilskuddId)
-        return reisetilskuddService.hentReisetilskudd(soknad.reisetilskuddId) ?: throw IllegalStateException()
+        reisetilskuddService.sendReisetilskudd(soknad.fnr, soknad.id)
+        return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @PostMapping(value = ["/reisetilskudd/{id}/avbryt"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun avbrytSoknad(@PathVariable("id") id: String): Reisetilskudd {
+    fun avbrytSoknad(@PathVariable("id") id: String): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(ÅPEN, FREMTIDIG, SENDBAR), "avbryt")
 
-        reisetilskuddService.avbrytReisetilskudd(soknad.fnr, soknad.reisetilskuddId)
-        return reisetilskuddService.hentReisetilskudd(soknad.reisetilskuddId) ?: throw IllegalStateException()
+        reisetilskuddService.avbrytReisetilskudd(soknad.fnr, soknad.id)
+        return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @PostMapping(value = ["/reisetilskudd/{id}/gjenapne"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun gjenapneSoknad(@PathVariable("id") id: String): Reisetilskudd {
+    fun gjenapneSoknad(@PathVariable("id") id: String): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(AVBRUTT), "gjenåpne")
 
-        reisetilskuddService.gjenapneReisetilskudd(soknad.fnr, soknad.reisetilskuddId)
-        return reisetilskuddService.hentReisetilskudd(soknad.reisetilskuddId) ?: throw IllegalStateException()
+        reisetilskuddService.gjenapneReisetilskudd(soknad.fnr, soknad.id)
+        return reisetilskuddService.hentReisetilskudd(soknad.id) ?: throw IllegalStateException()
     }
 
-    private fun hentOgSjekkTilgangTilSoknad(soknadId: String): Reisetilskudd {
+    private fun hentOgSjekkTilgangTilSoknad(soknadId: String): ReisetilskuddSoknad {
         val hentReisetilskudd = reisetilskuddService.hentReisetilskudd(soknadId) ?: throw SoknadIkkeFunnetException()
 
         if (this.tokenValidationContextHolder.fnrFraOIDC() != hentReisetilskudd.fnr) {
@@ -136,7 +136,7 @@ class SoknadController(
         return hentReisetilskudd
     }
 
-    private fun Reisetilskudd.sjekkGyldigStatus(statuser: List<ReisetilskuddStatus>, operasjon: String) {
+    private fun ReisetilskuddSoknad.sjekkGyldigStatus(statuser: List<ReisetilskuddStatus>, operasjon: String) {
         if (!statuser.contains(this.status)) {
             throw UgyldigStatusException("${this.status} ikke støttet for operasjon $operasjon")
         }

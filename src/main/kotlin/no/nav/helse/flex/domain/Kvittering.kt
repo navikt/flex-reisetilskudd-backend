@@ -7,11 +7,10 @@ enum class Transportmiddel {
 }
 
 data class Kvittering(
-    val kvitteringId: String? = null,
+    val id: String? = null,
     val blobId: String,
     val navn: String,
-    val datoForReise: LocalDate,
-    val storrelse: Long,
+    val datoForUtgift: LocalDate,
     val belop: Int, // Beløp i øre . 100kr = 10000
-    val transportmiddel: Transportmiddel
+    val typeUtgift: Transportmiddel
 )

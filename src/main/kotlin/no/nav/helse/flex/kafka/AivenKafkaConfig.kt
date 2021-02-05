@@ -1,6 +1,6 @@
 package no.nav.helse.flex.kafka
 
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
@@ -37,8 +37,8 @@ class AivenKafkaConfig(
     private val PKCS12 = "PKCS12"
 
     @Bean
-    fun producer() = KafkaProducer<String, Reisetilskudd>(producerConfig())
-    fun consumer() = KafkaConsumer<String, Reisetilskudd>(consumerConfig())
+    fun producer() = KafkaProducer<String, ReisetilskuddSoknad>(producerConfig())
+    fun consumer() = KafkaConsumer<String, ReisetilskuddSoknad>(consumerConfig())
 
     private fun producerConfig() = mapOf(
         KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,

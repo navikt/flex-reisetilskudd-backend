@@ -1,7 +1,7 @@
 package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
@@ -13,7 +13,7 @@ import java.time.LocalDate
 @Component
 class AktiverService(
     private val database: Database,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
+    private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
     private val metrikk: Metrikk
 ) {
     val log = logger()

@@ -1,7 +1,7 @@
 package no.nav.helse.flex
 
 import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.ReisetilskuddStatus.FREMTIDIG
 import no.nav.helse.flex.domain.ReisetilskuddStatus.ÅPEN
@@ -64,12 +64,12 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
                 database.lagreReisetilskudd(it)
             }
 
-        val json1 = this.sendSøknadResultActions(reisetilskudd.reisetilskuddId, fnr)
+        val json1 = this.sendSøknadResultActions(reisetilskudd.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn().response.contentAsString
         json1 `should be equal to` "{\"reason\":\"FREMTIDIG ikke støttet for operasjon send\"}"
 
-        val json2 = this.sendSøknadResultActions(reisetilskudd2.reisetilskuddId, fnr)
+        val json2 = this.sendSøknadResultActions(reisetilskudd2.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn().response.contentAsString
         json2 `should be equal to` "{\"reason\":\"ÅPEN ikke støttet for operasjon send\"}"
@@ -90,18 +90,18 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
             database.lagreReisetilskudd(it)
         }
 
-        val json1 = this.hentSøknadResultActions(reisetilskudd.reisetilskuddId, "123423232")
+        val json1 = this.hentSøknadResultActions(reisetilskudd.id, "123423232")
             .andExpect(MockMvcResultMatchers.status().isForbidden)
             .andReturn().response.contentAsString
         json1 `should be equal to` "{\"reason\":\"Er ikke eier\"}"
     }
 
-    fun reisetilskudd(status: ReisetilskuddStatus): Reisetilskudd {
-        return Reisetilskudd(
+    fun reisetilskudd(status: ReisetilskuddStatus): ReisetilskuddSoknad {
+        return ReisetilskuddSoknad(
             fnr = fnr,
             fom = LocalDate.now().plusDays(1),
             tom = LocalDate.now().plusDays(3),
-            reisetilskuddId = UUID.randomUUID().toString(),
+            id = UUID.randomUUID().toString(),
             oppfølgende = false,
             orgNavn = "dsf",
             orgNummer = "sdfsdf",
