@@ -43,6 +43,11 @@ interface SporsmalRepository : CrudRepository<SporsmalDbRecord, String> {
 }
 
 @Repository
+interface SvarRepository : CrudRepository<SvarDbRecord, String> {
+    fun findSvarBySporsmalId(sporsmalId: String): List<SvarDbRecord>
+}
+
+@Repository
 interface ReisetilskuddSoknadRepository : CrudRepository<ReisetilskuddSoknadDbRecord, String> {
     fun findReisetilskuddSoknadByFnr(fnr: String): List<ReisetilskuddSoknadDbRecord>
 }
@@ -100,6 +105,8 @@ data class KvitteringDbRecord(
     val opprettet: Instant,
 )
 
+fun SvarDbRecord.tilSvar(): Svar = Svar(id, verdi)
+
 fun ReisetilskuddSoknad.tilReisetilskuddSoknadDbRecord(): ReisetilskuddSoknadDbRecord = ReisetilskuddSoknadDbRecord(
     id = this.id,
     status = this.status,
@@ -125,7 +132,7 @@ fun Kvittering.tilKvitteringDbRecord(reisetilskuddSoknadId: String): KvitteringD
     reisetilskuddSoknadId = reisetilskuddSoknadId,
 )
 
-fun SporsmalDbRecord.tilSporsmal(undersporsmal: List<Sporsmal>): Sporsmal {
+fun SporsmalDbRecord.tilSporsmal(undersporsmal: List<Sporsmal>, svar: List<Svar>): Sporsmal {
     return Sporsmal(
         id = id,
         tag = tag,
@@ -136,7 +143,8 @@ fun SporsmalDbRecord.tilSporsmal(undersporsmal: List<Sporsmal>): Sporsmal {
         min = min,
         max = max,
         kriterieForVisningAvUndersporsmal = kriterieForVisningAvUndersporsmal,
-        undersporsmal = undersporsmal
+        undersporsmal = undersporsmal,
+        svar = svar,
     )
 }
 

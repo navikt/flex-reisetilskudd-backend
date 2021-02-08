@@ -124,7 +124,3 @@ class ReisetilskuddService(
         return reisetilskuddSoknadDao.finnSoknad(id)
     }
 }
-
-private fun Kvittering.tilKvitteringDbRecord(): KvitteringDbRecord {
-    TODO("Not yet implemented")
-}

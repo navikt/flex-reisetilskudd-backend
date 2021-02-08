@@ -15,6 +15,7 @@ class ReisetilskuddSoknadDao(
     val jdbcAggregateTemplate: JdbcAggregateTemplate,
     val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
     val sporsmalRepository: SporsmalRepository,
+    val svarRepository: SvarRepository,
     val kvitteringRepository: KvitteringRepository,
 ) {
 
@@ -28,7 +29,8 @@ class ReisetilskuddSoknadDao(
 
     private fun SporsmalDbRecord.hentUnderliggende(): Sporsmal {
         val undersporsmal = sporsmalRepository.findSporsmalByOversporsmalId(this.id).map { it.hentUnderliggende() }
-        return this.tilSporsmal(undersporsmal)
+        val svar = svarRepository.findSvarBySporsmalId(this.id).map { it.tilSvar() }
+        return this.tilSporsmal(undersporsmal, svar)
     }
 
     private fun ReisetilskuddSoknadDbRecord.hentUnderliggende(): ReisetilskuddSoknad {
