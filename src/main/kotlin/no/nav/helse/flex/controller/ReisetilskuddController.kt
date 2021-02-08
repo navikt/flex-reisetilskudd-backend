@@ -5,7 +5,6 @@ import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.ReisetilskuddStatus.*
-import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import no.nav.security.token.support.core.context.TokenValidationContextHolder
@@ -35,20 +34,6 @@ class SoknadController(
     @GetMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentSoknad(@PathVariable id: String): ReisetilskuddSoknad {
         return hentOgSjekkTilgangTilSoknad(id)
-    }
-
-    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
-    @ResponseBody
-    @PutMapping(
-        value = ["/reisetilskudd/{id}"],
-        produces = [MediaType.APPLICATION_JSON_VALUE],
-        consumes = [MediaType.APPLICATION_JSON_VALUE]
-    )
-    fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): ReisetilskuddSoknad {
-        val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
-
-        return soknad
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
