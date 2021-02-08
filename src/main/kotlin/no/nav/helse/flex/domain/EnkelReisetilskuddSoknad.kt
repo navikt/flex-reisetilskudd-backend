@@ -16,7 +16,7 @@ data class EnkelReisetilskuddSoknad(
 )
 
 fun ReisetilskuddSoknad.tilEnkel(): EnkelReisetilskuddSoknad {
-    val id = this.id ?: throw IllegalStateException("ID skal være satt")
+    val id = this.id
     return EnkelReisetilskuddSoknad(
         id = id,
         status = this.status,

@@ -164,8 +164,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         val kvittering = this.lagreKvittering(
             fnr,
-            reisetilskudd.id!!,
+            reisetilskudd.id,
             Kvittering(
+                id = UUID.randomUUID().toString(),
                 blobId = "123456",
                 belop = 133700,
                 typeUtgift = Transportmiddel.EGEN_BIL,
@@ -198,7 +199,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan slette en kvittering`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
         reisetilskudd.kvitteringer.size `should be equal to` 1
-        this.slettKvittering(fnr, reisetilskudd.id!!, reisetilskudd.kvitteringer[0].id!!)
+        this.slettKvittering(fnr, reisetilskudd.id, reisetilskudd.kvitteringer[0].id)
 
         val reisetilskuddEtter = this.hentSoknader(fnr).first()
         reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)

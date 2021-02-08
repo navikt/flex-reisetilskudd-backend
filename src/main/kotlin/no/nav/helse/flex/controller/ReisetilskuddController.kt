@@ -11,7 +11,6 @@ import no.nav.security.token.support.core.context.TokenValidationContextHolder
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
 
 @RestController
 @RequestMapping(value = ["/api/v1"])
@@ -47,7 +46,7 @@ class SoknadController(
     fun lagreKvittering(@PathVariable("id") id: String, @RequestBody kvittering: Kvittering): Kvittering {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(kvittering.copy(reisetilskuddSoknadId = id, opprettet = Instant.now()))
+        return reisetilskuddService.lagreKvittering(id, kvittering)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
