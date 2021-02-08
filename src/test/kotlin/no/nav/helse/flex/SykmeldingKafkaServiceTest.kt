@@ -1,10 +1,47 @@
-package no.nav.helse.flex.kafka
-/*
-@KtorExperimentalAPI
+package no.nav.helse.flex
+
+import no.nav.helse.flex.kafka.SykmeldingMessage
+import no.nav.helse.flex.utils.TestHelper
+import no.nav.helse.flex.utils.hentSoknader
+import no.nav.helse.flex.utils.lagSykmeldingMessage
+import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import no.nav.syfo.model.sykmelding.model.GradertDTO
+import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
+import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
+import org.amshove.kluent.`should be equal to`
+import org.amshove.kluent.shouldBeEmpty
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.awaitility.Awaitility.await
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.web.servlet.MockMvc
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
+
+@SpringBootTest
+@Testcontainers
+@DirtiesContext
+@EnableMockOAuth2Server
+@AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class SykmeldingKafkaServiceTest {
+internal class SykmeldingKafkaServiceTest : TestHelper {
     companion object {
-        lateinit var testApp: TestApp
+        @Container
+        val postgreSQLContainer = PostgreSQLContainerWithProps()
+
+        @Container
+        val kafkaContainer = KafkaContainerWithProps()
+
         val reisetilskuddPeriode = SykmeldingsperiodeDTO(
             type = PeriodetypeDTO.REISETILSKUDD,
             reisetilskudd = true,
@@ -77,75 +114,51 @@ internal class SykmeldingKafkaServiceTest {
             enGyldigPeriode,
             flereGyldigePerioder
         )
-
-        @BeforeAll
-        @JvmStatic
-        internal fun beforeAll() {
-            testApp = skapTestApplication()
-        }
     }
+
+    @Autowired
+    override lateinit var server: MockOAuth2Server
+
+    @Autowired
+    override lateinit var mockMvc: MockMvc
+
+    @Autowired
+    lateinit var sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage>
 
     @Test
     @Order(0)
     fun `Det er ingen reisetilskudd til å begynne med`() {
-        with(testApp) {
-            with(
-                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                    medSelvbetjeningToken("fnr")
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.OK
-                response.content!!.tilReisetilskuddListe().size `should be equal to` 0
-            }
-        }
+        val soknader = this.hentSoknader("fnr")
+        soknader.shouldBeEmpty()
     }
 
     @Test
     @Order(1)
     fun `Alle sykmeldinger publiseres og konsumeres`() {
-        with(testApp) {
-            applicationState.alive = true
-            applicationState.ready = true
-            sykmeldinger.forEach { syk ->
-                sykmeldingKafkaProducer.send(
-                    ProducerRecord(
-                        "syfo-sendt-sykmelding",
-                        syk
-                    )
-                ).get()
-            }
 
-            runBlocking {
-                stopApplicationNårAntallKafkaMeldingerErLest(
-                    sykmeldingKafkaConsumer,
-                    applicationState,
-                    antallKafkaMeldinger = sykmeldinger.size
+        sykmeldinger.forEach { syk ->
+            sykmeldingKafkaProducer.send(
+                ProducerRecord(
+                    "syfo-sendt-sykmelding",
+                    syk.sykmelding.id,
+                    syk
                 )
-                sykmeldingKafkaService.start()
-            }
+            ).get()
         }
+        await().during(5, TimeUnit.SECONDS).until { this.hentSoknader("fnr").size == 3 }
     }
 
     @Test
     @Order(2)
     fun `Reisetilskuddene er tilgjengelig`() {
-        with(testApp) {
-            with(
-                engine.handleRequest(HttpMethod.Get, "/api/v1/reisetilskudd") {
-                    medSelvbetjeningToken("fnr")
-                }
-            ) {
-                response.status() shouldBeEqualTo HttpStatusCode.OK
-                val reisetilskuddene = response.content!!.tilReisetilskuddListe()
-                reisetilskuddene.size `should be equal to` 3
-                reisetilskuddene.filter {
-                    it.sykmeldingId == enGyldigPeriode.sykmelding.id
-                }.size `should be equal to` 1
-                reisetilskuddene.filter {
-                    it.sykmeldingId == flereGyldigePerioder.sykmelding.id
-                }.size `should be equal to` 2
-            }
-        }
+        val reisetilskuddene = this.hentSoknader("fnr")
+
+        reisetilskuddene.size `should be equal to` 3
+        reisetilskuddene.filter {
+            it.sykmeldingId == enGyldigPeriode.sykmelding.id
+        }.size `should be equal to` 1
+        reisetilskuddene.filter {
+            it.sykmeldingId == flereGyldigePerioder.sykmelding.id
+        }.size `should be equal to` 2
     }
 }
-*/ // TODO

@@ -1,7 +1,10 @@
 package no.nav.helse.flex.cronjob
 
-import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.db.EnkelReisetilskuddSoknadRepository
+import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
+import no.nav.helse.flex.db.getById
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
+import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
@@ -12,8 +15,9 @@ import java.time.LocalDate
 
 @Component
 class AktiverService(
-    private val database: Database,
-    private val kafkaProducer: KafkaProducer<String, Reisetilskudd>,
+    private val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
+    private val enkelReisetilskuddSoknadRepository: EnkelReisetilskuddSoknadRepository,
+    private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
     private val metrikk: Metrikk
 ) {
     val log = logger()
@@ -21,20 +25,21 @@ class AktiverService(
     fun åpneReisetilskudd(now: LocalDate = LocalDate.now()): Int {
         log.info("Leter etter reisetilskudd som skal bli ÅPNE")
 
-        val reisetilskuddSomSkalÅpnes = database.finnReisetilskuddSomSkalÅpnes(now)
+        val reisetilskuddSomSkalÅpnes = enkelReisetilskuddSoknadRepository.finnReisetilskuddSomSkalÅpnes(now)
         log.info("Fant ${reisetilskuddSomSkalÅpnes.size} reisetilskudd som skal bli ÅPNE")
 
         var i = 0
-        reisetilskuddSomSkalÅpnes.forEach { id ->
+        reisetilskuddSomSkalÅpnes.forEach { reisetilskudd ->
+            val id = reisetilskudd.id
             try {
-                database.åpneReisetilskudd(id)
+                enkelReisetilskuddSoknadRepository.save(reisetilskudd.copy(status = ReisetilskuddStatus.ÅPEN))
                 i++
-                val reisetilskudd = database.finnReisetilskudd(id)
+                val oppdatertReisetilskudd = reisetilskuddSoknadRepository.getById(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
                         id,
-                        reisetilskudd
+                        oppdatertReisetilskudd
                     )
                 ).get()
                 metrikk.ÅPNE_REISETILSKUDD.increment()
@@ -50,20 +55,22 @@ class AktiverService(
     fun sendbareReisetilskudd(now: LocalDate = LocalDate.now()): Int {
         log.info("Leter etter reisetilskudd som skal bli SENDBAR")
 
-        val reisetilskuddSomSkalBliSendbar = database.finnReisetilskuddSomSkalBliSendbar(now)
+        val reisetilskuddSomSkalBliSendbar = enkelReisetilskuddSoknadRepository.finnReisetilskuddSomSkalBliSendbar(now)
         log.info("Fant ${reisetilskuddSomSkalBliSendbar.size} reisetilskudd som skal bli SENDBAR")
 
         var i = 0
-        reisetilskuddSomSkalBliSendbar.forEach { id ->
+        reisetilskuddSomSkalBliSendbar.forEach { reisetilskudd ->
+            val id = reisetilskudd.id
+
             try {
-                database.sendbarReisetilskudd(id)
+                enkelReisetilskuddSoknadRepository.save(reisetilskudd.copy(status = ReisetilskuddStatus.SENDBAR))
                 i++
-                val reisetilskudd = database.finnReisetilskudd(id)
+                val oppdatertReisetilskudd = reisetilskuddSoknadRepository.getById(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
                         id,
-                        reisetilskudd
+                        oppdatertReisetilskudd
                     )
                 ).get()
                 metrikk.SENDBARE_REISETILSKUDD.increment()

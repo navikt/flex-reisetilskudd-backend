@@ -2,8 +2,8 @@ package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
-import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -36,8 +36,7 @@ internal class CronjobKtTest {
     }
 
     @Autowired
-    lateinit var db: Database
-
+    lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository
     @Autowired
     lateinit var cronjob: Cronjob
 
@@ -69,12 +68,12 @@ internal class CronjobKtTest {
             tom = now.plusDays(19),
             status = ReisetilskuddStatus.FREMTIDIG
         )
-        db.lagreReisetilskudd(nr4)
-        db.lagreReisetilskudd(nr3)
-        db.lagreReisetilskudd(nr2)
-        db.lagreReisetilskudd(nr1)
+        reisetilskuddSoknadRepository.save(nr4)
+        reisetilskuddSoknadRepository.save(nr3)
+        reisetilskuddSoknadRepository.save(nr2)
+        reisetilskuddSoknadRepository.save(nr1)
 
-        val reisetilskuddeneFør = db.hentReisetilskuddene(fnr)
+        val reisetilskuddeneFør = reisetilskuddSoknadRepository.findReisetilskuddSoknadByFnr(fnr)
         reisetilskuddeneFør.size shouldBe 4
         reisetilskuddeneFør[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
         reisetilskuddeneFør[1].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
@@ -83,7 +82,7 @@ internal class CronjobKtTest {
 
         cronjob.run()
 
-        val reisetilskuddeneEtter = db.hentReisetilskuddene(fnr)
+        val reisetilskuddeneEtter = reisetilskuddSoknadRepository.findReisetilskuddSoknadByFnr(fnr)
         reisetilskuddeneEtter.size shouldBe 4
         reisetilskuddeneEtter[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
         reisetilskuddeneEtter[1].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
@@ -92,7 +91,6 @@ internal class CronjobKtTest {
     }
 
     private fun reisetilskudd(
-        reisetilskuddId: String = UUID.randomUUID().toString(),
         sykmeldingId: String = UUID.randomUUID().toString(),
         fnr: String,
         fom: LocalDate = LocalDate.now().minusDays(10),
@@ -100,17 +98,15 @@ internal class CronjobKtTest {
         orgNummer: String = "12345",
         orgNavn: String = "min arbeidsplass",
         status: ReisetilskuddStatus? = null,
-        oppfølgende: Boolean = false
-    ) = Reisetilskudd(
-        reisetilskuddId = reisetilskuddId,
+    ) = ReisetilskuddSoknad(
         sykmeldingId = sykmeldingId,
         fnr = fnr,
         fom = fom,
         tom = tom,
-        orgNummer = orgNummer,
-        orgNavn = orgNavn,
+        arbeidsgiverOrgnummer = orgNummer,
+        arbeidsgiverNavn = orgNavn,
         status = status ?: reisetilskuddStatus(fom, tom),
-        oppfølgende = oppfølgende,
         opprettet = Instant.now(),
+        endret = Instant.now(),
     )
 }

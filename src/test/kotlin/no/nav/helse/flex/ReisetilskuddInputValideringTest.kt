@@ -1,7 +1,7 @@
 package no.nav.helse.flex
 
-import no.nav.helse.flex.db.Database
-import no.nav.helse.flex.domain.Reisetilskudd
+import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
+import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.ReisetilskuddStatus.FREMTIDIG
 import no.nav.helse.flex.domain.ReisetilskuddStatus.ÅPEN
@@ -51,25 +51,20 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     override lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var database: Database
+    lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository
 
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
-        val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-            database.lagreReisetilskudd(it)
-        }
+        val reisetilskudd = reisetilskuddSoknadRepository.save(reisetilskudd(FREMTIDIG))
 
-        val reisetilskudd2 = reisetilskudd(ÅPEN)
-            .also {
-                database.lagreReisetilskudd(it)
-            }
+        val reisetilskudd2 = reisetilskuddSoknadRepository.save(reisetilskudd(ÅPEN))
 
-        val json1 = this.sendSøknadResultActions(reisetilskudd.reisetilskuddId, fnr)
+        val json1 = this.sendSøknadResultActions(reisetilskudd.id!!, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn().response.contentAsString
         json1 `should be equal to` "{\"reason\":\"FREMTIDIG ikke støttet for operasjon send\"}"
 
-        val json2 = this.sendSøknadResultActions(reisetilskudd2.reisetilskuddId, fnr)
+        val json2 = this.sendSøknadResultActions(reisetilskudd2.id!!, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn().response.contentAsString
         json2 `should be equal to` "{\"reason\":\"ÅPEN ikke støttet for operasjon send\"}"
@@ -86,28 +81,25 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
 
     @Test
     fun `En annen persons reisetilskudd id gir 403`() {
-        val reisetilskudd = reisetilskudd(FREMTIDIG).also {
-            database.lagreReisetilskudd(it)
-        }
+        val reisetilskudd = reisetilskuddSoknadRepository.save(reisetilskudd(FREMTIDIG))
 
-        val json1 = this.hentSøknadResultActions(reisetilskudd.reisetilskuddId, "123423232")
+        val json1 = this.hentSøknadResultActions(reisetilskudd.id!!, "123423232")
             .andExpect(MockMvcResultMatchers.status().isForbidden)
             .andReturn().response.contentAsString
         json1 `should be equal to` "{\"reason\":\"Er ikke eier\"}"
     }
 
-    fun reisetilskudd(status: ReisetilskuddStatus): Reisetilskudd {
-        return Reisetilskudd(
+    fun reisetilskudd(status: ReisetilskuddStatus): ReisetilskuddSoknad {
+        return ReisetilskuddSoknad(
             fnr = fnr,
             fom = LocalDate.now().plusDays(1),
             tom = LocalDate.now().plusDays(3),
-            reisetilskuddId = UUID.randomUUID().toString(),
-            oppfølgende = false,
-            orgNavn = "dsf",
-            orgNummer = "sdfsdf",
+            arbeidsgiverNavn = "dsf",
+            arbeidsgiverOrgnummer = "sdfsdf",
             status = status,
             sykmeldingId = UUID.randomUUID().toString(),
             opprettet = Instant.now(),
+            endret = Instant.now(),
         )
     }
 }
