@@ -56,17 +56,17 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
         val reisetilskuddSoknad = reisetilskudd(FREMTIDIG)
-        val reisetilskudd = reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad)
+        reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad)
 
         val reisetilskuddSoknad1 = reisetilskudd(ÅPEN)
-        val reisetilskudd2 = reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad1)
+        reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad1)
 
-        val json1 = this.sendSøknadResultActions(reisetilskuddSoknad.id!!, fnr)
+        val json1 = this.sendSøknadResultActions(reisetilskuddSoknad.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn().response.contentAsString
         json1 `should be equal to` "{\"reason\":\"FREMTIDIG ikke støttet for operasjon send\"}"
 
-        val json2 = this.sendSøknadResultActions(reisetilskuddSoknad1.id!!, fnr)
+        val json2 = this.sendSøknadResultActions(reisetilskuddSoknad1.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn().response.contentAsString
         json2 `should be equal to` "{\"reason\":\"ÅPEN ikke støttet for operasjon send\"}"
@@ -84,7 +84,7 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     @Test
     fun `En annen persons reisetilskudd id gir 403`() {
         val reisetilskudd1 = reisetilskudd(FREMTIDIG)
-        val reisetilskudd = reisetilskuddSoknadRepository.lagreSoknad(reisetilskudd1)
+        reisetilskuddSoknadRepository.lagreSoknad(reisetilskudd1)
 
         val json1 = this.hentSøknadResultActions(reisetilskudd1.id, "123423232")
             .andExpect(MockMvcResultMatchers.status().isForbidden)

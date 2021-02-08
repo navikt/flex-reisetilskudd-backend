@@ -131,7 +131,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan avbryte søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr)
 
-        val avbruttSøknad = this.avbrytSøknad(fnr, reisetilskudd.first().id!!)
+        val avbruttSøknad = this.avbrytSøknad(fnr, reisetilskudd.first().id)
         avbruttSøknad.status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
         avbruttSøknad.avbrutt.shouldNotBeNull()
     }
@@ -141,7 +141,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan gjenåpne søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr)
 
-        val gjenåpnet = this.gjenåpneSøknad(fnr, reisetilskudd.first().id!!)
+        val gjenåpnet = this.gjenåpneSøknad(fnr, reisetilskudd.first().id)
         gjenåpnet.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         gjenåpnet.avbrutt.shouldBeNull()
     }
@@ -209,7 +209,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     @Order(9)
     fun `Vi kan sende inn søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
-        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id!!)
+        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id)
         sendtSøknad.status shouldBeEqualTo ReisetilskuddStatus.SENDT
         sendtSøknad.sendt.shouldNotBeNull()
     }

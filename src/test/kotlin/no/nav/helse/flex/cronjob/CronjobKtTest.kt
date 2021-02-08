@@ -1,8 +1,8 @@
 package no.nav.helse.flex.cronjob
-/*
+
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
-import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
+import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
@@ -36,7 +36,8 @@ internal class CronjobKtTest {
     }
 
     @Autowired
-    lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository
+    lateinit var dao: ReisetilskuddSoknadDao
+
     @Autowired
     lateinit var cronjob: Cronjob
 
@@ -68,12 +69,12 @@ internal class CronjobKtTest {
             tom = now.plusDays(19),
             status = ReisetilskuddStatus.FREMTIDIG
         )
-        reisetilskuddSoknadRepository.save(nr4)
-        reisetilskuddSoknadRepository.save(nr3)
-        reisetilskuddSoknadRepository.save(nr2)
-        reisetilskuddSoknadRepository.save(nr1)
+        dao.lagreSoknad(nr4)
+        dao.lagreSoknad(nr3)
+        dao.lagreSoknad(nr2)
+        dao.lagreSoknad(nr1)
 
-        val reisetilskuddeneFør = reisetilskuddSoknadRepository.findReisetilskuddSoknadByFnr(fnr)
+        val reisetilskuddeneFør = dao.finnMedFnr(fnr)
         reisetilskuddeneFør.size shouldBe 4
         reisetilskuddeneFør[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
         reisetilskuddeneFør[1].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
@@ -82,7 +83,7 @@ internal class CronjobKtTest {
 
         cronjob.run()
 
-        val reisetilskuddeneEtter = reisetilskuddSoknadRepository.findReisetilskuddSoknadByFnr(fnr)
+        val reisetilskuddeneEtter = dao.finnMedFnr(fnr)
         reisetilskuddeneEtter.size shouldBe 4
         reisetilskuddeneEtter[0].status shouldBeEqualTo ReisetilskuddStatus.SENDT
         reisetilskuddeneEtter[1].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
@@ -111,4 +112,3 @@ internal class CronjobKtTest {
         endret = Instant.now(),
     )
 }
-*/ // TODO
