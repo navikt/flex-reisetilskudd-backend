@@ -1,38 +1,48 @@
 package no.nav.helse.flex.soknadsoppsett
 
 import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.domain.KriterieForVisningAvUndersporsmal.CHECKED
 import no.nav.helse.flex.domain.KriterieForVisningAvUndersporsmal.JA
 import no.nav.helse.flex.domain.Svartype.*
 import no.nav.helse.flex.domain.Tag.*
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
+import no.nav.helse.flex.soknadsoppsett.DatoFormaterer.formatterPeriode
 import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import java.time.Instant
+import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 import java.util.*
 
-fun skapReisetilskuddsoknad(periode: SykmeldingsperiodeDTO, sykmeldingMessage: SykmeldingMessage): ReisetilskuddSoknad {
+fun skapReisetilskuddsoknad(
+    periode: SykmeldingsperiodeDTO,
+    sykmeldingMessage: SykmeldingMessage,
+    navn: String
+): ReisetilskuddSoknad {
+    val fom = periode.fom
+    val tom = periode.tom
+    val formattertPeriode = formatterPeriode(
+        fom = fom,
+        tom = tom
+    )
     return ReisetilskuddSoknad(
-        id = UUID.randomUUID().toString(),
         sykmeldingId = sykmeldingMessage.sykmelding.id,
-        status = reisetilskuddStatus(periode.fom, periode.tom),
+        status = reisetilskuddStatus(fom, tom),
         fnr = sykmeldingMessage.kafkaMetadata.fnr,
-        fom = periode.fom,
-        tom = periode.tom,
+        fom = fom,
+        tom = tom,
         arbeidsgiverNavn = sykmeldingMessage.event.arbeidsgiver?.orgNavn,
         arbeidsgiverOrgnummer = sykmeldingMessage.event.arbeidsgiver?.orgnummer,
         opprettet = Instant.now(),
         endret = Instant.now(),
         sporsmal = listOf(
             Sporsmal(
-                id = UUID.randomUUID().toString(),
                 tag = ANSVARSERKLARING,
                 svartype = JA_NEI,
                 overskrift = "Vi stoler på deg",
                 undertekst = "Jeg vet at jeg kan miste retten til sykepenger hvis jeg ikke har gitt riktige opplysninger. Jeg vet også at jeg må betale tilbake hvis jeg har gitt feil opplysninger eller latt være å informere.",
-                sporsmalstekst = "Jeg , [navn], bekrefter at jeg vil gi riktige og fullstendige opplysninger.", // TODO hente navn fra PDL? KAn vi ha <strong> her?
+                sporsmalstekst = "Jeg, <strong>$navn</strong>, bekrefter at jeg vil gi riktige og fullstendige opplysninger.",
             ),
             Sporsmal(
-                id = UUID.randomUUID().toString(),
                 tag = TRANSPORT_TIL_DAGLIG,
                 svartype = JA_NEI,
                 overskrift = "Transport til daglig",
@@ -40,35 +50,64 @@ fun skapReisetilskuddsoknad(periode: SykmeldingsperiodeDTO, sykmeldingMessage: S
                 kriterieForVisningAvUndersporsmal = JA,
                 undersporsmal = listOf(
                     Sporsmal(
-                        id = UUID.randomUUID().toString(),
                         tag = TYPE_TRANSPORT,
-                        svartype = CHECKBOX,
-                        sporsmalstekst = "Hva slags type transport bruker du?", // TODO enda flere underspørsål
+                        svartype = CHECKBOX_GRUPPE,
+                        sporsmalstekst = "Hva slags type transport bruker du?",
+                        undersporsmal = listOf(
+                            Sporsmal(
+                                tag = OFFENTLIG_TRANSPORT_TIL_DAGLIG,
+                                sporsmalstekst = "Offentlig transport",
+                                svartype = CHECKBOX,
+                                kriterieForVisningAvUndersporsmal = CHECKED,
+                                undersporsmal = listOf(
+                                    Sporsmal(
+                                        tag = OFFENTLIG_TRANSPORT_BELOP,
+                                        sporsmalstekst = "Hvor mye betaler du vanligvis i måneden for offentlig transport?",
+                                        svartype = BELOP,
+                                    )
+                                )
+                            ),
+                            Sporsmal(
+                                tag = BIL_TIL_DAGLIG,
+                                sporsmalstekst = "Bil",
+                                svartype = CHECKBOX,
+                                kriterieForVisningAvUndersporsmal = CHECKED,
+                                undersporsmal = listOf(
+                                    Sporsmal(
+                                        tag = KM_HJEM_JOBB,
+                                        sporsmalstekst = "Hvor mange km er det fra hjemmet ditt til jobben?",
+                                        svartype = KILOMETER,
+                                    )
+                                )
+                            )
+                        )
+
                     )
                 )
             ),
             Sporsmal(
-                id = UUID.randomUUID().toString(),
-                tag = BIL,
+                tag = REISE_MED_BIL,
                 svartype = JA_NEI,
                 overskrift = "Reise med bil",
-                sporsmalstekst = "Reiser du med bil til og fra jobben mellom 1. og 30. juni 2020?", // TODO tekst fra datoer
+                sporsmalstekst = "Reiser du med bil til og fra jobben mellom $formattertPeriode?",
                 kriterieForVisningAvUndersporsmal = JA,
                 undersporsmal = listOf(
                     Sporsmal(
-                        id = UUID.randomUUID().toString(),
                         tag = BIL_DATOER,
                         svartype = DATOER,
-                        sporsmalstekst = "Hvilke dager reiste du med bil`", // TODO min max etc
+                        min = fom.format(ISO_LOCAL_DATE),
+                        max = tom.format(ISO_LOCAL_DATE),
+                        sporsmalstekst = "Hvilke dager reiste du med bil",
                     )
                 )
             ),
             Sporsmal(
-                id = UUID.randomUUID().toString(),
-                tag = KVITTERINGER, // Frontend håndterer at legg til kvittering vises og bruker egne endepunkter for det?
+                tag = KVITTERINGER,
                 svartype = IKKE_RELEVANT,
                 overskrift = "Kvitteringer",
-                sporsmalstekst = "Last opp kvitteringer for reiser til og fra jobben mellom 1. og 30. juni 2021.", // TODO tekst fra datoer
+                min = fom.format(ISO_LOCAL_DATE),
+                max = tom.format(ISO_LOCAL_DATE),
+                sporsmalstekst = "Last opp kvitteringer for reiser til og fra jobben mellom $formattertPeriode.",
             ),
             Sporsmal(
                 id = UUID.randomUUID().toString(),

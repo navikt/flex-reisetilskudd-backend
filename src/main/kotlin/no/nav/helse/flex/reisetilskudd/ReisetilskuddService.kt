@@ -26,15 +26,15 @@ class ReisetilskuddService(
 ) {
     private val log = logger()
     fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
+        val navn = "Navn Navnesen" // TODO hent navn fra PDL
         sykmeldingMessage.runCatching {
             this.reisetilskuddPerioder()
                 .splittLangeSykmeldingperioder()
                 .tidligstePeriodeFoerst()
                 .map { periode ->
-                    skapReisetilskuddsoknad(periode, sykmeldingMessage)
+                    skapReisetilskuddsoknad(periode, sykmeldingMessage, navn)
                 }
                 .forEach { reisetilskudd ->
-                    // reisetilskuddSoknadRepository.save(reisetilskudd)
                     reisetilskuddSoknadDao.lagreSoknad(reisetilskudd)
                     kafkaProducer.send(
                         ProducerRecord(

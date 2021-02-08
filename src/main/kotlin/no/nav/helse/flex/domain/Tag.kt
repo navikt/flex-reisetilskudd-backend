@@ -2,7 +2,11 @@ package no.nav.helse.flex.domain
 
 enum class Tag {
     ANSVARSERKLARING,
-    BIL,
+    BIL_TIL_DAGLIG,
+    OFFENTLIG_TRANSPORT_TIL_DAGLIG,
+    OFFENTLIG_TRANSPORT_BELOP,
+    KM_HJEM_JOBB,
+    REISE_MED_BIL,
     BIL_DATOER,
     TRANSPORT_TIL_DAGLIG,
     TYPE_TRANSPORT,

@@ -19,5 +19,7 @@ enum class Svartype {
     RADIO_GRUPPE_UKEKALENDER,
     RADIO,
     TALL,
+    BELOP,
+    KILOMETER,
     INFO_BEHANDLINGSDAGER
 }

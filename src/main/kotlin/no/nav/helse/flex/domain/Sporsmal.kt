@@ -1,7 +1,9 @@
 package no.nav.helse.flex.domain
 
+import java.util.*
+
 data class Sporsmal(
-    val id: String,
+    val id: String = UUID.randomUUID().toString(),
     val tag: Tag,
     val overskrift: String? = null,
     val sporsmalstekst: String? = null,
