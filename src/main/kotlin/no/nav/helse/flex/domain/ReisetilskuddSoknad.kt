@@ -1,13 +1,11 @@
 package no.nav.helse.flex.domain
 
-import org.springframework.data.annotation.Id
-import org.springframework.data.relational.core.mapping.MappedCollection
 import java.time.Instant
 import java.time.LocalDate
+import java.util.*
 
 data class ReisetilskuddSoknad(
-    @Id
-    val id: String? = null,
+    val id: String = UUID.randomUUID().toString(),
     val status: ReisetilskuddStatus,
     val sykmeldingId: String,
     val fnr: String,
@@ -19,8 +17,8 @@ data class ReisetilskuddSoknad(
     val avbrutt: Instant? = null,
     val arbeidsgiverOrgnummer: String?,
     val arbeidsgiverNavn: String?,
-    @MappedCollection(keyColumn = "reisetilskudd_soknad_id", idColumn = "reisetilskudd_soknad_id")
-    val kvitteringer: List<Kvittering> = emptyList()
+    val kvitteringer: List<Kvittering> = emptyList(),
+    val sporsmal: List<Sporsmal> = emptyList()
 )
 
 enum class ReisetilskuddStatus {

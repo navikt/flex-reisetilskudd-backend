@@ -4,6 +4,7 @@ import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.kafka.SykmeldingMessage
+import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -58,6 +59,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
     @Autowired
     lateinit var sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage>
+
+    @Autowired
+    lateinit var reisetilskuddService: ReisetilskuddService
 
     @Test
     fun `ingen token returnerer 401`() {
@@ -131,7 +135,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan avbryte søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr)
 
-        val avbruttSøknad = this.avbrytSøknad(fnr, reisetilskudd.first().id!!)
+        val avbruttSøknad = this.avbrytSøknad(fnr, reisetilskudd.first().id)
         avbruttSøknad.status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
         avbruttSøknad.avbrutt.shouldNotBeNull()
     }
@@ -141,20 +145,20 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan gjenåpne søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr)
 
-        val gjenåpnet = this.gjenåpneSøknad(fnr, reisetilskudd.first().id!!)
+        val gjenåpnet = this.gjenåpneSøknad(fnr, reisetilskudd.first().id)
         gjenåpnet.status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         gjenåpnet.avbrutt.shouldBeNull()
     }
 
-  /*  @Test
-    @Order(5)
-    fun `Vi kan besvare et av spørsmålene`() {
-        val reisetilskudd = this.hentSoknader(fnr).first()
-        reisetilskudd.sykler.shouldBeNull()
+    /*  @Test
+      @Order(5)
+      fun `Vi kan besvare et av spørsmålene`() {
+          val reisetilskudd = this.hentSoknader(fnr).first()
+          reisetilskudd.sykler.shouldBeNull()
 
-        val besvart = this.svar(fnr, reisetilskudd.id, Svar(sykler = true))
-        besvart.sykler?.shouldBeTrue()
-    } */
+          val besvart = this.svar(fnr, reisetilskudd.id, Svar(sykler = true))
+          besvart.sykler?.shouldBeTrue()
+      } */
 
     @Test
     @Order(6)
@@ -164,8 +168,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         val kvittering = this.lagreKvittering(
             fnr,
-            reisetilskudd.id!!,
+            reisetilskudd.id,
             Kvittering(
+                id = UUID.randomUUID().toString(),
                 blobId = "123456",
                 belop = 133700,
                 typeUtgift = Transportmiddel.EGEN_BIL,
@@ -198,7 +203,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     fun `Vi kan slette en kvittering`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
         reisetilskudd.kvitteringer.size `should be equal to` 1
-        this.slettKvittering(fnr, reisetilskudd.id!!, reisetilskudd.kvitteringer[0].id!!)
+        this.slettKvittering(fnr, reisetilskudd.id, reisetilskudd.kvitteringer[0].id)
 
         val reisetilskuddEtter = this.hentSoknader(fnr).first()
         reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
@@ -208,7 +213,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     @Order(9)
     fun `Vi kan sende inn søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
-        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id!!)
+        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id)
         sendtSøknad.status shouldBeEqualTo ReisetilskuddStatus.SENDT
         sendtSøknad.sendt.shouldNotBeNull()
     }

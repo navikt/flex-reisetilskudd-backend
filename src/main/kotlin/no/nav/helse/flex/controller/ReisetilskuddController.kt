@@ -5,14 +5,12 @@ import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.ReisetilskuddStatus.*
-import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import no.nav.security.token.support.core.context.TokenValidationContextHolder
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
 
 @RestController
 @RequestMapping(value = ["/api/v1"])
@@ -39,20 +37,6 @@ class SoknadController(
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
-    @PutMapping(
-        value = ["/reisetilskudd/{id}"],
-        produces = [MediaType.APPLICATION_JSON_VALUE],
-        consumes = [MediaType.APPLICATION_JSON_VALUE]
-    )
-    fun svar(@PathVariable("id") id: String, @RequestBody svar: Svar): ReisetilskuddSoknad {
-        val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "svar")
-
-        return soknad
-    }
-
-    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
-    @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(
         value = ["/reisetilskudd/{id}/kvittering"],
@@ -62,7 +46,7 @@ class SoknadController(
     fun lagreKvittering(@PathVariable("id") id: String, @RequestBody kvittering: Kvittering): Kvittering {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
         soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(kvittering.copy(reisetilskuddSoknadId = id, opprettet = Instant.now()))
+        return reisetilskuddService.lagreKvittering(id, kvittering)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])

@@ -1,8 +1,7 @@
 package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.db.EnkelReisetilskuddSoknadRepository
-import no.nav.helse.flex.db.ReisetilskuddSoknadRepository
-import no.nav.helse.flex.db.getById
+import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.kafka.AivenKafkaConfig
@@ -15,7 +14,7 @@ import java.time.LocalDate
 
 @Component
 class AktiverService(
-    private val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
+    private val reisetilskuddSoknadRepository: ReisetilskuddSoknadDao,
     private val enkelReisetilskuddSoknadRepository: EnkelReisetilskuddSoknadRepository,
     private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
     private val metrikk: Metrikk
@@ -34,7 +33,7 @@ class AktiverService(
             try {
                 enkelReisetilskuddSoknadRepository.save(reisetilskudd.copy(status = ReisetilskuddStatus.ÅPEN))
                 i++
-                val oppdatertReisetilskudd = reisetilskuddSoknadRepository.getById(id)
+                val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
@@ -65,7 +64,7 @@ class AktiverService(
             try {
                 enkelReisetilskuddSoknadRepository.save(reisetilskudd.copy(status = ReisetilskuddStatus.SENDBAR))
                 i++
-                val oppdatertReisetilskudd = reisetilskuddSoknadRepository.getById(id)
+                val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
                 kafkaProducer.send(
                     ProducerRecord(
                         AivenKafkaConfig.topic,
