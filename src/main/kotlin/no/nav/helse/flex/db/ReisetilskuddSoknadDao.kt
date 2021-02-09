@@ -4,6 +4,7 @@ import no.nav.helse.flex.controller.SoknadIkkeFunnetException
 import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.Sporsmal
+import no.nav.helse.flex.domain.flatten
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
@@ -54,8 +55,7 @@ class ReisetilskuddSoknadDao(
                     }.forEach { hovedsporsmal.add(it) }
             } else {
                 val toRemove = mutableSetOf<SporsmalDbRecord>()
-                listAvAlleSpm.forEach {
-                    spm ->
+                listAvAlleSpm.forEach { spm ->
                     val flatListe = hovedsporsmal.flatten()
                     val find = flatListe.find { it.id == spm.oversporsmalId }
                     find?.let {
@@ -119,5 +119,15 @@ class ReisetilskuddSoknadDao(
 
     fun slettKvitteringMedId(kvitteringId: String) {
         kvitteringRepository.deleteById(kvitteringId)
+    }
+
+    fun lagreSvar(sporsmal: Sporsmal) {
+        val alleSporsmal = listOf(sporsmal).flatten()
+        svarRepository.deleteSvarDbRecordByIdIn(alleSporsmal.map { it.id })
+        alleSporsmal.forEach { spm ->
+            spm.svar.forEach { svar ->
+                jdbcAggregateTemplate.insert(svar.tilSvarDbRecord(sporsmalId = spm.id))
+            }
+        }
     }
 }

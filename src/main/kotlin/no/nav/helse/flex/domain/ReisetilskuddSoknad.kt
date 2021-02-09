@@ -24,4 +24,3 @@ data class ReisetilskuddSoknad(
 enum class ReisetilskuddStatus {
     FREMTIDIG, ÅPEN, SENDBAR, SENDT, AVBRUTT
 }
-

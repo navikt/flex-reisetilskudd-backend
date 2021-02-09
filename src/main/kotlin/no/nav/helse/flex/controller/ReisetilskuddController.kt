@@ -3,6 +3,7 @@ package no.nav.helse.flex.controller
 import no.nav.helse.flex.config.OIDCIssuer.SELVBETJENING
 import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.domain.ReisetilskuddStatus.*
+import no.nav.helse.flex.reisetilskudd.BesvarSporsmalService
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import no.nav.security.token.support.core.context.TokenValidationContextHolder
@@ -14,7 +15,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping(value = ["/api/v1"])
 class SoknadController(
     private val tokenValidationContextHolder: TokenValidationContextHolder,
-    private val reisetilskuddService: ReisetilskuddService
+    private val reisetilskuddService: ReisetilskuddService,
+    private val besvarSporsmalService: BesvarSporsmalService,
 ) {
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -42,18 +44,9 @@ class SoknadController(
         if (sporsmalId != sporsmal.id) {
             throw IllegalArgumentException("$sporsmalId != ${sporsmal.id} SporsmalId i body ikke lik sporsmalId i URL ")
         }
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre sporsmal")
 
-
-        if (!soknad.sporsmal.flatten().map { it.id }.contains(sporsmalId)) {
-            throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
-        }
-
-        if (!soknad.sporsmal.map { it.id }.contains(sporsmalId)) {
-            throw IllegalArgumentException("$sporsmalId er ikke et hovedspørsmål i søknad $soknadId")
-        }
-
-        val oppdatertSoknad = reisetilskuddService.oppdaterSporsmal(soknad, sporsmal)
+        val oppdatertSoknad = besvarSporsmalService.oppdaterSporsmal(soknad, sporsmal)
         val sporsmalSomBleOppdatert = oppdatertSoknad.sporsmal.find { it.tag == sporsmal.tag }!!
 
         return OppdaterSporsmalResponse(oppdatertSporsmal = sporsmalSomBleOppdatert)

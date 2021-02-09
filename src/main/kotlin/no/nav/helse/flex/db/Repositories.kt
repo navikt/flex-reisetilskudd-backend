@@ -45,6 +45,7 @@ interface SporsmalRepository : CrudRepository<SporsmalDbRecord, String> {
 @Repository
 interface SvarRepository : CrudRepository<SvarDbRecord, String> {
     fun findSvarDbRecordsBySporsmalIdIn(ider: List<String>): List<SvarDbRecord>
+    fun deleteSvarDbRecordByIdIn(ider: List<String>)
 }
 
 @Repository
@@ -105,7 +106,13 @@ data class KvitteringDbRecord(
     val opprettet: Instant,
 )
 
-fun SvarDbRecord.tilSvar(): Svar = Svar(id, verdi)
+fun SvarDbRecord.tilSvar(): Svar = Svar(id = id, verdi = verdi)
+
+fun Svar.tilSvarDbRecord(sporsmalId: String): SvarDbRecord = SvarDbRecord(
+    id = id,
+    verdi = verdi,
+    sporsmalId = sporsmalId
+)
 
 fun ReisetilskuddSoknad.tilReisetilskuddSoknadDbRecord(): ReisetilskuddSoknadDbRecord = ReisetilskuddSoknadDbRecord(
     id = this.id,
