@@ -1,10 +1,9 @@
 package no.nav.helse.flex.controller
 
 import no.nav.helse.flex.config.OIDCIssuer.SELVBETJENING
-import no.nav.helse.flex.domain.Kvittering
-import no.nav.helse.flex.domain.ReisetilskuddSoknad
-import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.domain.ReisetilskuddStatus.*
+import no.nav.helse.flex.reisetilskudd.BesvarSporsmalService
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
 import no.nav.security.token.support.core.context.TokenValidationContextHolder
@@ -16,7 +15,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping(value = ["/api/v1"])
 class SoknadController(
     private val tokenValidationContextHolder: TokenValidationContextHolder,
-    private val reisetilskuddService: ReisetilskuddService
+    private val reisetilskuddService: ReisetilskuddService,
+    private val besvarSporsmalService: BesvarSporsmalService,
 ) {
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
@@ -26,6 +26,30 @@ class SoknadController(
         val fnr = tokenValidationContextHolder.fnrFraOIDC()
 
         return reisetilskuddService.hentReisetilskuddene(fnr)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @PutMapping(
+        value = ["/reisetilskudd/{soknadId}/sporsmal/{sporsmalId}"],
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_JSON_VALUE]
+    )
+    fun oppdaterSporsmal(
+        @PathVariable soknadId: String,
+        @PathVariable sporsmalId: String,
+        @RequestBody sporsmal: Sporsmal
+    ): OppdaterSporsmalResponse {
+        val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
+
+        if (sporsmalId != sporsmal.id) {
+            throw IllegalArgumentException("$sporsmalId != ${sporsmal.id} SporsmalId i body ikke lik sporsmalId i URL ")
+        }
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre sporsmal")
+
+        val oppdatertSoknad = besvarSporsmalService.oppdaterSporsmal(soknad, sporsmal)
+        val sporsmalSomBleOppdatert = oppdatertSoknad.sporsmal.find { it.tag == sporsmal.tag }!!
+
+        return OppdaterSporsmalResponse(oppdatertSporsmal = sporsmalSomBleOppdatert)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])

@@ -15,3 +15,10 @@ data class Sporsmal(
     val svar: List<Svar> = emptyList(),
     val undersporsmal: List<Sporsmal> = emptyList()
 )
+
+fun List<Sporsmal>.flatten(): List<Sporsmal> =
+    flatMap {
+        mutableListOf(it).apply {
+            addAll(it.undersporsmal.flatten())
+        }
+    }

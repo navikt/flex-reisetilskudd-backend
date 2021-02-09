@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.time.LocalDate
+import java.util.*
 
 @Repository
 interface EnkelReisetilskuddSoknadRepository : CrudRepository<EnkelReisetilskuddSoknad, String> {
@@ -45,6 +46,7 @@ interface SporsmalRepository : CrudRepository<SporsmalDbRecord, String> {
 @Repository
 interface SvarRepository : CrudRepository<SvarDbRecord, String> {
     fun findSvarDbRecordsBySporsmalIdIn(ider: List<String>): List<SvarDbRecord>
+    fun deleteSvarDbRecordByIdIn(ider: List<String>)
 }
 
 @Repository
@@ -105,7 +107,13 @@ data class KvitteringDbRecord(
     val opprettet: Instant,
 )
 
-fun SvarDbRecord.tilSvar(): Svar = Svar(id, verdi)
+fun SvarDbRecord.tilSvar(): Svar = Svar(id = id, verdi = verdi)
+
+fun Svar.tilSvarDbRecord(sporsmalId: String): SvarDbRecord = SvarDbRecord(
+    id = id ?: UUID.randomUUID().toString(),
+    verdi = verdi,
+    sporsmalId = sporsmalId
+)
 
 fun ReisetilskuddSoknad.tilReisetilskuddSoknadDbRecord(): ReisetilskuddSoknadDbRecord = ReisetilskuddSoknadDbRecord(
     id = this.id,
