@@ -75,7 +75,7 @@ fun skapReisetilskuddsoknad(
                                 undersporsmal = listOf(
                                     Sporsmal(
                                         tag = KM_HJEM_JOBB,
-                                        sporsmalstekst = "Hvor mange km er det fra hjemmet ditt til jobben?",
+                                        sporsmalstekst = "Hvor mange km er reisen med bil hjemmefra til jobb?",
                                         svartype = KILOMETER,
                                     )
                                 )
