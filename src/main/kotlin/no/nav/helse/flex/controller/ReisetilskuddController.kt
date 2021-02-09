@@ -30,7 +30,7 @@ class SoknadController(
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @PutMapping(
-        value = ["/soknader/{soknadId}/sporsmal/{sporsmalId}"],
+        value = ["/reisetilskudd/{soknadId}/sporsmal/{sporsmalId}"],
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )

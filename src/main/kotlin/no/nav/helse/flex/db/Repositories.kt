@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.time.LocalDate
+import java.util.*
 
 @Repository
 interface EnkelReisetilskuddSoknadRepository : CrudRepository<EnkelReisetilskuddSoknad, String> {
@@ -109,7 +110,7 @@ data class KvitteringDbRecord(
 fun SvarDbRecord.tilSvar(): Svar = Svar(id = id, verdi = verdi)
 
 fun Svar.tilSvarDbRecord(sporsmalId: String): SvarDbRecord = SvarDbRecord(
-    id = id,
+    id = id ?: UUID.randomUUID().toString(),
     verdi = verdi,
     sporsmalId = sporsmalId
 )

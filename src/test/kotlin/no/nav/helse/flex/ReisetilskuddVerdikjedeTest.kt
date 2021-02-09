@@ -2,6 +2,7 @@ package no.nav.helse.flex
 
 import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.Tag.*
 import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
@@ -128,6 +129,14 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         reisetilskudd[0].kvitteringer.shouldBeEmpty()
         reisetilskudd[0].arbeidsgiverOrgnummer.shouldBeNull()
         reisetilskudd[0].arbeidsgiverNavn.shouldBeNull()
+
+        reisetilskudd[0].sporsmal.map { it.tag } shouldBeEqualTo listOf(
+            ANSVARSERKLARING,
+            TRANSPORT_TIL_DAGLIG,
+            REISE_MED_BIL,
+            KVITTERINGER,
+            UTBETALING
+        )
     }
 
     @Test
@@ -150,15 +159,16 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         gjenåpnet.avbrutt.shouldBeNull()
     }
 
-    /*  @Test
-      @Order(5)
-      fun `Vi kan besvare et av spørsmålene`() {
-          val reisetilskudd = this.hentSoknader(fnr).first()
-          reisetilskudd.sykler.shouldBeNull()
+    @Test
+    @Order(5)
+    fun `Vi kan besvare et av spørsmålene`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)
+            .besvarSporsmal(ANSVARSERKLARING, "CHECKED")
 
-          val besvart = this.svar(fnr, reisetilskudd.id, Svar(sykler = true))
-          besvart.sykler?.shouldBeTrue()
-      } */
+        val svaret = this.hentSoknader(fnr).first().sporsmal.find { it.tag == ANSVARSERKLARING }!!.svar.first()
+        svaret.verdi shouldBeEqualTo "CHECKED"
+    }
 
     @Test
     @Order(6)
@@ -213,7 +223,8 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     @Order(9)
     fun `Vi kan sende inn søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
-        val sendtSøknad = this.sendSøknad(fnr, reisetilskudd.id)
+        val sendtSøknad = SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)
+            .sendSoknad()
         sendtSøknad.status shouldBeEqualTo ReisetilskuddStatus.SENDT
         sendtSøknad.sendt.shouldNotBeNull()
     }

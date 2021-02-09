@@ -2,18 +2,14 @@ package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
-import no.nav.helse.flex.logger
-import no.nav.helse.flex.metrikk.Metrikk
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
 @Transactional
 class BesvarSporsmalService(
-    private val metrikk: Metrikk,
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao
 ) {
-    private val log = logger()
 
     fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
         val sporsmalId = sporsmal.id
