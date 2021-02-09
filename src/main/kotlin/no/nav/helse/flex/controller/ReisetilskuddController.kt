@@ -1,9 +1,7 @@
 package no.nav.helse.flex.controller
 
 import no.nav.helse.flex.config.OIDCIssuer.SELVBETJENING
-import no.nav.helse.flex.domain.Kvittering
-import no.nav.helse.flex.domain.ReisetilskuddSoknad
-import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.domain.ReisetilskuddStatus.*
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
@@ -26,6 +24,39 @@ class SoknadController(
         val fnr = tokenValidationContextHolder.fnrFraOIDC()
 
         return reisetilskuddService.hentReisetilskuddene(fnr)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @PutMapping(
+        value = ["/soknader/{soknadId}/sporsmal/{sporsmalId}"],
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_JSON_VALUE]
+    )
+    fun oppdaterSporsmal(
+        @PathVariable soknadId: String,
+        @PathVariable sporsmalId: String,
+        @RequestBody sporsmal: Sporsmal
+    ): OppdaterSporsmalResponse {
+        val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
+
+        if (sporsmalId != sporsmal.id) {
+            throw IllegalArgumentException("$sporsmalId != ${sporsmal.id} SporsmalId i body ikke lik sporsmalId i URL ")
+        }
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
+
+
+        if (!soknad.sporsmal.flatten().map { it.id }.contains(sporsmalId)) {
+            throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
+        }
+
+        if (!soknad.sporsmal.map { it.id }.contains(sporsmalId)) {
+            throw IllegalArgumentException("$sporsmalId er ikke et hovedspørsmål i søknad $soknadId")
+        }
+
+        val oppdatertSoknad = reisetilskuddService.oppdaterSporsmal(soknad, sporsmal)
+        val sporsmalSomBleOppdatert = oppdatertSoknad.sporsmal.find { it.tag == sporsmal.tag }!!
+
+        return OppdaterSporsmalResponse(oppdatertSporsmal = sporsmalSomBleOppdatert)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])

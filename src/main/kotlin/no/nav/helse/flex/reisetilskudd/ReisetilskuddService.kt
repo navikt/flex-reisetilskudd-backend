@@ -123,4 +123,23 @@ class ReisetilskuddService(
     fun hentReisetilskudd(id: String): ReisetilskuddSoknad? {
         return reisetilskuddSoknadDao.finnSoknad(id)
     }
+
+    fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
+        fun List<Sporsmal>.erUlikUtenomSvar(sammenlign: List<Sporsmal>): Boolean {
+            fun List<Sporsmal>.flattenOgFjernSvar(): List<Sporsmal> {
+                return this.flatten().map { it.copy(svar = emptyList()) }.sortedBy { it.id }
+            }
+
+            return this.flattenOgFjernSvar() != sammenlign.flattenOgFjernSvar()
+        }
+
+        val sporsmaletFraBasen = soknadFraBasenFørOppdatering.sporsmal.find { it.id == sporsmal.id }
+            ?: throw IllegalArgumentException("Soknad fra basen skal ha spørsmålet")
+
+        if (listOf(sporsmal).erUlikUtenomSvar(listOf(sporsmaletFraBasen))) {
+            throw IllegalArgumentException("Spørsmål i databasen er ulikt spørsmål som er besvart")
+        }
+
+        return reisetilskuddSoknadDao.hentSoknad(soknadFraBasenFørOppdatering.id)
+    }
 }
