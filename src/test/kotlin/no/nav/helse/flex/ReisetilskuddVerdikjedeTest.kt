@@ -4,6 +4,7 @@ import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.kafka.SykmeldingMessage
+import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -58,6 +59,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
     @Autowired
     lateinit var sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage>
+
+    @Autowired
+    lateinit var reisetilskuddService: ReisetilskuddService
 
     @Test
     fun `ingen token returnerer 401`() {
@@ -146,15 +150,15 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         gjenåpnet.avbrutt.shouldBeNull()
     }
 
-  /*  @Test
-    @Order(5)
-    fun `Vi kan besvare et av spørsmålene`() {
-        val reisetilskudd = this.hentSoknader(fnr).first()
-        reisetilskudd.sykler.shouldBeNull()
+    /*  @Test
+      @Order(5)
+      fun `Vi kan besvare et av spørsmålene`() {
+          val reisetilskudd = this.hentSoknader(fnr).first()
+          reisetilskudd.sykler.shouldBeNull()
 
-        val besvart = this.svar(fnr, reisetilskudd.id, Svar(sykler = true))
-        besvart.sykler?.shouldBeTrue()
-    } */
+          val besvart = this.svar(fnr, reisetilskudd.id, Svar(sykler = true))
+          besvart.sykler?.shouldBeTrue()
+      } */
 
     @Test
     @Order(6)

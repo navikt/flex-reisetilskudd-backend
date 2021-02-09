@@ -27,14 +27,57 @@ class ReisetilskuddSoknadDao(
         return reisetilskuddSoknadRepository.findReisetilskuddSoknadByFnr(fnr).map { it.hentUnderliggende() }
     }
 
-    private fun SporsmalDbRecord.hentUnderliggende(): Sporsmal {
-        val undersporsmal = sporsmalRepository.findSporsmalByOversporsmalId(this.id).map { it.hentUnderliggende() }
-        val svar = svarRepository.findSvarBySporsmalId(this.id).map { it.tilSvar() }
-        return this.tilSporsmal(undersporsmal, svar)
+    fun Set<Sporsmal>.flatten(): List<Sporsmal> =
+        this.toList().flatMap {
+            mutableListOf(it).apply {
+                addAll(it.undersporsmal.toSet().flatten())
+            }
+        }
+
+    private fun List<SporsmalDbRecord>.hentUnderliggendeOgSkapGraf(): List<Sporsmal> {
+        val svar = svarRepository.findSvarDbRecordsBySporsmalIdIn(this.map { it.id })
+        val listAvAlleSpm = HashSet<SporsmalDbRecord>(this)
+
+        val hovedsporsmal = mutableSetOf<Sporsmal>()
+
+        while (listAvAlleSpm.isNotEmpty()) {
+            if (hovedsporsmal.isEmpty()) {
+                // Første runde
+                val hovedsporsmalDbRecord = listAvAlleSpm.filter { it.oversporsmalId == null }
+                listAvAlleSpm.removeAll(hovedsporsmalDbRecord)
+                hovedsporsmalDbRecord
+                    .map { spm ->
+                        spm.tilSporsmal(
+                            undersporsmal = ArrayList(),
+                            svar = svar.filter { it.sporsmalId == spm.id }.map { it.tilSvar() }
+                        )
+                    }.forEach { hovedsporsmal.add(it) }
+            } else {
+                val toRemove = mutableSetOf<SporsmalDbRecord>()
+                listAvAlleSpm.forEach {
+                    spm ->
+                    val flatListe = hovedsporsmal.flatten()
+                    val find = flatListe.find { it.id == spm.oversporsmalId }
+                    find?.let {
+                        toRemove.add(spm)
+                        (find.undersporsmal as ArrayList).add(
+                            spm.tilSporsmal(
+                                undersporsmal = ArrayList(),
+                                svar = svar.filter { it.sporsmalId == spm.id }.map { it.tilSvar() }
+                            )
+                        ).also { sortedBy { it.tag } }
+                    }
+                }
+                listAvAlleSpm.removeAll(toRemove)
+            }
+        }
+
+        return hovedsporsmal.toList().sortedBy { it.tag }
     }
 
     private fun ReisetilskuddSoknadDbRecord.hentUnderliggende(): ReisetilskuddSoknad {
-        val sporsmal = sporsmalRepository.findSporsmalByReisetilskuddSoknadId(this.id).map { it.hentUnderliggende() }
+        val sporsmal = sporsmalRepository.findSporsmalByReisetilskuddSoknadId(this.id).sortedBy { it.tag }
+            .hentUnderliggendeOgSkapGraf()
         val kvitteringer =
             kvitteringRepository.findKvitteringDbRecordByReisetilskuddSoknadId(this.id).map { it.tilKvittering() }
         return this.tilReisetilskuddsoknad(sporsmal = sporsmal, kvitteringer = kvitteringer)
@@ -54,14 +97,19 @@ class ReisetilskuddSoknadDao(
     private fun lagreHovedsporsmal(sporsmal: Sporsmal, reisetilskuddSoknadId: String) {
         jdbcAggregateTemplate.insert(sporsmal.tilSporsmalDbRecord(reisetilskuddSoknadId = reisetilskuddSoknadId))
         sporsmal.undersporsmal.forEach {
-            lagreUndersporsmal(it, sporsmal.id)
+            lagreUndersporsmal(it, reisetilskuddSoknadId, sporsmal.id)
         }
     }
 
-    private fun lagreUndersporsmal(sporsmal: Sporsmal, oversporsmalId: String) {
-        jdbcAggregateTemplate.insert(sporsmal.tilSporsmalDbRecord(oversporsmalId = oversporsmalId))
+    private fun lagreUndersporsmal(sporsmal: Sporsmal, reisetilskuddSoknadId: String, oversporsmalId: String) {
+        jdbcAggregateTemplate.insert(
+            sporsmal.tilSporsmalDbRecord(
+                oversporsmalId = oversporsmalId,
+                reisetilskuddSoknadId = reisetilskuddSoknadId
+            )
+        )
         sporsmal.undersporsmal.forEach {
-            lagreUndersporsmal(it, sporsmal.id)
+            lagreUndersporsmal(it, reisetilskuddSoknadId, sporsmal.id)
         }
     }
 

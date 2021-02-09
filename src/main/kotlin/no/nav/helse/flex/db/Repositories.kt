@@ -44,7 +44,7 @@ interface SporsmalRepository : CrudRepository<SporsmalDbRecord, String> {
 
 @Repository
 interface SvarRepository : CrudRepository<SvarDbRecord, String> {
-    fun findSvarBySporsmalId(sporsmalId: String): List<SvarDbRecord>
+    fun findSvarDbRecordsBySporsmalIdIn(ider: List<String>): List<SvarDbRecord>
 }
 
 @Repository
