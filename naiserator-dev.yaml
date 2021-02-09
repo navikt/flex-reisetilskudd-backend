@@ -63,4 +63,6 @@ spec:
   env:
     - name: KAFKA_BOOTSTRAP_SERVERS_URL
       value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443
+    - name: FLEX_BUCKET_UPLOADER_SCOPE
+      value: 37e6eb95-2bab-432a-93e4-0356667a724e/.default
 
