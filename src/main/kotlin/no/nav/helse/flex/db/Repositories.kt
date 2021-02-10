@@ -108,8 +108,9 @@ fun SvarDbRecord.tilSvar(erKvittering: Boolean): Svar {
 }
 
 fun Svar.tilSvarDbRecord(sporsmalId: String): SvarDbRecord = SvarDbRecord(
-    id = id ?: UUID.randomUUID().toString(),
-    verdi = verdi ?: kvittering?.let { objectMapper.writeValueAsString(it) } ?: throw IllegalArgumentException(),
+    id = UUID.randomUUID().toString(),
+    verdi = verdi ?: kvittering?.let { objectMapper.writeValueAsString(it) }
+        ?: throw IllegalArgumentException("Må ha verdi eller kvittering"),
     sporsmalId = sporsmalId
 )
 
