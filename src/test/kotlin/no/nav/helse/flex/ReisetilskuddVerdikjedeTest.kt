@@ -234,9 +234,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val reisetilskudd = this.hentSoknader(fnr).first()
         SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)
             .besvarSporsmal(ANSVARSERKLARING, "CHECKED")
-
-        val svaret = this.hentSoknader(fnr).first().sporsmal.find { it.tag == ANSVARSERKLARING }!!.svar.first()
-        svaret.verdi shouldBeEqualTo "CHECKED"
+            .besvarSporsmal(TRANSPORT_TIL_DAGLIG, "NEI")
+            .besvarSporsmal(REISE_MED_BIL, "NEI")
+            .besvarSporsmal(UTBETALING, "JA")
     }
 
     @Test
