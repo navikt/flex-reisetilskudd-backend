@@ -103,7 +103,7 @@ fun skapReisetilskuddsoknad(
             ),
             Sporsmal(
                 tag = KVITTERINGER,
-                svartype = IKKE_RELEVANT,
+                svartype = KVITTERING,
                 overskrift = "Kvitteringer",
                 min = fom.format(ISO_LOCAL_DATE),
                 max = tom.format(ISO_LOCAL_DATE),

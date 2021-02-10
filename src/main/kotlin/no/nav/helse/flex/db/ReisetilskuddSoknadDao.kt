@@ -3,6 +3,7 @@ package no.nav.helse.flex.db
 import no.nav.helse.flex.controller.SoknadIkkeFunnetException
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.Sporsmal
+import no.nav.helse.flex.domain.Svartype
 import no.nav.helse.flex.domain.flatten
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate
 import org.springframework.data.repository.findByIdOrNull
@@ -48,7 +49,8 @@ class ReisetilskuddSoknadDao(
                     .map { spm ->
                         spm.tilSporsmal(
                             undersporsmal = ArrayList(),
-                            svar = svar.filter { it.sporsmalId == spm.id }.map { it.tilSvar() }
+                            svar = svar.filter { it.sporsmalId == spm.id }
+                                .map { it.tilSvar(spm.svartype == Svartype.KVITTERING) }
                         )
                     }.forEach { hovedsporsmal.add(it) }
             } else {
@@ -61,7 +63,8 @@ class ReisetilskuddSoknadDao(
                         (find.undersporsmal as ArrayList).add(
                             spm.tilSporsmal(
                                 undersporsmal = ArrayList(),
-                                svar = svar.filter { it.sporsmalId == spm.id }.map { it.tilSvar() }
+                                svar = svar.filter { it.sporsmalId == spm.id }
+                                    .map { it.tilSvar(spm.svartype == Svartype.KVITTERING) }
                             )
                         ).also { sortedBy { it.tag } }
                     }
@@ -117,5 +120,9 @@ class ReisetilskuddSoknadDao(
                 jdbcAggregateTemplate.insert(svar.tilSvarDbRecord(sporsmalId = spm.id))
             }
         }
+    }
+
+    fun slettSvar(svarId: String) {
+        svarRepository.deleteById(svarId)
     }
 }

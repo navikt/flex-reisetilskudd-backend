@@ -14,6 +14,9 @@ class BesvarSporsmalService(
     fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
         val sporsmalId = sporsmal.id
         val soknadId = soknadFraBasenFørOppdatering.id
+        if (sporsmal.tag == Tag.KVITTERINGER) {
+            throw IllegalArgumentException("Kvitteringsspørsmål skal lagre og slette enkeltsvar")
+        }
         if (!soknadFraBasenFørOppdatering.sporsmal.flatten().map { it.id }.contains(sporsmalId)) {
             throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
         }
@@ -39,5 +42,38 @@ class BesvarSporsmalService(
 
         reisetilskuddSoknadDao.lagreSvar(sporsmal)
         return reisetilskuddSoknadDao.hentSoknad(soknadId)
+    }
+
+    fun lagreNyttSvar(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmalId: String, svar: Svar): Sporsmal {
+        val soknadId = soknadFraBasenFørOppdatering.id
+
+        val sporsmal = (
+            soknadFraBasenFørOppdatering.sporsmal.flatten()
+                .find { it.id == sporsmalId }
+                ?: throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
+            )
+
+        val oppdatertSporsmal = sporsmal.copy(svar = sporsmal.svar.toMutableList().also { it.add(svar) })
+
+        reisetilskuddSoknadDao.lagreSvar(oppdatertSporsmal)
+        return reisetilskuddSoknadDao.hentSoknad(soknadId).sporsmal.flatten().find { it.id == sporsmalId }!!
+    }
+
+    fun slettSvar(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmalId: String, svarId: String) {
+        val soknadId = soknadFraBasenFørOppdatering.id
+
+        if (!soknadFraBasenFørOppdatering.sporsmal.flatten().map { it.id }.contains(sporsmalId)) {
+            throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
+        }
+
+        val sporsmal = (
+            soknadFraBasenFørOppdatering.sporsmal.flatten()
+                .find { it.id == sporsmalId }
+                ?: throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
+            )
+
+        if (sporsmal.svar.map { it.id }.contains(svarId)) {
+            reisetilskuddSoknadDao.slettSvar(svarId)
+        }
     }
 }

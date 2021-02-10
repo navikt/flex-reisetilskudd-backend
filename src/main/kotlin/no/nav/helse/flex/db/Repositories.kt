@@ -1,6 +1,8 @@
 package no.nav.helse.flex.db
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.objectMapper
 import org.springframework.data.annotation.Id
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -89,11 +91,25 @@ data class ReisetilskuddSoknadDbRecord(
     val arbeidsgiverNavn: String?,
 )
 
-fun SvarDbRecord.tilSvar(): Svar = Svar(id = id, verdi = verdi)
+fun SvarDbRecord.tilSvar(erKvittering: Boolean): Svar {
+    return Svar(
+        id = id,
+        verdi = if (!erKvittering) {
+            verdi
+        } else {
+            null
+        },
+        kvittering = if (erKvittering) {
+            objectMapper.readValue(verdi)
+        } else {
+            null
+        },
+    )
+}
 
 fun Svar.tilSvarDbRecord(sporsmalId: String): SvarDbRecord = SvarDbRecord(
     id = id ?: UUID.randomUUID().toString(),
-    verdi = verdi ?: kvittering?.toString() ?: throw IllegalArgumentException(),
+    verdi = verdi ?: kvittering?.let { objectMapper.writeValueAsString(it) } ?: throw IllegalArgumentException(),
     sporsmalId = sporsmalId
 )
 

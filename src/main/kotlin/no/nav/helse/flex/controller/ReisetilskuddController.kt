@@ -53,6 +53,39 @@ class SoknadController(
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(
+        value = ["/reisetilskudd/{soknadId}/sporsmal/{sporsmalId}/svar"],
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_JSON_VALUE]
+    )
+    fun lagreNyttSvar(
+        @PathVariable soknadId: String,
+        @PathVariable sporsmalId: String,
+        @RequestBody svar: Svar
+    ): Sporsmal {
+        val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
+
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre svar")
+
+        return besvarSporsmalService.lagreNyttSvar(soknad, sporsmalId, svar)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping(
+        value = ["/reisetilskudd/{soknadId}/sporsmal/{sporsmalId}/svar/{svarId}"]
+    )
+    fun slettSvar(
+        @PathVariable soknadId: String,
+        @PathVariable sporsmalId: String,
+        @PathVariable svarId: String,
+    ) {
+        val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
+        besvarSporsmalService.slettSvar(soknad, sporsmalId, svarId)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
     @GetMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hentSoknad(@PathVariable id: String): ReisetilskuddSoknad {
