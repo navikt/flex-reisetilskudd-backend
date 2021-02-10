@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.objectMapper
 import org.springframework.data.annotation.Id
+import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.CrudRepository
@@ -42,7 +43,15 @@ interface SporsmalRepository : CrudRepository<SporsmalDbRecord, String> {
 @Repository
 interface SvarRepository : CrudRepository<SvarDbRecord, String> {
     fun findSvarDbRecordsBySporsmalIdIn(ider: List<String>): List<SvarDbRecord>
-    fun deleteSvarDbRecordByIdIn(ider: List<String>)
+
+    @Modifying
+    @Query(
+        """
+            DELETE FROM svar
+            WHERE sporsmal_id = :id
+        """
+    )
+    fun slettMedSporsmalId(id: String)
 }
 
 @Repository

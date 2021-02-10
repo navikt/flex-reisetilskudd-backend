@@ -223,6 +223,24 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
     @Test
     @Order(9)
+    fun `Vi tester å sende inn søknaden før alle svar er besvart og får bad request`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        this.sendSøknadResultActions(reisetilskudd.id, fnr)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+    }
+    @Test
+    @Order(10)
+    fun `Vi besvarer resten av spørsmålene`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)
+            .besvarSporsmal(ANSVARSERKLARING, "CHECKED")
+
+        val svaret = this.hentSoknader(fnr).first().sporsmal.find { it.tag == ANSVARSERKLARING }!!.svar.first()
+        svaret.verdi shouldBeEqualTo "CHECKED"
+    }
+
+    @Test
+    @Order(11)
     fun `Vi kan sende inn søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
         val sendtSøknad = SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)

@@ -10,6 +10,7 @@ import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
 import no.nav.helse.flex.soknadsoppsett.skapReisetilskuddsoknad
+import no.nav.helse.flex.svarvalidering.validerSvarPaSoknad
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.stereotype.Component
@@ -54,6 +55,7 @@ class ReisetilskuddService(
     }
 
     fun sendReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
+        reisetilskuddSoknad.validerSvarPaSoknad()
         val avbrutt = reisetilskuddSoknad.tilEnkel().copy(sendt = Instant.now(), status = ReisetilskuddStatus.SENDT)
         enkelReisetilskuddSoknadRepository.save(avbrutt)
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
