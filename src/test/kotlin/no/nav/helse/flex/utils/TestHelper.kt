@@ -1,16 +1,12 @@
 package no.nav.helse.flex.utils
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.helse.flex.domain.Kvittering
-import no.nav.helse.flex.domain.OppdaterSporsmalResponse
-import no.nav.helse.flex.domain.ReisetilskuddSoknad
-import no.nav.helse.flex.domain.Sporsmal
+import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.objectMapper
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -40,8 +36,9 @@ fun TestHelper.avbrytSøknad(fnr: String, reisetilskuddId: String): Reisetilskud
 }
 
 fun TestHelper.sendSøknad(fnr: String, reisetilskuddId: String): ReisetilskuddSoknad {
-    val json =
-        sendSøknadResultActions(reisetilskuddId, fnr).andExpect(status().isOk).andReturn().response.contentAsString
+    val json = sendSøknadResultActions(reisetilskuddId, fnr)
+        .andExpect(status().isOk)
+        .andReturn().response.contentAsString
 
     return objectMapper.readValue(json)
 }
@@ -56,8 +53,42 @@ fun TestHelper.oppdaterSporsmalMedResult(fnr: String, reisetilskuddId: String, s
 }
 
 fun TestHelper.oppdaterSporsmal(fnr: String, reisetilskuddId: String, sporsmal: Sporsmal): OppdaterSporsmalResponse {
-    val json =
-        oppdaterSporsmalMedResult(fnr, reisetilskuddId, sporsmal).andExpect(status().isOk).andReturn().response.contentAsString
+    val json = oppdaterSporsmalMedResult(fnr, reisetilskuddId, sporsmal)
+        .andExpect(status().isOk)
+        .andReturn().response.contentAsString
+
+    return objectMapper.readValue(json)
+}
+
+fun TestHelper.slettSvarMedResult(
+    fnr: String,
+    reisetilskuddId: String,
+    sporsmalId: String,
+    svarId: String
+): ResultActions {
+    return this.mockMvc.perform(
+        delete("/api/v1/reisetilskudd/$reisetilskuddId/sporsmal/$sporsmalId/svar/$svarId")
+            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
+    )
+}
+
+fun TestHelper.slettSvar(fnr: String, reisetilskuddId: String, sporsmalId: String, svarId: String) {
+    slettSvarMedResult(fnr, reisetilskuddId, sporsmalId, svarId).andExpect(status().isNoContent).andReturn()
+}
+
+fun TestHelper.lagreSvarMedResult(fnr: String, reisetilskuddId: String, sporsmalId: String, svar: Svar): ResultActions {
+    return this.mockMvc.perform(
+        post("/api/v1/reisetilskudd/$reisetilskuddId/sporsmal/$sporsmalId/svar")
+            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
+            .content(objectMapper.writeValueAsString(svar))
+            .contentType(MediaType.APPLICATION_JSON)
+    )
+}
+
+fun TestHelper.lagreSvar(fnr: String, reisetilskuddId: String, sporsmalId: String, svar: Svar): Sporsmal {
+    val json = lagreSvarMedResult(fnr, reisetilskuddId, sporsmalId, svar)
+        .andExpect(status().isCreated)
+        .andReturn().response.contentAsString
 
     return objectMapper.readValue(json)
 }
@@ -88,22 +119,4 @@ fun TestHelper.gjenåpneSøknad(fnr: String, reisetilskuddId: String): Reisetils
     ).andExpect(status().isOk).andReturn().response.contentAsString
 
     return objectMapper.readValue(json)
-}
-
-fun TestHelper.lagreKvittering(fnr: String, reisetilskuddId: String, kvittering: Kvittering): Kvittering {
-    val json = this.mockMvc.perform(
-        post("/api/v1/reisetilskudd/$reisetilskuddId/kvittering", kvittering)
-            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
-            .content(objectMapper.writeValueAsString(kvittering))
-            .contentType(MediaType.APPLICATION_JSON)
-    ).andExpect(status().isCreated).andReturn().response.contentAsString
-
-    return objectMapper.readValue(json)
-}
-
-fun TestHelper.slettKvittering(fnr: String, reisetilskuddId: String, kvitteringId: String) {
-    this.mockMvc.perform(
-        MockMvcRequestBuilders.delete("/api/v1/reisetilskudd/$reisetilskuddId/kvittering/$kvitteringId")
-            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
-    ).andExpect(status().isNoContent).andReturn()
 }

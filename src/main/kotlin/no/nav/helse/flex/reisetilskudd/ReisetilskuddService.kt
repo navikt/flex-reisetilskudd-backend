@@ -106,16 +106,6 @@ class ReisetilskuddService(
         return reisetilskudd
     }
 
-    fun lagreKvittering(reisetilskuddSoknadId: String, kvittering: Kvittering): Kvittering {
-        return reisetilskuddSoknadDao.lagreKvittering(reisetilskuddSoknadId, kvittering)
-    }
-
-    fun slettKvittering(kvitteringId: String, soknad: ReisetilskuddSoknad) {
-        if (soknad.kvitteringer.map { it.id }.contains(kvitteringId)) {
-            reisetilskuddSoknadDao.slettKvitteringMedId(kvitteringId)
-        }
-    }
-
     fun hentReisetilskuddene(fnr: String): List<ReisetilskuddSoknad> {
         return reisetilskuddSoknadDao.finnMedFnr(fnr)
     }

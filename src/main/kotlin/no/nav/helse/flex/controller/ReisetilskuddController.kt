@@ -53,38 +53,43 @@ class SoknadController(
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
-    @ResponseBody
-    @GetMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun hentSoknad(@PathVariable id: String): ReisetilskuddSoknad {
-        return hentOgSjekkTilgangTilSoknad(id)
-    }
-
-    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
-    @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(
-        value = ["/reisetilskudd/{id}/kvittering"],
-        produces = [MediaType.APPLICATION_JSON_VALUE],
-        consumes = [MediaType.APPLICATION_JSON_VALUE]
+        value = ["/reisetilskudd/{soknadId}/sporsmal/{sporsmalId}/svar"],
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun lagreKvittering(@PathVariable("id") id: String, @RequestBody kvittering: Kvittering): Kvittering {
-        val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(id, kvittering)
+    fun lagreNyttSvar(
+        @PathVariable soknadId: String,
+        @PathVariable sporsmalId: String,
+        @RequestBody svar: Svar
+    ): Sporsmal {
+        val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
+
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre svar")
+
+        return besvarSporsmalService.lagreNyttSvar(soknad, sporsmalId, svar)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(
-        value = ["/reisetilskudd/{id}/kvittering/{kvitteringId}"]
+        value = ["/reisetilskudd/{soknadId}/sporsmal/{sporsmalId}/svar/{svarId}"]
     )
-    fun slettKvittering(@PathVariable("id") id: String, @PathVariable kvitteringId: String) {
-        val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        reisetilskuddService.slettKvittering(
-            kvitteringId = kvitteringId,
-            soknad = soknad
-        )
+    fun slettSvar(
+        @PathVariable soknadId: String,
+        @PathVariable sporsmalId: String,
+        @PathVariable svarId: String,
+    ) {
+        val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
+        besvarSporsmalService.slettSvar(soknad, sporsmalId, svarId)
+    }
+
+    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
+    @ResponseBody
+    @GetMapping(value = ["/reisetilskudd/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun hentSoknad(@PathVariable id: String): ReisetilskuddSoknad {
+        return hentOgSjekkTilgangTilSoknad(id)
     }
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])

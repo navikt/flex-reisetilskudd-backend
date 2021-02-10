@@ -2,8 +2,9 @@ package no.nav.helse.flex
 
 import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
+import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Tag.*
-import no.nav.helse.flex.domain.Transportmiddel
+import no.nav.helse.flex.domain.Utgiftstype.EGEN_BIL
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
@@ -126,7 +127,6 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         reisetilskudd[0].sendt.shouldBeNull()
         reisetilskudd[0].avbrutt.shouldBeNull()
-        reisetilskudd[0].kvitteringer.shouldBeEmpty()
         reisetilskudd[0].arbeidsgiverOrgnummer.shouldBeNull()
         reisetilskudd[0].arbeidsgiverNavn.shouldBeNull()
 
@@ -173,50 +173,52 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     @Test
     @Order(6)
     fun `Vi kan laste opp en kvittering`() {
-        val reisetilskudd = this.hentSoknader(fnr).first()
-        reisetilskudd.kvitteringer.shouldBeEmpty()
-
-        val kvittering = this.lagreKvittering(
-            fnr,
-            reisetilskudd.id,
-            Kvittering(
-                id = UUID.randomUUID().toString(),
-                blobId = "123456",
+        val reisetilskuddSoknad = this.hentSoknader(fnr).first()
+        val kvitteringSpm = reisetilskuddSoknad.sporsmal.filter { it.tag == KVITTERINGER }.first()
+        val svar = Svar(
+            kvittering = Kvittering(
+                blobId = "9a186e3c-aeeb-4566-a865-15aa9139d364",
                 belop = 133700,
-                typeUtgift = Transportmiddel.EGEN_BIL,
+                typeUtgift = EGEN_BIL,
                 datoForUtgift = LocalDate.now(),
             )
         )
 
-        kvittering.datoForUtgift.`should be equal to`(LocalDate.now())
-        kvittering.id.shouldNotBeNull()
+        val spmSomBleSvart = lagreSvar(fnr, reisetilskuddSoknad.id, kvitteringSpm.id, svar)
 
-        val oppdatertReisetilskudd = this.hentSoknader(fnr).first()
-        oppdatertReisetilskudd.kvitteringer.shouldNotBeEmpty()
+        val returnertSvar = spmSomBleSvart.svar.first().kvittering!!
+
+        returnertSvar.datoForUtgift.`should be equal to`(LocalDate.now())
+        returnertSvar.typeUtgift.`should be equal to`(EGEN_BIL)
     }
 
     @Test
     @Order(7)
     fun `Vi kan se den opplastede kvitteringen`() {
-        val kvitteringer = this.hentSoknader(fnr).first().kvitteringer
+        val reisetilskuddSoknad = this.hentSoknader(fnr).first()
+        val kvitteringSpm = reisetilskuddSoknad.sporsmal.filter { it.tag == KVITTERINGER }.first()
+        kvitteringSpm.svar.size `should be equal to` 1
 
-        kvitteringer.size `should be equal to` 1
-        val kvittering = kvitteringer.first()
+        val svaret = kvitteringSpm.svar.first().kvittering!!
 
-        kvittering.datoForUtgift.`should be equal to`(LocalDate.now())
-        kvittering.id.shouldNotBeNull()
-        kvittering.belop.`should be equal to`(133700)
+        svaret.datoForUtgift.`should be equal to`(LocalDate.now())
+        svaret.blobId.`should be equal to`("9a186e3c-aeeb-4566-a865-15aa9139d364")
+        svaret.belop.`should be equal to`(133700)
     }
 
     @Test
     @Order(8)
     fun `Vi kan slette en kvittering`() {
-        val reisetilskudd = this.hentSoknader(fnr).first()
-        reisetilskudd.kvitteringer.size `should be equal to` 1
-        this.slettKvittering(fnr, reisetilskudd.id, reisetilskudd.kvitteringer[0].id)
+        val reisetilskuddSoknad = this.hentSoknader(fnr).first()
+        val kvitteringSpm = reisetilskuddSoknad.sporsmal.filter { it.tag == KVITTERINGER }.first()
+        kvitteringSpm.svar.size `should be equal to` 1
 
-        val reisetilskuddEtter = this.hentSoknader(fnr).first()
-        reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
+        val svaret = kvitteringSpm.svar.first()
+        slettSvar(fnr, reisetilskuddSoknad.id, kvitteringSpm.id, svaret.id!!)
+
+        val reisetilskuddSoknadEtter = this.hentSoknader(fnr).first()
+        val kvitteringSpmEtter = reisetilskuddSoknadEtter.sporsmal.filter { it.tag == KVITTERINGER }.first()
+        kvitteringSpmEtter.svar.size `should be equal to` 0
     }
 
     @Test

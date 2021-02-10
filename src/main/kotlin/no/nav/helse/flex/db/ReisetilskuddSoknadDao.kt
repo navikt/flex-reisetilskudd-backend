@@ -1,9 +1,9 @@
 package no.nav.helse.flex.db
 
 import no.nav.helse.flex.controller.SoknadIkkeFunnetException
-import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.Sporsmal
+import no.nav.helse.flex.domain.Svartype
 import no.nav.helse.flex.domain.flatten
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate
 import org.springframework.data.repository.findByIdOrNull
@@ -17,7 +17,6 @@ class ReisetilskuddSoknadDao(
     val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
     val sporsmalRepository: SporsmalRepository,
     val svarRepository: SvarRepository,
-    val kvitteringRepository: KvitteringRepository,
 ) {
 
     fun hentSoknad(id: String): ReisetilskuddSoknad {
@@ -50,7 +49,8 @@ class ReisetilskuddSoknadDao(
                     .map { spm ->
                         spm.tilSporsmal(
                             undersporsmal = ArrayList(),
-                            svar = svar.filter { it.sporsmalId == spm.id }.map { it.tilSvar() }
+                            svar = svar.filter { it.sporsmalId == spm.id }
+                                .map { it.tilSvar(spm.svartype == Svartype.KVITTERING) }
                         )
                     }.forEach { hovedsporsmal.add(it) }
             } else {
@@ -63,7 +63,8 @@ class ReisetilskuddSoknadDao(
                         (find.undersporsmal as ArrayList).add(
                             spm.tilSporsmal(
                                 undersporsmal = ArrayList(),
-                                svar = svar.filter { it.sporsmalId == spm.id }.map { it.tilSvar() }
+                                svar = svar.filter { it.sporsmalId == spm.id }
+                                    .map { it.tilSvar(spm.svartype == Svartype.KVITTERING) }
                             )
                         ).also { sortedBy { it.tag } }
                     }
@@ -78,9 +79,7 @@ class ReisetilskuddSoknadDao(
     private fun ReisetilskuddSoknadDbRecord.hentUnderliggende(): ReisetilskuddSoknad {
         val sporsmal = sporsmalRepository.findSporsmalByReisetilskuddSoknadId(this.id).sortedBy { it.tag }
             .hentUnderliggendeOgSkapGraf()
-        val kvitteringer =
-            kvitteringRepository.findKvitteringDbRecordByReisetilskuddSoknadId(this.id).map { it.tilKvittering() }
-        return this.tilReisetilskuddsoknad(sporsmal = sporsmal, kvitteringer = kvitteringer)
+        return this.tilReisetilskuddsoknad(sporsmal = sporsmal)
     }
 
     fun finnSoknad(id: String): ReisetilskuddSoknad? {
@@ -113,14 +112,6 @@ class ReisetilskuddSoknadDao(
         }
     }
 
-    fun lagreKvittering(reisetilskuddSoknadId: String, kvittering: Kvittering): Kvittering {
-        return jdbcAggregateTemplate.insert(kvittering.tilKvitteringDbRecord(reisetilskuddSoknadId)).tilKvittering()
-    }
-
-    fun slettKvitteringMedId(kvitteringId: String) {
-        kvitteringRepository.deleteById(kvitteringId)
-    }
-
     fun lagreSvar(sporsmal: Sporsmal) {
         val alleSporsmal = listOf(sporsmal).flatten()
         svarRepository.deleteSvarDbRecordByIdIn(alleSporsmal.map { it.id })
@@ -129,5 +120,9 @@ class ReisetilskuddSoknadDao(
                 jdbcAggregateTemplate.insert(svar.tilSvarDbRecord(sporsmalId = spm.id))
             }
         }
+    }
+
+    fun slettSvar(svarId: String) {
+        svarRepository.deleteById(svarId)
     }
 }

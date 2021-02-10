@@ -1,6 +1,8 @@
 package no.nav.helse.flex.db
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.objectMapper
 import org.springframework.data.annotation.Id
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -33,14 +35,8 @@ interface EnkelReisetilskuddSoknadRepository : CrudRepository<EnkelReisetilskudd
 }
 
 @Repository
-interface KvitteringRepository : CrudRepository<KvitteringDbRecord, String> {
-    fun findKvitteringDbRecordByReisetilskuddSoknadId(reisetilskuddSoknadId: String): List<KvitteringDbRecord>
-}
-
-@Repository
 interface SporsmalRepository : CrudRepository<SporsmalDbRecord, String> {
     fun findSporsmalByReisetilskuddSoknadId(reisetilskuddSoknadId: String): List<SporsmalDbRecord>
-    fun findSporsmalByOversporsmalId(oversporsmalId: String): List<SporsmalDbRecord>
 }
 
 @Repository
@@ -95,23 +91,26 @@ data class ReisetilskuddSoknadDbRecord(
     val arbeidsgiverNavn: String?,
 )
 
-@Table("kvittering")
-data class KvitteringDbRecord(
-    @Id
-    val id: String,
-    val reisetilskuddSoknadId: String? = null,
-    val blobId: String,
-    val datoForUtgift: LocalDate,
-    val belop: Int, // Beløp i øre . 100kr = 10000
-    val typeUtgift: Transportmiddel,
-    val opprettet: Instant,
-)
-
-fun SvarDbRecord.tilSvar(): Svar = Svar(id = id, verdi = verdi)
+fun SvarDbRecord.tilSvar(erKvittering: Boolean): Svar {
+    return Svar(
+        id = id,
+        verdi = if (!erKvittering) {
+            verdi
+        } else {
+            null
+        },
+        kvittering = if (erKvittering) {
+            objectMapper.readValue(verdi)
+        } else {
+            null
+        },
+    )
+}
 
 fun Svar.tilSvarDbRecord(sporsmalId: String): SvarDbRecord = SvarDbRecord(
-    id = id ?: UUID.randomUUID().toString(),
-    verdi = verdi,
+    id = UUID.randomUUID().toString(),
+    verdi = verdi ?: kvittering?.let { objectMapper.writeValueAsString(it) }
+        ?: throw IllegalArgumentException("Må ha verdi eller kvittering"),
     sporsmalId = sporsmalId
 )
 
@@ -130,16 +129,6 @@ fun ReisetilskuddSoknad.tilReisetilskuddSoknadDbRecord(): ReisetilskuddSoknadDbR
     arbeidsgiverNavn = this.arbeidsgiverNavn
 )
 
-fun Kvittering.tilKvitteringDbRecord(reisetilskuddSoknadId: String): KvitteringDbRecord = KvitteringDbRecord(
-    id = id,
-    blobId = blobId,
-    datoForUtgift = datoForUtgift,
-    belop = belop,
-    typeUtgift = typeUtgift,
-    opprettet = opprettet ?: Instant.now(),
-    reisetilskuddSoknadId = reisetilskuddSoknadId,
-)
-
 fun SporsmalDbRecord.tilSporsmal(undersporsmal: List<Sporsmal>, svar: List<Svar>): Sporsmal {
     return Sporsmal(
         id = id,
@@ -156,17 +145,7 @@ fun SporsmalDbRecord.tilSporsmal(undersporsmal: List<Sporsmal>, svar: List<Svar>
     )
 }
 
-fun KvitteringDbRecord.tilKvittering(): Kvittering = Kvittering(
-    id = id,
-    blobId = blobId,
-    datoForUtgift = datoForUtgift,
-    belop = belop,
-    typeUtgift = typeUtgift,
-    opprettet = opprettet
-)
-
 fun ReisetilskuddSoknadDbRecord.tilReisetilskuddsoknad(
-    kvitteringer: List<Kvittering>,
     sporsmal: List<Sporsmal>
 ): ReisetilskuddSoknad = ReisetilskuddSoknad(
     id = this.id,
@@ -181,7 +160,6 @@ fun ReisetilskuddSoknadDbRecord.tilReisetilskuddsoknad(
     avbrutt = this.avbrutt,
     arbeidsgiverOrgnummer = this.arbeidsgiverOrgnummer,
     arbeidsgiverNavn = this.arbeidsgiverNavn,
-    kvitteringer = kvitteringer,
     sporsmal = sporsmal
 )
 

@@ -5,7 +5,7 @@ enum class Svartype {
     CHECKBOX,
     CHECKBOX_GRUPPE,
     DATOER,
-    IKKE_RELEVANT,
     BELOP,
     KILOMETER,
+    KVITTERING,
 }
