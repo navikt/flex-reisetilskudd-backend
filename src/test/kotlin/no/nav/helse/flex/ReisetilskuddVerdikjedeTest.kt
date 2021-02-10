@@ -4,7 +4,7 @@ import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Tag.*
-import no.nav.helse.flex.domain.Utgiftstype.EGEN_BIL
+import no.nav.helse.flex.domain.Utgiftstype.PARKERING
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
@@ -179,7 +179,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
             kvittering = Kvittering(
                 blobId = "9a186e3c-aeeb-4566-a865-15aa9139d364",
                 belop = 133700,
-                typeUtgift = EGEN_BIL,
+                typeUtgift = PARKERING,
                 datoForUtgift = LocalDate.now(),
             )
         )
@@ -189,7 +189,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val returnertSvar = spmSomBleSvart.svar.first().kvittering!!
 
         returnertSvar.datoForUtgift.`should be equal to`(LocalDate.now())
-        returnertSvar.typeUtgift.`should be equal to`(EGEN_BIL)
+        returnertSvar.typeUtgift.`should be equal to`(PARKERING)
     }
 
     @Test

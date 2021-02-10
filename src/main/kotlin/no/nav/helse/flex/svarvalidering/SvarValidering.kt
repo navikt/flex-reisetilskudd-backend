@@ -2,10 +2,13 @@ package no.nav.helse.flex.svarvalidering
 
 import no.nav.helse.flex.controller.AbstractApiError
 import no.nav.helse.flex.controller.LogLevel.WARN
+import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.Sporsmal
+import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Svartype.*
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import java.util.*
 
 fun ReisetilskuddSoknad.validerSvarPaSoknad() {
     sporsmal.forEach { it.validerSvarPaSporsmal() }
@@ -46,6 +49,10 @@ private fun Sporsmal.validerUndersporsmal() {
 }
 
 private fun Sporsmal.validerGrenserPaSvar() {
+    if (min == null && max == null) {
+        return
+    }
+
     /*
     return if (sporsmal.min == null && sporsmal.max == null) {
         true
@@ -58,18 +65,41 @@ private fun Sporsmal.validerGrenserPaSvar() {
     */
 }
 
-private fun Sporsmal.validerSvarverdier() {
-    /*
-    return when (sporsmal.svartype) {
-        Svartype.JA_NEI -> "JA" == verdi || "NEI" == verdi
-        Svartype.CHECKBOX, Svartype.CHECKBOX_GRUPPE -> verdi == null
-        else -> {
-            log.error("Har ikke implementert validering av svartype: " + sporsmal.svartype)
-            false
-        }
-    }
+private fun validerKvittering(kvittering: Kvittering?): () -> Boolean {
+    return { kvittering != null && kvittering.blobId.erUUID() }
+}
 
-     */
+private fun String.erUUID(): Boolean {
+    return try {
+        UUID.fromString(this)
+        true
+    } catch (e: Exception) {
+        false
+    }
+}
+
+private fun Sporsmal.validerSvarverdi(svar: Svar) {
+    val verdi = svar.verdi
+    val predikat: () -> Boolean = when (svartype) {
+        JA_NEI -> {
+            { "JA" == verdi || "NEI" == verdi }
+        }
+        CHECKBOX -> {
+            { "CHECKED" == verdi }
+        }
+        DATOER -> TODO()
+        BELOP -> TODO()
+        KILOMETER -> TODO()
+        KVITTERING -> validerKvittering(svar.kvittering)
+        CHECKBOX_GRUPPE -> throw IllegalStateException("Skal ha validert 0 svar allerede")
+    }
+    if (!predikat()) {
+        throw ValideringException("Spørsmål $id med tag $tag har feil svarverdi $verdi")
+    }
+}
+
+private fun Sporsmal.validerSvarverdier() {
+    svar.forEach { this.validerSvarverdi(it) }
 }
 
 private fun Sporsmal.validerAntallSvar() {
