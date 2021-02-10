@@ -1,9 +1,7 @@
 package no.nav.helse.flex
 
-import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Tag.*
-import no.nav.helse.flex.domain.Transportmiddel
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
@@ -126,7 +124,6 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
         reisetilskudd[0].sendt.shouldBeNull()
         reisetilskudd[0].avbrutt.shouldBeNull()
-        reisetilskudd[0].kvitteringer.shouldBeEmpty()
         reisetilskudd[0].arbeidsgiverOrgnummer.shouldBeNull()
         reisetilskudd[0].arbeidsgiverNavn.shouldBeNull()
 
@@ -169,7 +166,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val svaret = this.hentSoknader(fnr).first().sporsmal.find { it.tag == ANSVARSERKLARING }!!.svar.first()
         svaret.verdi shouldBeEqualTo "CHECKED"
     }
-
+/*
     @Test
     @Order(6)
     fun `Vi kan laste opp en kvittering`() {
@@ -218,7 +215,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val reisetilskuddEtter = this.hentSoknader(fnr).first()
         reisetilskuddEtter.kvitteringer.size.`should be equal to`(0)
     }
-
+*/
     @Test
     @Order(9)
     fun `Vi kan sende inn søknaden`() {

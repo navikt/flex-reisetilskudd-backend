@@ -8,7 +8,6 @@ enum class Transportmiddel {
 }
 
 data class Kvittering(
-    val id: String,
     val blobId: String,
     val datoForUtgift: LocalDate,
     val belop: Int, // Beløp i øre . 100kr = 10000

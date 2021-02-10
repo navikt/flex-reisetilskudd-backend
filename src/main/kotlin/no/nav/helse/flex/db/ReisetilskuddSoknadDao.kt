@@ -1,7 +1,6 @@
 package no.nav.helse.flex.db
 
 import no.nav.helse.flex.controller.SoknadIkkeFunnetException
-import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.Sporsmal
 import no.nav.helse.flex.domain.flatten
@@ -17,7 +16,6 @@ class ReisetilskuddSoknadDao(
     val reisetilskuddSoknadRepository: ReisetilskuddSoknadRepository,
     val sporsmalRepository: SporsmalRepository,
     val svarRepository: SvarRepository,
-    val kvitteringRepository: KvitteringRepository,
 ) {
 
     fun hentSoknad(id: String): ReisetilskuddSoknad {
@@ -78,9 +76,7 @@ class ReisetilskuddSoknadDao(
     private fun ReisetilskuddSoknadDbRecord.hentUnderliggende(): ReisetilskuddSoknad {
         val sporsmal = sporsmalRepository.findSporsmalByReisetilskuddSoknadId(this.id).sortedBy { it.tag }
             .hentUnderliggendeOgSkapGraf()
-        val kvitteringer =
-            kvitteringRepository.findKvitteringDbRecordByReisetilskuddSoknadId(this.id).map { it.tilKvittering() }
-        return this.tilReisetilskuddsoknad(sporsmal = sporsmal, kvitteringer = kvitteringer)
+        return this.tilReisetilskuddsoknad(sporsmal = sporsmal)
     }
 
     fun finnSoknad(id: String): ReisetilskuddSoknad? {
@@ -111,14 +107,6 @@ class ReisetilskuddSoknadDao(
         sporsmal.undersporsmal.forEach {
             lagreUndersporsmal(it, reisetilskuddSoknadId, sporsmal.id)
         }
-    }
-
-    fun lagreKvittering(reisetilskuddSoknadId: String, kvittering: Kvittering): Kvittering {
-        return jdbcAggregateTemplate.insert(kvittering.tilKvitteringDbRecord(reisetilskuddSoknadId)).tilKvittering()
-    }
-
-    fun slettKvitteringMedId(kvitteringId: String) {
-        kvitteringRepository.deleteById(kvitteringId)
     }
 
     fun lagreSvar(sporsmal: Sporsmal) {

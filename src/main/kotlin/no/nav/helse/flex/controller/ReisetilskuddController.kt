@@ -61,34 +61,6 @@ class SoknadController(
 
     @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
     @ResponseBody
-    @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping(
-        value = ["/reisetilskudd/{id}/kvittering"],
-        produces = [MediaType.APPLICATION_JSON_VALUE],
-        consumes = [MediaType.APPLICATION_JSON_VALUE]
-    )
-    fun lagreKvittering(@PathVariable("id") id: String, @RequestBody kvittering: Kvittering): Kvittering {
-        val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        return reisetilskuddService.lagreKvittering(id, kvittering)
-    }
-
-    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping(
-        value = ["/reisetilskudd/{id}/kvittering/{kvitteringId}"]
-    )
-    fun slettKvittering(@PathVariable("id") id: String, @PathVariable kvitteringId: String) {
-        val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre kvittering")
-        reisetilskuddService.slettKvittering(
-            kvitteringId = kvitteringId,
-            soknad = soknad
-        )
-    }
-
-    @ProtectedWithClaims(issuer = SELVBETJENING, claimMap = ["acr=Level4"])
-    @ResponseBody
     @PostMapping(value = ["/reisetilskudd/{id}/send"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun sendSoknad(@PathVariable("id") id: String): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)

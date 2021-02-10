@@ -17,7 +17,6 @@ data class ReisetilskuddSoknad(
     val avbrutt: Instant? = null,
     val arbeidsgiverOrgnummer: String?,
     val arbeidsgiverNavn: String?,
-    val kvitteringer: List<Kvittering> = emptyList(),
     val sporsmal: List<Sporsmal> = emptyList()
 )
 

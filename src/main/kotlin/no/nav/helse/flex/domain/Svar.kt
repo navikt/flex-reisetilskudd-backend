@@ -2,5 +2,6 @@ package no.nav.helse.flex.domain
 
 data class Svar(
     val id: String? = null,
-    val verdi: String
+    val verdi: String? = null,
+    val kvittering: Kvittering? = null,
 )
