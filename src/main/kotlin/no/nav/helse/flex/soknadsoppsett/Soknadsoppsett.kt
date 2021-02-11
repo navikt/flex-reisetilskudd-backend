@@ -10,6 +10,7 @@ import no.nav.helse.flex.reisetilskudd.reisetilskuddStatus
 import no.nav.helse.flex.soknadsoppsett.DatoFormaterer.formatterPeriode
 import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import java.time.Instant
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 import java.util.*
 
@@ -43,28 +44,11 @@ fun skapReisetilskuddsoknad(
                 sporsmalstekst = "Jeg, <strong>$navn</strong>, bekrefter at jeg vil gi riktige og fullstendige opplysninger.",
             ),
             transportTilDagligSpørsmål(),
-            Sporsmal(
-                tag = REISE_MED_BIL,
-                svartype = JA_NEI,
-                overskrift = "Reise med bil",
-                sporsmalstekst = "Reiser du med bil til og fra jobben mellom $formattertPeriode?",
-                kriterieForVisningAvUndersporsmal = JA,
-                undersporsmal = listOf(
-                    Sporsmal(
-                        tag = BIL_DATOER,
-                        svartype = DATOER,
-                        min = fom.format(ISO_LOCAL_DATE),
-                        max = tom.format(ISO_LOCAL_DATE),
-                        sporsmalstekst = "Hvilke dager reiste du med bil",
-                    )
-                )
-            ),
+            reiseMedBilSpørsmål(formattertPeriode, fom, tom),
             Sporsmal(
                 tag = KVITTERINGER,
                 svartype = KVITTERING,
                 overskrift = "Kvitteringer",
-                min = fom.format(ISO_LOCAL_DATE),
-                max = tom.format(ISO_LOCAL_DATE),
                 sporsmalstekst = "Last opp kvitteringer for reiser til og fra jobben mellom $formattertPeriode.",
             ),
             Sporsmal(
@@ -77,6 +61,27 @@ fun skapReisetilskuddsoknad(
         ).sortedBy { it.tag }
     )
 }
+
+private fun reiseMedBilSpørsmål(
+    formattertPeriode: String,
+    fom: LocalDate,
+    tom: LocalDate
+) = Sporsmal(
+    tag = REISE_MED_BIL,
+    svartype = JA_NEI,
+    overskrift = "Reise med bil",
+    sporsmalstekst = "Reiser du med bil til og fra jobben mellom $formattertPeriode?",
+    kriterieForVisningAvUndersporsmal = JA,
+    undersporsmal = listOf(
+        Sporsmal(
+            tag = BIL_DATOER,
+            svartype = DATOER,
+            min = fom.format(ISO_LOCAL_DATE),
+            max = tom.format(ISO_LOCAL_DATE),
+            sporsmalstekst = "Hvilke dager reiste du med bil",
+        )
+    )
+)
 
 fun transportTilDagligSpørsmål() = Sporsmal(
     tag = TRANSPORT_TIL_DAGLIG,

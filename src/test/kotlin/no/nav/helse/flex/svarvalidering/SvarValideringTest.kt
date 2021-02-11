@@ -85,6 +85,18 @@ internal class SvarValideringTest {
         spm.copy(svar = listOf(Svar(verdi = "1"))).validerSvarPaSporsmal()
     }
 
+    @Test
+    fun `test reiseMedBilSpørsmål`() {
+        val spm = offentligTransportBeløpSpørsmål()
+
+        spm `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil antall svar 0"
+
+        spm.copy(svar = listOf(Svar(verdi = "1.0"))) `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil svarverdi 1.0"
+        spm.copy(svar = listOf(Svar(verdi = "-1"))) `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har svarverdi utenfor grenseverdi -1"
+        spm.copy(svar = listOf(Svar(verdi = "0"))).validerSvarPaSporsmal()
+        spm.copy(svar = listOf(Svar(verdi = "1"))).validerSvarPaSporsmal()
+    }
+
     private fun String?.`er double med max en desimal`() = this.erDoubleMedMaxEnDesimal()
     private fun String?.`er heltall`() = this.erHeltall()
     private fun String?.`er dato`() = this.erDato()
