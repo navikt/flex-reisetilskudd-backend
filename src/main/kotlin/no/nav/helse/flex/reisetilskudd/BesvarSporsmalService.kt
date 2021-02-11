@@ -2,6 +2,7 @@ package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.svarvalidering.validerSvarPaSporsmal
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,6 +15,7 @@ class BesvarSporsmalService(
     fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
         val sporsmalId = sporsmal.id
         val soknadId = soknadFraBasenFørOppdatering.id
+
         if (sporsmal.tag == Tag.KVITTERINGER) {
             throw IllegalArgumentException("Kvitteringsspørsmål skal lagre og slette enkeltsvar")
         }
@@ -40,6 +42,8 @@ class BesvarSporsmalService(
             throw IllegalArgumentException("Spørsmål i databasen er ulikt spørsmål som er besvart")
         }
 
+        sporsmal.validerSvarPaSporsmal()
+
         reisetilskuddSoknadDao.lagreSvar(sporsmal)
         return reisetilskuddSoknadDao.hentSoknad(soknadId)
     }
@@ -54,6 +58,7 @@ class BesvarSporsmalService(
             )
 
         val oppdatertSporsmal = sporsmal.copy(svar = sporsmal.svar.toMutableList().also { it.add(svar) })
+        oppdatertSporsmal.validerSvarPaSporsmal()
 
         reisetilskuddSoknadDao.lagreSvar(oppdatertSporsmal)
         return reisetilskuddSoknadDao.hentSoknad(soknadId).sporsmal.flatten().find { it.id == sporsmalId }!!

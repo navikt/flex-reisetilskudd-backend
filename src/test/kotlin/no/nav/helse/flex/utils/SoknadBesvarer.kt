@@ -4,31 +4,27 @@ import no.nav.helse.flex.domain.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.springframework.test.web.servlet.MockMvc
 
-private fun copyRsByttSvar(
-    rsSykepengesoknad: ReisetilskuddSoknad,
-    rsSporsmal: Sporsmal,
-    rsSvar: List<Svar>
-): ReisetilskuddSoknad {
-    var alleSporsmal = rsSykepengesoknad.sporsmal
-    alleSporsmal = byttSvar(alleSporsmal, rsSporsmal, rsSvar)
-    return rsSykepengesoknad.copy(sporsmal = alleSporsmal)
-}
+private fun ReisetilskuddSoknad.byttSvar(tag: Tag, svar: List<Svar>): ReisetilskuddSoknad =
+    copy(sporsmal = sporsmal.byttSvar(tag, svar))
 
-private fun ReisetilskuddSoknad.byttSvar(rsSporsmal: Sporsmal, rsSvar: List<Svar>): ReisetilskuddSoknad {
-    return copyRsByttSvar(this, rsSporsmal, rsSvar)
-}
+fun Sporsmal.byttSvar(tag: Tag? = null, svar: String): Sporsmal =
+    this.byttSvar(tag, listOf(svar))
 
-private fun byttSvar(alleSporsmal: List<Sporsmal>, rsSporsmal: Sporsmal, rsSvar: List<Svar>): List<Sporsmal> {
-    return alleSporsmal.map { spm ->
-        if (spm.tag == rsSporsmal.tag) rsSporsmal.copy(svar = rsSvar)
-        else if (spm.undersporsmal.isNotEmpty()) spm.copy(
-            undersporsmal = byttSvar(
-                spm.undersporsmal,
-                rsSporsmal,
-                rsSvar
+fun Sporsmal.byttSvar(tag: Tag? = null, svar: List<String>): Sporsmal =
+    listOf(this).byttSvar(tag ?: this.tag, svar.toList().map { Svar(verdi = it) }).first()
+
+private fun List<Sporsmal>.byttSvar(tag: Tag, svar: List<Svar>): List<Sporsmal> {
+    return map { spm ->
+        when {
+            spm.tag == tag -> spm.copy(svar = svar)
+            spm.undersporsmal.isNotEmpty() -> spm.copy(
+                undersporsmal = spm.undersporsmal.byttSvar(
+                    tag,
+                    svar
+                )
             )
-        )
-        else spm
+            else -> spm
+        }
     }
 }
 
@@ -46,10 +42,8 @@ class SoknadBesvarer(
     }
 
     fun besvarSporsmal(tag: Tag, svarListe: List<String>, ferdigBesvart: Boolean = true): SoknadBesvarer {
-        val sporsmal = reisetilskuddSoknad.sporsmal.flatten().find { it.tag == tag }
-            ?: throw RuntimeException("Spørsmål ikke funnet $tag")
-        val rsSvar = svarListe.map { Svar(verdi = it) }
-        val oppdatertSoknad = reisetilskuddSoknad.byttSvar(sporsmal, rsSvar)
+        val svar = svarListe.map { Svar(verdi = it) }
+        val oppdatertSoknad = reisetilskuddSoknad.byttSvar(tag, svar)
         reisetilskuddSoknad = oppdatertSoknad
         return if (ferdigBesvart) {
             gaVidere(tag)

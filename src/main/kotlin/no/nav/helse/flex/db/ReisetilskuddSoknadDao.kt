@@ -114,7 +114,7 @@ class ReisetilskuddSoknadDao(
 
     fun lagreSvar(sporsmal: Sporsmal) {
         val alleSporsmal = listOf(sporsmal).flatten()
-        svarRepository.deleteSvarDbRecordByIdIn(alleSporsmal.map { it.id })
+        alleSporsmal.map { it.id }.forEach { svarRepository.slettMedSporsmalId(it) }
         alleSporsmal.forEach { spm ->
             spm.svar.forEach { svar ->
                 jdbcAggregateTemplate.insert(svar.tilSvarDbRecord(sporsmalId = spm.id))

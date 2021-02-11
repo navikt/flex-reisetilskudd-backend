@@ -4,7 +4,7 @@ import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Tag.*
-import no.nav.helse.flex.domain.Utgiftstype.EGEN_BIL
+import no.nav.helse.flex.domain.Utgiftstype.PARKERING
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
@@ -179,7 +179,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
             kvittering = Kvittering(
                 blobId = "9a186e3c-aeeb-4566-a865-15aa9139d364",
                 belop = 133700,
-                typeUtgift = EGEN_BIL,
+                typeUtgift = PARKERING,
                 datoForUtgift = LocalDate.now(),
             )
         )
@@ -189,7 +189,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val returnertSvar = spmSomBleSvart.svar.first().kvittering!!
 
         returnertSvar.datoForUtgift.`should be equal to`(LocalDate.now())
-        returnertSvar.typeUtgift.`should be equal to`(EGEN_BIL)
+        returnertSvar.typeUtgift.`should be equal to`(PARKERING)
     }
 
     @Test
@@ -223,6 +223,37 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
 
     @Test
     @Order(9)
+    fun `Vi tester å sende inn søknaden før alle svar er besvart og får bad request`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        this.sendSøknadResultActions(reisetilskudd.id, fnr)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+    }
+
+    @Test
+    @Order(10)
+    fun `Vi besvarer et spørsmål med feil type verdi`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        val utbetaling = reisetilskudd.sporsmal.first { it.tag == UTBETALING }.byttSvar(svar = "TJA")
+
+        val json = oppdaterSporsmalMedResult(fnr, reisetilskudd.id, utbetaling)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andReturn().response.contentAsString
+        json shouldBeEqualTo "{\"reason\":\"SPORSMALETS_SVAR_VALIDERER_IKKE\"}"
+    }
+
+    @Test
+    @Order(10)
+    fun `Vi besvarer resten av spørsmålene`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)
+            .besvarSporsmal(ANSVARSERKLARING, "CHECKED")
+            .besvarSporsmal(TRANSPORT_TIL_DAGLIG, "NEI")
+            .besvarSporsmal(REISE_MED_BIL, "NEI")
+            .besvarSporsmal(UTBETALING, "JA")
+    }
+
+    @Test
+    @Order(11)
     fun `Vi kan sende inn søknaden`() {
         val reisetilskudd = this.hentSoknader(fnr).first()
         val sendtSøknad = SoknadBesvarer(reisetilskudd, this.mockMvc, server, fnr)
