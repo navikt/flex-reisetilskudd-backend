@@ -19,6 +19,7 @@ fun ReisetilskuddSoknad.validerSvarPaSoknad() {
 fun Sporsmal.validerSvarPaSporsmal() {
     validerAntallSvar()
     validerSvarverdier()
+    validerKunUnikeSvar()
     validerGrenserPaSvar()
     validerUndersporsmal()
 }
@@ -189,6 +190,11 @@ private fun Sporsmal.validerSvarverdi(svar: Svar) {
 private fun Sporsmal.validerSvarverdier() {
     svar.forEach { this.validerSvarverdi(it) }
 }
+private fun Sporsmal.validerKunUnikeSvar() {
+    if (svar.size != svar.toSet().size) {
+        throw ValideringException("Spørsmål $id med tag $tag har duplikate svar")
+    }
+}
 
 private fun Sporsmal.validerAntallSvar() {
     val predikat: (Int) -> Boolean = when (this.svartype) {
@@ -201,7 +207,9 @@ private fun Sporsmal.validerAntallSvar() {
         CHECKBOX_GRUPPE -> {
             { it == 0 }
         }
-        DATOER,
+        DATOER -> {
+            { it > 0 }
+        }
         KVITTERING -> {
             { it >= 0 }
         }

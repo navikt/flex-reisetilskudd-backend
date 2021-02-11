@@ -62,7 +62,7 @@ fun skapReisetilskuddsoknad(
     )
 }
 
-private fun reiseMedBilSpørsmål(
+fun reiseMedBilSpørsmål(
     formattertPeriode: String,
     fom: LocalDate,
     tom: LocalDate

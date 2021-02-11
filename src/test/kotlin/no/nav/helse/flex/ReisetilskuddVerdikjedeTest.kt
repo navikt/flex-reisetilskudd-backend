@@ -228,6 +228,19 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         this.sendSøknadResultActions(reisetilskudd.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
     }
+
+    @Test
+    @Order(10)
+    fun `Vi besvarer et spørsmål med feil type verdi`() {
+        val reisetilskudd = this.hentSoknader(fnr).first()
+        val utbetaling = reisetilskudd.sporsmal.first { it.tag == UTBETALING }.byttSvar(svar = "TJA")
+
+        val json = oppdaterSporsmalMedResult(fnr, reisetilskudd.id, utbetaling)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
+            .andReturn().response.contentAsString
+        json shouldBeEqualTo "{\"reason\":\"SPORSMALETS_SVAR_VALIDERER_IKKE\"}"
+    }
+
     @Test
     @Order(10)
     fun `Vi besvarer resten av spørsmålene`() {

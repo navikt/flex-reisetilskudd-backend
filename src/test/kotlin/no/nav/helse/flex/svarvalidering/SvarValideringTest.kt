@@ -1,11 +1,16 @@
 package no.nav.helse.flex.svarvalidering
 
-import no.nav.helse.flex.domain.Sporsmal
-import no.nav.helse.flex.domain.Svar
+import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.domain.Svartype.CHECKBOX_GRUPPE
+import no.nav.helse.flex.domain.Tag.*
 import no.nav.helse.flex.soknadsoppsett.offentligTransportBeløpSpørsmål
+import no.nav.helse.flex.soknadsoppsett.reiseMedBilSpørsmål
+import no.nav.helse.flex.soknadsoppsett.transportTilDagligSpørsmål
+import no.nav.helse.flex.utils.byttSvar
 import org.amshove.kluent.*
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 import java.util.*
 
 internal class SvarValideringTest {
@@ -79,22 +84,68 @@ internal class SvarValideringTest {
 
         spm `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil antall svar 0"
 
-        spm.copy(svar = listOf(Svar(verdi = "1.0"))) `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil svarverdi 1.0"
-        spm.copy(svar = listOf(Svar(verdi = "-1"))) `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har svarverdi utenfor grenseverdi -1"
-        spm.copy(svar = listOf(Svar(verdi = "0"))).validerSvarPaSporsmal()
-        spm.copy(svar = listOf(Svar(verdi = "1"))).validerSvarPaSporsmal()
+        spm.byttSvar(svar = "1.0") `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil svarverdi 1.0"
+        spm.byttSvar(svar = "-1") `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har svarverdi utenfor grenseverdi -1"
+        spm.byttSvar(svar = "0").validerSvarPaSporsmal()
+        spm.byttSvar(svar = "1").validerSvarPaSporsmal()
     }
 
     @Test
     fun `test reiseMedBilSpørsmål`() {
-        val spm = offentligTransportBeløpSpørsmål()
+        val spm =
+            reiseMedBilSpørsmål(fom = LocalDate.now(), tom = LocalDate.now().plusDays(2), formattertPeriode = " okok")
 
-        spm `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil antall svar 0"
+        spm `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag REISE_MED_BIL har feil antall svar 0"
 
-        spm.copy(svar = listOf(Svar(verdi = "1.0"))) `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har feil svarverdi 1.0"
-        spm.copy(svar = listOf(Svar(verdi = "-1"))) `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag OFFENTLIG_TRANSPORT_BELOP har svarverdi utenfor grenseverdi -1"
-        spm.copy(svar = listOf(Svar(verdi = "0"))).validerSvarPaSporsmal()
-        spm.copy(svar = listOf(Svar(verdi = "1"))).validerSvarPaSporsmal()
+        spm.byttSvar(svar = "NEI").validerSvarPaSporsmal()
+        spm.byttSvar(svar = "KANSKJE") `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag $REISE_MED_BIL har feil svarverdi KANSKJE"
+
+        spm.byttSvar(svar = "JA") `valider svar og forvent feilmelding` "Spørsmål ${spm.idForTag(BIL_DATOER)} med tag $BIL_DATOER har feil antall svar 0"
+
+        val igår = LocalDate.now().minusDays(1).toString()
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_DATOER, svar = igår)
+            .`valider svar og forvent feilmelding`("Spørsmål ${spm.idForTag(BIL_DATOER)} med tag $BIL_DATOER har svarverdi utenfor grenseverdi $igår")
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_DATOER, svar = LocalDate.now().toString())
+            .validerSvarPaSporsmal()
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_DATOER, svar = listOf(LocalDate.now().toString(), LocalDate.now().toString()))
+            .`valider svar og forvent feilmelding`("Spørsmål ${spm.idForTag(BIL_DATOER)} med tag $BIL_DATOER har duplikate svar")
+    }
+
+    @Test
+    fun `test transport til daglig spørsmål`() {
+        val spm = transportTilDagligSpørsmål()
+
+        spm `valider svar og forvent feilmelding` "Spørsmål ${spm.id} med tag $TRANSPORT_TIL_DAGLIG har feil antall svar 0"
+
+        spm.byttSvar(svar = "NEI")
+            .validerSvarPaSporsmal()
+
+        spm.byttSvar(svar = "JA")
+            .`valider svar og forvent feilmelding`("Spørsmål ${spm.idForTag(TYPE_TRANSPORT)} av typen $CHECKBOX_GRUPPE må ha minst ett besvart underspørsmål")
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_TIL_DAGLIG, svar = "CHECKED")
+            .`valider svar og forvent feilmelding`("Spørsmål ${spm.idForTag(KM_HJEM_JOBB)} med tag $KM_HJEM_JOBB har feil antall svar 0")
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_TIL_DAGLIG, svar = "CHECKED")
+            .byttSvar(tag = KM_HJEM_JOBB, svar = "4.45")
+            .`valider svar og forvent feilmelding`("Spørsmål ${spm.idForTag(KM_HJEM_JOBB)} med tag $KM_HJEM_JOBB har feil svarverdi 4.45")
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_TIL_DAGLIG, svar = "CHECKED")
+            .byttSvar(tag = KM_HJEM_JOBB, svar = "4.4")
+            .validerSvarPaSporsmal()
+    }
+
+    private fun Sporsmal.idForTag(tag: Tag): String {
+        return listOf(this).flatten().first { it.tag == tag }.id
     }
 
     private fun String?.`er double med max en desimal`() = this.erDoubleMedMaxEnDesimal()

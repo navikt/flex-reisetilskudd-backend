@@ -7,7 +7,11 @@ import org.springframework.test.web.servlet.MockMvc
 private fun ReisetilskuddSoknad.byttSvar(tag: Tag, svar: List<Svar>): ReisetilskuddSoknad =
     copy(sporsmal = sporsmal.byttSvar(tag, svar))
 
-fun Sporsmal.byttSvar(tag: Tag, svar: List<Svar>): Sporsmal = listOf(this).byttSvar(tag, svar).first()
+fun Sporsmal.byttSvar(tag: Tag? = null, svar: String): Sporsmal =
+    this.byttSvar(tag, listOf(svar))
+
+fun Sporsmal.byttSvar(tag: Tag? = null, svar: List<String>): Sporsmal =
+    listOf(this).byttSvar(tag ?: this.tag, svar.toList().map { Svar(verdi = it) }).first()
 
 private fun List<Sporsmal>.byttSvar(tag: Tag, svar: List<Svar>): List<Sporsmal> {
     return map { spm ->
