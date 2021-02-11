@@ -8,6 +8,7 @@ import no.nav.helse.flex.domain.Sporsmal
 import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Svartype.*
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import java.time.LocalDate
 import java.util.*
 
 fun ReisetilskuddSoknad.validerSvarPaSoknad() {
@@ -69,10 +70,44 @@ private fun validerKvittering(kvittering: Kvittering?): () -> Boolean {
     return { kvittering != null && kvittering.blobId.erUUID() }
 }
 
-private fun String.erUUID(): Boolean {
+fun String.erUUID(): Boolean {
     return try {
         UUID.fromString(this)
+        this.length == 36
+    } catch (e: Exception) {
+        false
+    }
+}
+
+fun String?.erHeltall(): Boolean {
+    val verdi = this ?: return false
+    return try {
+        verdi.toInt()
         true
+    } catch (e: Exception) {
+        false
+    }
+}
+
+fun String?.erDato(): Boolean {
+    val verdi = this ?: return false
+    return try {
+        LocalDate.parse(verdi)
+        true
+    } catch (e: Exception) {
+        false
+    }
+}
+
+fun String?.erDoubleMedMaxEnDesimal(): Boolean {
+    val verdi = this ?: return false
+    return try {
+        verdi.toBigDecimal()
+        if (verdi.contains(".")) {
+            return verdi.split(".")[1].length == 1
+        } else {
+            true
+        }
     } catch (e: Exception) {
         false
     }
@@ -87,9 +122,15 @@ private fun Sporsmal.validerSvarverdi(svar: Svar) {
         CHECKBOX -> {
             { "CHECKED" == verdi }
         }
-        DATOER -> TODO()
-        BELOP -> TODO()
-        KILOMETER -> TODO()
+        DATOER -> {
+            { verdi.erDato() }
+        }
+        BELOP -> {
+            { verdi.erHeltall() }
+        }
+        KILOMETER -> {
+            { verdi.erDoubleMedMaxEnDesimal() }
+        }
         KVITTERING -> validerKvittering(svar.kvittering)
         CHECKBOX_GRUPPE -> throw IllegalStateException("Skal ha validert 0 svar allerede")
     }
