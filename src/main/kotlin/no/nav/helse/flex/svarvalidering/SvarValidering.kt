@@ -8,6 +8,7 @@ import no.nav.helse.flex.domain.Sporsmal
 import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Svartype.*
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.*
 
@@ -49,25 +50,71 @@ private fun Sporsmal.validerUndersporsmal() {
     }
 }
 
-private fun Sporsmal.validerGrenserPaSvar() {
-    if (min == null && max == null) {
-        return
+private fun String?.tilLocalDate(): LocalDate? {
+    if (this == null) {
+        return null
+    }
+    return LocalDate.parse(this)
+}
+
+private fun String?.tilBigDescimal(): BigDecimal? {
+    if (this == null) {
+        return null
+    }
+    return this.toBigDecimal()
+}
+
+private fun Sporsmal.validerGrenserPaDato(svar: Svar): () -> Boolean {
+    val dato = LocalDate.parse(svar.verdi)
+    val minDato = this.min.tilLocalDate()
+    val maxDato = this.max.tilLocalDate()
+    var validerer = true
+
+    if (minDato != null && minDato.isAfter(dato)) {
+        validerer = false
     }
 
-    /*
-    return if (sporsmal.min == null && sporsmal.max == null) {
-        true
-    } else when (sporsmal.svartype) {
-        else -> {
-            log.error("Har ikke implementert validering av grenser for svartype: " + sporsmal.svartype)
-            false
-        }
+    if (maxDato != null && maxDato.isBefore(dato)) {
+        validerer = false
     }
-    */
+    return { validerer }
+}
+
+private fun Sporsmal.validerGrenserPaaTall(svar: Svar): () -> Boolean {
+    val verdi = svar.verdi.tilBigDescimal() ?: throw IllegalStateException("Verdi er allerede validert her")
+    val min = this.min.tilBigDescimal()
+    val max = this.max.tilBigDescimal()
+    var validerer = true
+    if (min != null && verdi < min) {
+        validerer = false
+    }
+    if (max != null && verdi > max) {
+        validerer = false
+    }
+    return { validerer }
+}
+
+private fun Sporsmal.validerGrenserPaSvar(svar: Svar) {
+
+    val predikat: () -> Boolean = when (svartype) {
+        JA_NEI, CHECKBOX, CHECKBOX_GRUPPE, KVITTERING -> {
+            { true }
+        }
+        DATOER -> validerGrenserPaDato(svar)
+        BELOP -> validerGrenserPaaTall(svar)
+        KILOMETER -> validerGrenserPaaTall(svar)
+    }
+    if (!predikat()) {
+        throw ValideringException("Spørsmål $id med tag $tag har svarverdi utenfor grenseverdi ${svar.verdi}")
+    }
+}
+
+private fun Sporsmal.validerGrenserPaSvar() {
+    svar.forEach { this.validerGrenserPaSvar(it) }
 }
 
 private fun validerKvittering(kvittering: Kvittering?): () -> Boolean {
-    return { kvittering != null && kvittering.blobId.erUUID() }
+    return { kvittering != null && kvittering.blobId.erUUID() && kvittering.belop >= 0 }
 }
 
 fun String.erUUID(): Boolean {

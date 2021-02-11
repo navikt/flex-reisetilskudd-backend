@@ -42,49 +42,7 @@ fun skapReisetilskuddsoknad(
                 undertekst = "Jeg vet at jeg kan miste retten til sykepenger hvis jeg ikke har gitt riktige opplysninger. Jeg vet også at jeg må betale tilbake hvis jeg har gitt feil opplysninger eller latt være å informere.",
                 sporsmalstekst = "Jeg, <strong>$navn</strong>, bekrefter at jeg vil gi riktige og fullstendige opplysninger.",
             ),
-            Sporsmal(
-                tag = TRANSPORT_TIL_DAGLIG,
-                svartype = JA_NEI,
-                overskrift = "Transport til daglig",
-                sporsmalstekst = "bruker du vanligvis bil eller offentlig transport til og fra arbeidsplassen?",
-                kriterieForVisningAvUndersporsmal = JA,
-                undersporsmal = listOf(
-                    Sporsmal(
-                        tag = TYPE_TRANSPORT,
-                        svartype = CHECKBOX_GRUPPE,
-                        sporsmalstekst = "Hva slags type transport bruker du?",
-                        undersporsmal = listOf(
-                            Sporsmal(
-                                tag = OFFENTLIG_TRANSPORT_TIL_DAGLIG,
-                                sporsmalstekst = "Offentlig transport",
-                                svartype = CHECKBOX,
-                                kriterieForVisningAvUndersporsmal = CHECKED,
-                                undersporsmal = listOf(
-                                    Sporsmal(
-                                        tag = OFFENTLIG_TRANSPORT_BELOP,
-                                        sporsmalstekst = "Hvor mye betaler du vanligvis i måneden for offentlig transport?",
-                                        svartype = BELOP,
-                                    )
-                                )
-                            ),
-                            Sporsmal(
-                                tag = BIL_TIL_DAGLIG,
-                                sporsmalstekst = "Bil",
-                                svartype = CHECKBOX,
-                                kriterieForVisningAvUndersporsmal = CHECKED,
-                                undersporsmal = listOf(
-                                    Sporsmal(
-                                        tag = KM_HJEM_JOBB,
-                                        sporsmalstekst = "Hvor mange km er reisen med bil hjemmefra til jobb?",
-                                        svartype = KILOMETER,
-                                    )
-                                )
-                            )
-                        )
-
-                    )
-                )
-            ),
+            transportTilDagligSpørsmål(),
             Sporsmal(
                 tag = REISE_MED_BIL,
                 svartype = JA_NEI,
@@ -119,3 +77,51 @@ fun skapReisetilskuddsoknad(
         ).sortedBy { it.tag }
     )
 }
+
+fun transportTilDagligSpørsmål() = Sporsmal(
+    tag = TRANSPORT_TIL_DAGLIG,
+    svartype = JA_NEI,
+    overskrift = "Transport til daglig",
+    sporsmalstekst = "bruker du vanligvis bil eller offentlig transport til og fra arbeidsplassen?",
+    kriterieForVisningAvUndersporsmal = JA,
+    undersporsmal = listOf(
+        Sporsmal(
+            tag = TYPE_TRANSPORT,
+            svartype = CHECKBOX_GRUPPE,
+            sporsmalstekst = "Hva slags type transport bruker du?",
+            undersporsmal = listOf(
+                Sporsmal(
+                    tag = OFFENTLIG_TRANSPORT_TIL_DAGLIG,
+                    sporsmalstekst = "Offentlig transport",
+                    svartype = CHECKBOX,
+                    kriterieForVisningAvUndersporsmal = CHECKED,
+                    undersporsmal = listOf(
+                        offentligTransportBeløpSpørsmål()
+                    )
+                ),
+                Sporsmal(
+                    tag = BIL_TIL_DAGLIG,
+                    sporsmalstekst = "Bil",
+                    svartype = CHECKBOX,
+                    kriterieForVisningAvUndersporsmal = CHECKED,
+                    undersporsmal = listOf(
+                        Sporsmal(
+                            tag = KM_HJEM_JOBB,
+                            min = "0",
+                            sporsmalstekst = "Hvor mange km er reisen med bil hjemmefra til jobb?",
+                            svartype = KILOMETER,
+                        )
+                    )
+                )
+            )
+
+        )
+    )
+)
+
+fun offentligTransportBeløpSpørsmål() = Sporsmal(
+    tag = OFFENTLIG_TRANSPORT_BELOP,
+    min = "0",
+    sporsmalstekst = "Hvor mye betaler du vanligvis i måneden for offentlig transport?",
+    svartype = BELOP,
+)
