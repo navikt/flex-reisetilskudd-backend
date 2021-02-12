@@ -38,7 +38,7 @@ fun skapReisetilskuddsoknad(
         sporsmal = listOf(
             Sporsmal(
                 tag = ANSVARSERKLARING,
-                svartype = CHECKBOX,
+                svartype = CHECKBOX_PANEL,
                 overskrift = "Vi stoler på deg",
                 undertekst = "Jeg vet at jeg kan miste retten til sykepenger hvis jeg ikke har gitt riktige opplysninger. Jeg vet også at jeg må betale tilbake hvis jeg har gitt feil opplysninger eller latt være å informere.",
                 sporsmalstekst = "Jeg, <strong>$navn</strong>, bekrefter at jeg vil gi riktige og fullstendige opplysninger.",
