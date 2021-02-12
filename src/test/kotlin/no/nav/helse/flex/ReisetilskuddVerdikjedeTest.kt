@@ -55,6 +55,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val kafkaContainer = KafkaContainerWithProps()
 
         val fnr = "12345678901"
+        val aktorId = "aktor"
         val tom = LocalDate.now().minusDays(1)
         val fom = LocalDate.now().minusDays(5)
         val sykmeldingId = UUID.randomUUID().toString()
@@ -120,6 +121,17 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
                 hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
             )
         )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/$sykmeldingId/erUtenforVentetid"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(true))
+            )
 
         flexFssProxyMockServer.expect(
             once(),

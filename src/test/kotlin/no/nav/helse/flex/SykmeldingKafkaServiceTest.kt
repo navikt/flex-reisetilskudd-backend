@@ -24,7 +24,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.client.ExpectedCount.times
+import org.springframework.test.web.client.ExpectedCount.once
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.method
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
@@ -50,6 +50,16 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
 
         @Container
         val kafkaContainer = KafkaContainerWithProps()
+
+        val aktorId = "aktor"
+
+        val getPersonResponse = GetPersonResponse(
+            errors = emptyList(),
+            data = ResponseData(
+                hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
+                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+            )
+        )
 
         val reisetilskuddPeriode = SykmeldingsperiodeDTO(
             type = PeriodetypeDTO.REISETILSKUDD,
@@ -113,16 +123,6 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
                 )
             )
         )
-
-        val sykmeldinger = listOf(
-            tomPerioder,
-            utenReisetilskudd,
-            ikkeAllePerioderErReisetilskudd,
-            gradertPerioe,
-            feilVedScanning,
-            enGyldigPeriode,
-            flereGyldigePerioder
-        )
     }
 
     @Autowired
@@ -139,6 +139,11 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
 
     private lateinit var flexFssProxyMockServer: MockRestServiceServer
 
+    @BeforeEach
+    fun init() {
+        flexFssProxyMockServer = MockRestServiceServer.createServer(flexFssProxyRestTemplate)
+    }
+
     @Test
     @Order(0)
     fun `Det er ingen reisetilskudd til å begynne med`() {
@@ -148,19 +153,112 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
 
     @Test
     @Order(1)
-    fun `Alle sykmeldinger publiseres og konsumeres`() {
-
-        flexFssProxyMockServer = MockRestServiceServer.createServer(flexFssProxyRestTemplate)
-        val getPersonResponse = GetPersonResponse(
-            errors = emptyList(),
-            data = ResponseData(
-                hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
-                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+    fun `Sykmelding uten perioder`() {
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                tomPerioder.sykmelding.id,
+                tomPerioder
             )
+        ).get()
+        this.hentSoknader("fnr").size `should be equal to` 0
+    }
+
+    @Test
+    @Order(2)
+    fun `Sykmelding uten reisetilskudd`() {
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                utenReisetilskudd.sykmelding.id,
+                utenReisetilskudd
+            )
+        ).get()
+        this.hentSoknader("fnr").size `should be equal to` 0
+    }
+
+    @Test
+    @Order(3)
+    fun `Sykmelding der ikke alle periode er reisetilskudd`() {
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                ikkeAllePerioderErReisetilskudd.sykmelding.id,
+                ikkeAllePerioderErReisetilskudd
+            )
+        ).get()
+        this.hentSoknader("fnr").size `should be equal to` 0
+    }
+
+    @Test
+    @Order(4)
+    fun `Sykmelding inneholder gradert perioe`() {
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                gradertPerioe.sykmelding.id,
+                gradertPerioe
+            )
+        ).get()
+        this.hentSoknader("fnr").size `should be equal to` 0
+    }
+
+    @Test
+    @Order(5)
+    fun `Sykmelding med feilVedScanning`() {
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                feilVedScanning.sykmelding.id,
+                feilVedScanning
+            )
+        ).get()
+        this.hentSoknader("fnr").size `should be equal to` 0
+    }
+
+    @Test
+    @Order(6)
+    fun `Sykmelding innenfor arbeidsgiverperioden`() {
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${enGyldigPeriode.sykmelding.id}/erUtenforVentetid"))
         )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(false))
+            )
+
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                enGyldigPeriode.sykmelding.id,
+                enGyldigPeriode
+            )
+        ).get()
+
+        await().during(5, TimeUnit.SECONDS).until { this.hentSoknader("fnr").size == 0 }
+
+        flexFssProxyMockServer.verify()
+    }
+
+    @Test
+    @Order(7)
+    fun `Sykmelding med en gyldig periode`() {
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${enGyldigPeriode.sykmelding.id}/erUtenforVentetid"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(true))
+            )
 
         flexFssProxyMockServer.expect(
-            times(2),
+            once(),
             requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
         )
             .andExpect(method(HttpMethod.POST))
@@ -170,22 +268,59 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
                     .body(getPersonResponse.serialisertTilString())
             )
 
-        sykmeldinger.forEach { syk ->
-            sykmeldingKafkaProducer.send(
-                ProducerRecord(
-                    "syfo-sendt-sykmelding",
-                    syk.sykmelding.id,
-                    syk
-                )
-            ).get()
-        }
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                enGyldigPeriode.sykmelding.id,
+                enGyldigPeriode
+            )
+        ).get()
+
+        await().during(5, TimeUnit.SECONDS).until { this.hentSoknader("fnr").size == 1 }
+
+        flexFssProxyMockServer.verify()
+    }
+
+    @Test
+    @Order(8)
+    fun `Sykmelding med flere gyldige perioder`() {
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${flereGyldigePerioder.sykmelding.id}/erUtenforVentetid"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(true))
+            )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(getPersonResponse.serialisertTilString())
+            )
+
+        sykmeldingKafkaProducer.send(
+            ProducerRecord(
+                "syfo-sendt-sykmelding",
+                flereGyldigePerioder.sykmelding.id,
+                flereGyldigePerioder
+            )
+        ).get()
+
         await().during(5, TimeUnit.SECONDS).until { this.hentSoknader("fnr").size == 3 }
 
         flexFssProxyMockServer.verify()
     }
 
     @Test
-    @Order(2)
+    @Order(9)
     fun `Reisetilskuddene er tilgjengelig`() {
 
         val reisetilskuddene = this.hentSoknader("fnr")

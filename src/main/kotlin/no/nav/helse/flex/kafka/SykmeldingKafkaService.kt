@@ -1,6 +1,8 @@
 package no.nav.helse.flex.kafka
 
 import no.nav.helse.flex.client.pdl.PdlClient
+import no.nav.helse.flex.client.syketilfelle.ErUtenforVentetidRequest
+import no.nav.helse.flex.client.syketilfelle.SyketilfelleClient
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.reisetilskudd.OpprettReisetilskuddSoknaderService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
@@ -15,6 +17,7 @@ class SykmeldingKafkaService(
 
     private val reisetilskuddService: OpprettReisetilskuddSoknaderService,
     private val pdlClient: PdlClient,
+    private val syketilfelleClient: SyketilfelleClient,
 ) {
     val log = logger()
 
@@ -32,6 +35,8 @@ class SykmeldingKafkaService(
             log.warn("Mottok sykmelding der reisetilskudd flagg ikke stemmer overens med type: ${sykmeldingMessage.sykmelding.id}")
         } else if (sykmeldingMessage.erIkkeArbeidstaker()) {
             log.info("Mottok sykmelding med reisetilskudd hvor arbeidssituasjon er ${sykmeldingMessage.hentArbeidssituasjon()}: ${sykmeldingMessage.sykmelding.id}")
+        } else if (sykmeldingMessage.erInnenforArbeidsgiverperiode()) {
+            log.info("Mottok sykmelding med reisetilskudd innenfor arbeidsgiverperiode ${sykmeldingMessage.sykmelding.id}")
         } else if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
             if (cluster == "prod-gcp") {
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
@@ -87,5 +92,15 @@ class SykmeldingKafkaService(
             )
         }
         return null
+    }
+
+    private fun SykmeldingMessage.erInnenforArbeidsgiverperiode(): Boolean {
+        return !syketilfelleClient.erUtenforVentetid(
+            aktorId = "aktor", // TODO
+            sykmeldingId = sykmelding.id,
+            erUtenforVentetidRequest = ErUtenforVentetidRequest(
+                sykmeldingKafkaMessage = this
+            )
+        )
     }
 }
