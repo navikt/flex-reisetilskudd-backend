@@ -1,5 +1,6 @@
 package no.nav.helse.flex
 
+import no.nav.helse.flex.client.pdl.*
 import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Svar
@@ -14,20 +15,26 @@ import org.amshove.kluent.*
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.awaitility.Awaitility.await
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.web.client.ExpectedCount.once
+import org.springframework.test.web.client.MockRestServiceServer
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.web.client.RestTemplate
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.net.URI
 import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -60,10 +67,20 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     override lateinit var mockMvc: MockMvc
 
     @Autowired
+    private lateinit var flexFssProxyRestTemplate: RestTemplate
+
+    @Autowired
     lateinit var sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage>
 
     @Autowired
     lateinit var reisetilskuddService: ReisetilskuddService
+
+    private lateinit var flexFssProxyMockServer: MockRestServiceServer
+
+    @BeforeEach
+    fun init() {
+        flexFssProxyMockServer = MockRestServiceServer.createServer(flexFssProxyRestTemplate)
+    }
 
     @Test
     fun `ingen token returnerer 401`() {
@@ -96,6 +113,25 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
     @Test
     @Order(1)
     fun `En sykmelding med reisetilskudd konsumereres`() {
+        val getPersonResponse = GetPersonResponse(
+            errors = emptyList(),
+            data = ResponseData(
+                hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
+                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+            )
+        )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(getPersonResponse.serialisertTilString())
+            )
+
         val sykmeldingStatusKafkaMessageDTO =
             skapSykmeldingStatusKafkaMessageDTO(fnr = fnr, sykmeldingId = sykmeldingId)
         val sykmelding = getSykmeldingDto(sykmeldingId = sykmeldingId, fom = fom, tom = tom)
@@ -112,6 +148,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         ).get()
 
         await().atMost(3, TimeUnit.SECONDS).until { this.hentSoknader(fnr).size == 1 }
+        flexFssProxyMockServer.verify()
     }
 
     @Test
@@ -137,6 +174,8 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
             KVITTERINGER,
             UTBETALING
         )
+
+        reisetilskudd[0].sporsmal.first { it.tag == ANSVARSERKLARING }.sporsmalstekst shouldBeEqualTo "Jeg, <strong>Åge Melomnøvn Etternævn</strong>, bekrefter at jeg vil gi riktige og fullstendige opplysninger."
     }
 
     @Test

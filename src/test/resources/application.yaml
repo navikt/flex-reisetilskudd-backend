@@ -9,6 +9,10 @@ SERVICEUSER_PASSWORD: "pwd"
 
 NAIS_CLUSTER_NAME: "test"
 
+spring:
+  profiles:
+    active: test
+
 no.nav.security.jwt:
   issuer:
     selvbetjening:
@@ -17,3 +21,5 @@ no.nav.security.jwt:
 
 elector.path: dont_look_for_leader
 cronjob: "0 0/5 * * * ?"
+
+flex.fss.proxy.url: http://flex-fss-proxy

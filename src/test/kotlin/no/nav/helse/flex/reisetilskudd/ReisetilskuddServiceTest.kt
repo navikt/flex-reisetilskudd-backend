@@ -2,6 +2,9 @@ package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
+import no.nav.helse.flex.client.pdl.HentPerson
+import no.nav.helse.flex.client.pdl.Navn
+import no.nav.helse.flex.client.pdl.ResponseData
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.utils.lagSykmeldingMessage
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -37,12 +40,27 @@ internal class ReisetilskuddServiceTest {
     @Autowired
     private lateinit var reisetilskuddService: ReisetilskuddService
 
+    @Autowired
+    private lateinit var opprettReisetilskuddSoknaderService: OpprettReisetilskuddSoknaderService
+
+    private val person = ResponseData(
+        hentPerson = HentPerson(
+            navn = listOf(
+                Navn(
+                    fornavn = "F",
+                    mellomnavn = null,
+                    etternavn = "Etter"
+                )
+            )
+        )
+    )
+
     @Test
     fun `Vi mottar en sykmelding med reisetilskudd`() {
         val syk = lagSykmeldingMessage(
             fnr = "fnr1"
         )
-        reisetilskuddService.behandleSykmelding(syk)
+        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person)
         val reisetilskudd = reisetilskuddService.hentReisetilskuddene("fnr1")
         reisetilskudd.size shouldBe 1
         reisetilskudd.first().status shouldBe ReisetilskuddStatus.ÅPEN
@@ -66,7 +84,7 @@ internal class ReisetilskuddServiceTest {
                 )
             )
         )
-        reisetilskuddService.behandleSykmelding(syk)
+        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person)
         val reisetilskudd = reisetilskuddService.hentReisetilskuddene("fnr2")
         reisetilskudd.size shouldBe 3
 
@@ -114,7 +132,7 @@ internal class ReisetilskuddServiceTest {
                 )
             )
         )
-        reisetilskuddService.behandleSykmelding(syk)
+        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person)
         val reisetilskudd = reisetilskuddService.hentReisetilskuddene("fnr3")
         reisetilskudd.size shouldBe 3
 
