@@ -1,7 +1,8 @@
 package no.nav.helse.flex.kafka
 
+import no.nav.helse.flex.client.pdl.PdlClient
 import no.nav.helse.flex.logger
-import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
+import no.nav.helse.flex.reisetilskudd.OpprettReisetilskuddSoknaderService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmeldingstatus.ShortNameDTO
 import org.springframework.beans.factory.annotation.Value
@@ -12,7 +13,8 @@ class SykmeldingKafkaService(
     @Value("\${NAIS_CLUSTER_NAME}")
     private val cluster: String,
 
-    private val reisetilskuddService: ReisetilskuddService,
+    private val reisetilskuddService: OpprettReisetilskuddSoknaderService,
+    private val pdlClient: PdlClient,
 ) {
     val log = logger()
 
@@ -34,8 +36,9 @@ class SykmeldingKafkaService(
             if (cluster == "prod-gcp") {
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
             } else {
+                val person = pdlClient.hentPerson(sykmeldingMessage.kafkaMetadata.fnr)
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}")
-                reisetilskuddService.behandleSykmelding(sykmeldingMessage)
+                reisetilskuddService.behandleSykmelding(sykmeldingMessage, person)
             }
         } else {
             log.warn("Mottok sykmelding ${sykmeldingMessage.sykmelding.id} med udefinert utfall, skal ikke skje!")

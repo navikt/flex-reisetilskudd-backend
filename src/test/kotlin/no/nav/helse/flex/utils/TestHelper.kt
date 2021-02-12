@@ -120,3 +120,5 @@ fun TestHelper.gjenåpneSøknad(fnr: String, reisetilskuddId: String): Reisetils
 
     return objectMapper.readValue(json)
 }
+
+fun Any.serialisertTilString(): String = objectMapper.writeValueAsString(this)

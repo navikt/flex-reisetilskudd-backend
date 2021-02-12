@@ -3,13 +3,8 @@ package no.nav.helse.flex.reisetilskudd
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.kafka.reisetilskuddPerioder
-import no.nav.helse.flex.kafka.splittLangeSykmeldingperioder
-import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
-import no.nav.helse.flex.soknadsoppsett.skapReisetilskuddsoknad
 import no.nav.helse.flex.svarvalidering.validerSvarPaSoknad
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -26,33 +21,6 @@ class ReisetilskuddService(
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao
 ) {
     private val log = logger()
-    fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage) {
-        val navn = "Navn Navnesen" // TODO hent navn fra PDL
-        sykmeldingMessage.runCatching {
-            this.reisetilskuddPerioder()
-                .splittLangeSykmeldingperioder()
-                .tidligstePeriodeFoerst()
-                .map { periode ->
-                    skapReisetilskuddsoknad(periode, sykmeldingMessage, navn)
-                }
-                .forEach { reisetilskudd ->
-                    reisetilskuddSoknadDao.lagreSoknad(reisetilskudd)
-                    kafkaProducer.send(
-                        ProducerRecord(
-                            AivenKafkaConfig.topic,
-                            reisetilskudd.id,
-                            reisetilskudd
-                        )
-                    ).get()
-                    log.info("Opprettet reisetilskudd ${reisetilskudd.id}")
-                }
-        }.onSuccess {
-            log.info("Sykmelding ${sykmeldingMessage.sykmelding.id} ferdig behandlet")
-        }.onFailure { ex ->
-            log.error("Uhåndtert feil ved behandleSykmelding ${sykmeldingMessage.sykmelding.id}", ex)
-            throw ex
-        }
-    }
 
     fun sendReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
         reisetilskuddSoknad.validerSvarPaSoknad()

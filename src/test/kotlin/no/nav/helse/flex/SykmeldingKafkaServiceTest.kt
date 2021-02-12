@@ -1,9 +1,11 @@
 package no.nav.helse.flex
 
+import no.nav.helse.flex.client.pdl.*
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.utils.TestHelper
 import no.nav.helse.flex.utils.hentSoknader
 import no.nav.helse.flex.utils.lagSykmeldingMessage
+import no.nav.helse.flex.utils.serialisertTilString
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import no.nav.syfo.model.sykmelding.model.GradertDTO
@@ -14,17 +16,24 @@ import org.amshove.kluent.shouldBeEmpty
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.awaitility.Awaitility.await
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.web.client.ExpectedCount.times
+import org.springframework.test.web.client.MockRestServiceServer
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.web.client.RestTemplate
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.net.URI
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
@@ -123,7 +132,12 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
     override lateinit var mockMvc: MockMvc
 
     @Autowired
+    private lateinit var flexFssProxyRestTemplate: RestTemplate
+
+    @Autowired
     lateinit var sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage>
+
+    private lateinit var flexFssProxyMockServer: MockRestServiceServer
 
     @Test
     @Order(0)
@@ -136,6 +150,26 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
     @Order(1)
     fun `Alle sykmeldinger publiseres og konsumeres`() {
 
+        flexFssProxyMockServer = MockRestServiceServer.createServer(flexFssProxyRestTemplate)
+        val getPersonResponse = GetPersonResponse(
+            errors = emptyList(),
+            data = ResponseData(
+                hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
+                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+            )
+        )
+
+        flexFssProxyMockServer.expect(
+            times(2),
+            requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(getPersonResponse.serialisertTilString())
+            )
+
         sykmeldinger.forEach { syk ->
             sykmeldingKafkaProducer.send(
                 ProducerRecord(
@@ -146,11 +180,14 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
             ).get()
         }
         await().during(5, TimeUnit.SECONDS).until { this.hentSoknader("fnr").size == 3 }
+
+        flexFssProxyMockServer.verify()
     }
 
     @Test
     @Order(2)
     fun `Reisetilskuddene er tilgjengelig`() {
+
         val reisetilskuddene = this.hentSoknader("fnr")
 
         reisetilskuddene.size `should be equal to` 3
