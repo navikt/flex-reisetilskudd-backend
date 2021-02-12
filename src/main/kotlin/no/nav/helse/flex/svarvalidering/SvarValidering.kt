@@ -44,6 +44,7 @@ private fun Sporsmal.validerUndersporsmal() {
         }
         JA_NEI -> validerUnderspørsmålHvisDeSkalVises()
         CHECKBOX -> validerUnderspørsmålHvisDeSkalVises()
+        CHECKBOX_PANEL -> validerUnderspørsmålHvisDeSkalVises()
         DATOER -> validerUnderspørsmålHvisDeSkalVises()
         BELOP -> validerUnderspørsmålHvisDeSkalVises()
         KILOMETER -> validerUnderspørsmålHvisDeSkalVises()
@@ -98,7 +99,7 @@ private fun Sporsmal.validerGrenserPaaTall(svar: Svar): () -> Boolean {
 private fun Sporsmal.validerGrenserPaSvar(svar: Svar) {
 
     val predikat: () -> Boolean = when (svartype) {
-        JA_NEI, CHECKBOX, CHECKBOX_GRUPPE, KVITTERING -> {
+        JA_NEI, CHECKBOX, CHECKBOX_PANEL, CHECKBOX_GRUPPE, KVITTERING -> {
             { true }
         }
         DATOER -> validerGrenserPaDato(svar)
@@ -167,6 +168,7 @@ private fun Sporsmal.validerSvarverdi(svar: Svar) {
         JA_NEI -> {
             { "JA" == verdi || "NEI" == verdi }
         }
+        CHECKBOX_PANEL,
         CHECKBOX -> {
             { "CHECKED" == verdi }
         }
@@ -201,6 +203,7 @@ private fun Sporsmal.validerAntallSvar() {
         JA_NEI,
         BELOP,
         KILOMETER,
+        CHECKBOX_PANEL,
         CHECKBOX -> {
             { it == 1 }
         }
