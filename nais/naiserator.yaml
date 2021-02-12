@@ -1,10 +1,10 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: flex-reisetilskudd-backend
-  namespace: flex
+  name: {{app}}
+  namespace: {{namespace}}
   labels:
-    team: flex
+    team: {{team}}
 spec:
   image: {{ image }}
   replicas:
@@ -35,7 +35,11 @@ spec:
       cpu: 400m
       memory: 768Mi
   kafka:
-    pool: nav-dev
+    pool: {{kafkaPool}}
+  azure:
+    application:
+      enabled: true
+      tenant: {{azureTenant}}
   gcp:
     sqlInstances:
       - type: POSTGRES_11
@@ -45,16 +49,18 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: navtestb2c.b2clogin.com
+      {{#each externalHosts as |url|}}
+        - host: {{url}}
+      {{/each}}
     inbound:
       rules:
-        - application: flex-reisetilskudd-backend-proxy
         - application: flex-gateway
 
   envFrom:
     - secret: flex-reisetilskudd-backend-serviceuser
     - configmap: loginservice-idporten
   env:
-    - name: KAFKA_BOOTSTRAP_SERVERS_URL
-      value: SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443
-
+  {{#each env}}
+     - name: {{@key}}
+       value: {{this}}
+  {{/each}}
