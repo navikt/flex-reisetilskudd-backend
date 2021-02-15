@@ -1,5 +1,6 @@
 package no.nav.helse.flex.kafka
 
+import no.nav.helse.flex.client.pdl.AKTORID
 import no.nav.helse.flex.client.pdl.PdlClient
 import no.nav.helse.flex.client.syketilfelle.ErUtenforVentetidRequest
 import no.nav.helse.flex.client.syketilfelle.SyketilfelleClient
@@ -9,6 +10,7 @@ import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
 import no.nav.syfo.model.sykmeldingstatus.ShortNameDTO
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.lang.RuntimeException
 
 @Component
 class SykmeldingKafkaService(
@@ -35,18 +37,26 @@ class SykmeldingKafkaService(
             log.warn("Mottok sykmelding der reisetilskudd flagg ikke stemmer overens med type: ${sykmeldingMessage.sykmelding.id}")
         } else if (sykmeldingMessage.erIkkeArbeidstaker()) {
             log.info("Mottok sykmelding med reisetilskudd hvor arbeidssituasjon er ${sykmeldingMessage.hentArbeidssituasjon()}: ${sykmeldingMessage.sykmelding.id}")
-        } else if (sykmeldingMessage.erInnenforArbeidsgiverperiode()) {
-            log.info("Mottok sykmelding med reisetilskudd innenfor arbeidsgiverperiode ${sykmeldingMessage.sykmelding.id}")
-        } else if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
-            if (cluster == "prod-gcp") {
-                log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
-            } else {
-                val person = pdlClient.hentPerson(sykmeldingMessage.kafkaMetadata.fnr)
-                log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}")
-                reisetilskuddService.behandleSykmelding(sykmeldingMessage, person)
-            }
         } else {
-            log.warn("Mottok sykmelding ${sykmeldingMessage.sykmelding.id} med udefinert utfall, skal ikke skje!")
+            val person = pdlClient.hentPerson(sykmeldingMessage.kafkaMetadata.fnr)
+            val aktorId = person.hentIdenter
+                ?.identer
+                ?.find { it.gruppe == AKTORID }
+                ?.ident
+                ?: throw RuntimeException("Fant ikke aktorId for sykmelding ${sykmeldingMessage.sykmelding.id}")
+
+            if (sykmeldingMessage.erInnenforArbeidsgiverperiode(aktorId)) {
+                log.info("Mottok sykmelding med reisetilskudd innenfor arbeidsgiverperiode ${sykmeldingMessage.sykmelding.id}")
+            } else if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
+                if (cluster == "prod-gcp") {
+                    log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
+                } else {
+                    log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}")
+                    reisetilskuddService.behandleSykmelding(sykmeldingMessage, person)
+                }
+            } else {
+                log.warn("Mottok sykmelding ${sykmeldingMessage.sykmelding.id} med udefinert utfall, skal ikke skje!")
+            }
         }
     }
 
@@ -94,9 +104,9 @@ class SykmeldingKafkaService(
         return null
     }
 
-    private fun SykmeldingMessage.erInnenforArbeidsgiverperiode(): Boolean {
+    private fun SykmeldingMessage.erInnenforArbeidsgiverperiode(aktorId: String): Boolean {
         return !syketilfelleClient.erUtenforVentetid(
-            aktorId = "aktor", // TODO
+            aktorId = aktorId,
             sykmeldingId = sykmelding.id,
             erUtenforVentetidRequest = ErUtenforVentetidRequest(
                 sykmeldingKafkaMessage = this

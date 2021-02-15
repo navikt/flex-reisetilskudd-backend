@@ -51,13 +51,13 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
         @Container
         val kafkaContainer = KafkaContainerWithProps()
 
-        val aktorId = "aktor"
+        val aktorId = "aktorid123"
 
         val getPersonResponse = GetPersonResponse(
             errors = emptyList(),
             data = ResponseData(
                 hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
-                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, aktorId)))
             )
         )
 
@@ -218,7 +218,18 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
 
     @Test
     @Order(6)
-    fun `Sykmelding innenfor arbeidsgiverperioden`() {
+    fun `Sykmelding innenfor arbeidsgiverperioden og skal ikke opprette søknad`() {
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(getPersonResponse.serialisertTilString())
+            )
+
         flexFssProxyMockServer.expect(
             once(),
             requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${enGyldigPeriode.sykmelding.id}/erUtenforVentetid"))
@@ -248,17 +259,6 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
     fun `Sykmelding med en gyldig periode`() {
         flexFssProxyMockServer.expect(
             once(),
-            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${enGyldigPeriode.sykmelding.id}/erUtenforVentetid"))
-        )
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(
-                withStatus(HttpStatus.OK)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(objectMapper.writeValueAsString(true))
-            )
-
-        flexFssProxyMockServer.expect(
-            once(),
             requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
         )
             .andExpect(method(HttpMethod.POST))
@@ -266,6 +266,17 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
                 withStatus(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(getPersonResponse.serialisertTilString())
+            )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${enGyldigPeriode.sykmelding.id}/erUtenforVentetid"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(true))
             )
 
         sykmeldingKafkaProducer.send(
@@ -286,17 +297,6 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
     fun `Sykmelding med flere gyldige perioder`() {
         flexFssProxyMockServer.expect(
             once(),
-            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${flereGyldigePerioder.sykmelding.id}/erUtenforVentetid"))
-        )
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(
-                withStatus(HttpStatus.OK)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(objectMapper.writeValueAsString(true))
-            )
-
-        flexFssProxyMockServer.expect(
-            once(),
             requestTo(URI("http://flex-fss-proxy/api/pdl/graphql"))
         )
             .andExpect(method(HttpMethod.POST))
@@ -304,6 +304,17 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
                 withStatus(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(getPersonResponse.serialisertTilString())
+            )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/${flereGyldigePerioder.sykmelding.id}/erUtenforVentetid"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(true))
             )
 
         sykmeldingKafkaProducer.send(

@@ -55,7 +55,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
         val kafkaContainer = KafkaContainerWithProps()
 
         val fnr = "12345678901"
-        val aktorId = "aktor"
+        val aktorId = "aktorid123"
         val tom = LocalDate.now().minusDays(1)
         val fom = LocalDate.now().minusDays(5)
         val sykmeldingId = UUID.randomUUID().toString()
@@ -118,20 +118,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
             errors = emptyList(),
             data = ResponseData(
                 hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
-                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, aktorId)))
             )
         )
-
-        flexFssProxyMockServer.expect(
-            once(),
-            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/$sykmeldingId/erUtenforVentetid"))
-        )
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(
-                withStatus(HttpStatus.OK)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(objectMapper.writeValueAsString(true))
-            )
 
         flexFssProxyMockServer.expect(
             once(),
@@ -142,6 +131,17 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper {
                 withStatus(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(getPersonResponse.serialisertTilString())
+            )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/$sykmeldingId/erUtenforVentetid"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(true))
             )
 
         val sykmeldingStatusKafkaMessageDTO =
