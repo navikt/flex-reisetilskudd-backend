@@ -23,6 +23,8 @@ buildscript {
 
 ext["nimbus-jose-jwt.version"] = "8.20" // https://nav-it.slack.com/archives/C01381BAT62/p1611056940004800
 ext["okhttp3.version"] = "4.9.0" // For at token support testen kjører (tror jeg)
+ext["springCloudVersion"] = "2020.0.1"
+
 
 val githubUser: String by project
 val githubPassword: String by project
@@ -76,6 +78,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.cloud:spring-cloud-starter-contract-stub-runner")
     testImplementation("no.nav.security:token-validation-spring-test:$tokenSupportVersion")
     testImplementation("org.testcontainers:postgresql:$testContainersVersion")
     testImplementation("org.testcontainers:kafka:$testContainersVersion")
@@ -83,6 +86,13 @@ dependencies {
     testImplementation("org.awaitility:awaitility")
     testImplementation("org.hamcrest:hamcrest-library")
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
+    testImplementation("com.squareup.okhttp3:okhttp:4.9.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+    }
 }
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {

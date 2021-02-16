@@ -1,6 +1,7 @@
 package no.nav.helse.flex.reisetilskudd
 
-import no.nav.helse.flex.db.*
+import no.nav.helse.flex.bucketuploader.BucketUploaderService
+import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.svarvalidering.validerSvarPaSporsmal
 import org.springframework.stereotype.Component
@@ -9,7 +10,8 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 @Transactional
 class BesvarSporsmalService(
-    private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao
+    private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao,
+    private val bucketUploaderService: BucketUploaderService
 ) {
 
     fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
@@ -79,6 +81,9 @@ class BesvarSporsmalService(
 
         if (sporsmal.svar.map { it.id }.contains(svarId)) {
             reisetilskuddSoknadDao.slettSvar(svarId)
+            if (sporsmal.svartype == Svartype.KVITTERING) {
+                bucketUploaderService.slettKvittering(svarId)
+            }
         }
     }
 }
