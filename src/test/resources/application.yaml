@@ -28,6 +28,11 @@ no.nav.security.jwt:
         client-secret: "PWD"
         client-auth-method: client_secret_basic
 
+integration:
+  flex-bucket-uploader:
+    url: http://localhost:${wiremock.server.port}
+
+
 elector.path: dont_look_for_leader
 cronjob: "0 0/5 * * * ?"
 
