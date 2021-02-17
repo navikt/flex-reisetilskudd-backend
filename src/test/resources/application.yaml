@@ -17,7 +17,7 @@ no.nav.security.jwt:
   client:
     registration.azure-ad:
       token-endpoint-url: http://localhost:${mock-oauth2-server.port}/oauth2/v2.0/token
-      grant-type: client_credentials
+      grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
       scope: "SCOPE"
       authentication:
         client-id: "USER"
