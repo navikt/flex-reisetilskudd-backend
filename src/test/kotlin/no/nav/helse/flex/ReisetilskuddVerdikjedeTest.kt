@@ -32,28 +32,19 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.web.client.RestTemplate
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.net.URI
 import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 @SpringBootTest
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class ReisetilskuddVerdikjedeTest : TestHelper {
+internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTest() {
 
     companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
-
         val fnr = "12345678901"
         val tom = LocalDate.now().minusDays(1)
         val fom = LocalDate.now().minusDays(5)

@@ -20,27 +20,18 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
 @SpringBootTest
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class ReisetilskuddInputValideringTest : TestHelper {
+internal class ReisetilskuddInputValideringTest : TestHelper, AbstractContainerBaseTest() {
 
     companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
-
         val fnr = "12345678901"
     }
 

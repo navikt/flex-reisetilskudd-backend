@@ -81,7 +81,6 @@ dependencies {
     testImplementation("no.nav.security:token-validation-spring-test:$tokenSupportVersion")
     testImplementation("org.testcontainers:postgresql:$testContainersVersion")
     testImplementation("org.testcontainers:kafka:$testContainersVersion")
-    testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
     testImplementation("org.awaitility:awaitility")
     testImplementation("org.hamcrest:hamcrest-library")
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
