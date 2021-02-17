@@ -1,9 +1,14 @@
 package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.AbstractContainerBaseTest
+import no.nav.helse.flex.client.pdl.AKTORID
+import no.nav.helse.flex.client.pdl.HentIdenter
 import no.nav.helse.flex.client.pdl.HentPerson
 import no.nav.helse.flex.client.pdl.Navn
+import no.nav.helse.flex.client.pdl.PdlIdent
 import no.nav.helse.flex.client.pdl.ResponseData
+import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
+import no.nav.helse.flex.client.syketilfelle.PeriodeDTO
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.utils.lagSykmeldingMessage
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -43,6 +48,23 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
                     etternavn = "Etter"
                 )
             )
+        ),
+        hentIdenter = HentIdenter(
+            identer = listOf(
+                PdlIdent(
+                    gruppe = AKTORID,
+                    ident = "aktorId"
+                )
+            )
+        )
+    )
+
+    private val utenforArbeidsgiverperiode = OppfolgingstilfelleDTO(
+        antallBrukteDager = 50,
+        oppbruktArbeidsgvierperiode = true,
+        arbeidsgiverperiode = PeriodeDTO(
+            fom = LocalDate.now().minusDays(100),
+            tom = LocalDate.now().minusDays(50)
         )
     )
 
@@ -51,7 +73,7 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
         val syk = lagSykmeldingMessage(
             fnr = "fnr1"
         )
-        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person)
+        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person, utenforArbeidsgiverperiode)
         val reisetilskudd = reisetilskuddService.hentReisetilskuddene("fnr1")
         reisetilskudd.size shouldBe 1
         reisetilskudd.first().status shouldBe ReisetilskuddStatus.ÅPEN
@@ -75,7 +97,7 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
                 )
             )
         )
-        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person)
+        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person, utenforArbeidsgiverperiode)
         val reisetilskudd = reisetilskuddService.hentReisetilskuddene("fnr2")
         reisetilskudd.size shouldBe 3
 
@@ -123,7 +145,7 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
                 )
             )
         )
-        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person)
+        opprettReisetilskuddSoknaderService.behandleSykmelding(syk, person, utenforArbeidsgiverperiode)
         val reisetilskudd = reisetilskuddService.hentReisetilskuddene("fnr3")
         reisetilskudd.size shouldBe 3
 

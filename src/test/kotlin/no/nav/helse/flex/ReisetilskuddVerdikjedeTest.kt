@@ -1,6 +1,8 @@
 package no.nav.helse.flex
 
 import no.nav.helse.flex.client.pdl.*
+import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
+import no.nav.helse.flex.client.syketilfelle.PeriodeDTO
 import no.nav.helse.flex.domain.Kvittering
 import no.nav.helse.flex.domain.ReisetilskuddStatus
 import no.nav.helse.flex.domain.Svar
@@ -46,6 +48,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
 
     companion object {
         val fnr = "12345678901"
+        val aktorId = "aktorid123"
         val tom = LocalDate.now().minusDays(1)
         val fom = LocalDate.now().minusDays(5)
         val sykmeldingId = UUID.randomUUID().toString()
@@ -108,7 +111,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
             errors = emptyList(),
             data = ResponseData(
                 hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
-                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
+                hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, ident = aktorId)))
             )
         )
 
@@ -121,6 +124,26 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
                 withStatus(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(getPersonResponse.serialisertTilString())
+            )
+
+        flexFssProxyMockServer.expect(
+            once(),
+            requestTo(URI("http://flex-fss-proxy/reisetilskudd/$aktorId/oppfolgingstilfelle"))
+        )
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(
+                        OppfolgingstilfelleDTO(
+                            antallBrukteDager = 20,
+                            oppbruktArbeidsgvierperiode = true,
+                            arbeidsgiverperiode = PeriodeDTO(
+                                fom = LocalDate.now().minusDays(30),
+                                tom = LocalDate.now().minusDays(10)
+                            )
+                        ).serialisertTilString()
+                    )
             )
 
         val sykmeldingStatusKafkaMessageDTO =

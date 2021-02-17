@@ -1,6 +1,8 @@
 package no.nav.helse.flex.kafka
 
+import no.nav.helse.flex.client.pdl.AKTORID
 import no.nav.helse.flex.client.pdl.PdlClient
+import no.nav.helse.flex.client.syketilfelle.SyketilfelleClient
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.reisetilskudd.OpprettReisetilskuddSoknaderService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
@@ -15,6 +17,7 @@ class SykmeldingKafkaService(
 
     private val reisetilskuddService: OpprettReisetilskuddSoknaderService,
     private val pdlClient: PdlClient,
+    private val syketilfelleClient: SyketilfelleClient,
 ) {
     val log = logger()
 
@@ -37,8 +40,12 @@ class SykmeldingKafkaService(
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}, men oppretter ikke siden vi ikke er live i prod")
             } else {
                 val person = pdlClient.hentPerson(sykmeldingMessage.kafkaMetadata.fnr)
+                val aktorId = person.hentIdenter?.identer?.find { it.gruppe == AKTORID }?.ident
+                    ?: throw RuntimeException("Fant ikke aktorId for sykmelding ${sykmeldingMessage.sykmelding.id}")
+                val oppfolgingstilfelle = syketilfelleClient.beregnOppfolgingstilfelle(sykmeldingMessage, aktorId)
+
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}")
-                reisetilskuddService.behandleSykmelding(sykmeldingMessage, person)
+                reisetilskuddService.behandleSykmelding(sykmeldingMessage, person, oppfolgingstilfelle)
             }
         } else {
             log.warn("Mottok sykmelding ${sykmeldingMessage.sykmelding.id} med udefinert utfall, skal ikke skje!")
