@@ -1,7 +1,6 @@
 package no.nav.helse.flex.cronjob
 
-import no.nav.helse.flex.KafkaContainerWithProps
-import no.nav.helse.flex.PostgreSQLContainerWithProps
+import no.nav.helse.flex.AbstractContainerBaseTest
 import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
@@ -13,25 +12,16 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
 @SpringBootTest
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
-internal class CronjobKtTest {
+internal class CronjobKtTest : AbstractContainerBaseTest() {
 
     companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
-
         val fnr = "12345678901"
     }
 

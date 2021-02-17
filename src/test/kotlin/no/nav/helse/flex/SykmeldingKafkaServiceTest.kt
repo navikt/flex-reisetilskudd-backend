@@ -31,25 +31,17 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.web.client.RestTemplate
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.net.URI
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 @SpringBootTest
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class SykmeldingKafkaServiceTest : TestHelper {
+internal class SykmeldingKafkaServiceTest : TestHelper, AbstractContainerBaseTest() {
     companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
 
         val reisetilskuddPeriode = SykmeldingsperiodeDTO(
             type = PeriodetypeDTO.REISETILSKUDD,
@@ -154,7 +146,15 @@ internal class SykmeldingKafkaServiceTest : TestHelper {
         val getPersonResponse = GetPersonResponse(
             errors = emptyList(),
             data = ResponseData(
-                hentPerson = HentPerson(navn = listOf(Navn(fornavn = "ÅGE", mellomnavn = "MELOMNØVN", etternavn = "ETTERNæVN"))),
+                hentPerson = HentPerson(
+                    navn = listOf(
+                        Navn(
+                            fornavn = "ÅGE",
+                            mellomnavn = "MELOMNØVN",
+                            etternavn = "ETTERNæVN"
+                        )
+                    )
+                ),
                 hentIdenter = HentIdenter(listOf(PdlIdent(gruppe = AKTORID, "aktorid123")))
             )
         )

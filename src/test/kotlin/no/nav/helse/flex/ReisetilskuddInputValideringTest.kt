@@ -20,27 +20,18 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
 @SpringBootTest
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class ReisetilskuddInputValideringTest : TestHelper {
+internal class ReisetilskuddInputValideringTest : TestHelper, AbstractContainerBaseTest() {
 
     companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
-
         val fnr = "12345678901"
     }
 
@@ -51,15 +42,15 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     override lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadDao
+    lateinit var reisetilskuddSoknadDao: ReisetilskuddSoknadDao
 
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
         val reisetilskuddSoknad = reisetilskudd(FREMTIDIG)
-        reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad)
+        reisetilskuddSoknadDao.lagreSoknad(reisetilskuddSoknad)
 
         val reisetilskuddSoknad1 = reisetilskudd(ÅPEN)
-        reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad1)
+        reisetilskuddSoknadDao.lagreSoknad(reisetilskuddSoknad1)
 
         val json1 = this.sendSøknadResultActions(reisetilskuddSoknad.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
@@ -84,7 +75,7 @@ internal class ReisetilskuddInputValideringTest : TestHelper {
     @Test
     fun `En annen persons reisetilskudd id gir 403`() {
         val reisetilskudd1 = reisetilskudd(FREMTIDIG)
-        reisetilskuddSoknadRepository.lagreSoknad(reisetilskudd1)
+        reisetilskuddSoknadDao.lagreSoknad(reisetilskudd1)
 
         val json1 = this.hentSøknadResultActions(reisetilskudd1.id, "123423232")
             .andExpect(MockMvcResultMatchers.status().isForbidden)

@@ -1,7 +1,6 @@
 package no.nav.helse.flex.reisetilskudd
 
-import no.nav.helse.flex.KafkaContainerWithProps
-import no.nav.helse.flex.PostgreSQLContainerWithProps
+import no.nav.helse.flex.AbstractContainerBaseTest
 import no.nav.helse.flex.client.pdl.HentPerson
 import no.nav.helse.flex.client.pdl.Navn
 import no.nav.helse.flex.client.pdl.ResponseData
@@ -16,23 +15,15 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 @SpringBootTest
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
-internal class ReisetilskuddServiceTest {
+internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
 
     companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
 
         val fnr = "12345678901"
     }
