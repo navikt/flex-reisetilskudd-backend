@@ -42,15 +42,15 @@ internal class ReisetilskuddInputValideringTest : TestHelper, AbstractContainerB
     override lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var reisetilskuddSoknadRepository: ReisetilskuddSoknadDao
+    lateinit var reisetilskuddSoknadDao: ReisetilskuddSoknadDao
 
     @Test
     fun `Man kan ikke sende en FREMTIDIG eller ÅPEN søknad`() {
         val reisetilskuddSoknad = reisetilskudd(FREMTIDIG)
-        reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad)
+        reisetilskuddSoknadDao.lagreSoknad(reisetilskuddSoknad)
 
         val reisetilskuddSoknad1 = reisetilskudd(ÅPEN)
-        reisetilskuddSoknadRepository.lagreSoknad(reisetilskuddSoknad1)
+        reisetilskuddSoknadDao.lagreSoknad(reisetilskuddSoknad1)
 
         val json1 = this.sendSøknadResultActions(reisetilskuddSoknad.id, fnr)
             .andExpect(MockMvcResultMatchers.status().isBadRequest)
@@ -75,7 +75,7 @@ internal class ReisetilskuddInputValideringTest : TestHelper, AbstractContainerB
     @Test
     fun `En annen persons reisetilskudd id gir 403`() {
         val reisetilskudd1 = reisetilskudd(FREMTIDIG)
-        reisetilskuddSoknadRepository.lagreSoknad(reisetilskudd1)
+        reisetilskuddSoknadDao.lagreSoknad(reisetilskudd1)
 
         val json1 = this.hentSøknadResultActions(reisetilskudd1.id, "123423232")
             .andExpect(MockMvcResultMatchers.status().isForbidden)
