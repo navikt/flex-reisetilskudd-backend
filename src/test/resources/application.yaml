@@ -18,15 +18,7 @@ no.nav.security.jwt:
     selvbetjening:
       discoveryurl: http://localhost:${mock-oauth2-server.port}/selvbetjening/.well-known/openid-configuration
       accepted_audience: loginservice-client-id
-  client:
-    registration.azure-ad:
-      token-endpoint-url: http://localhost:${mock-oauth2-server.port}/oauth2/v2.0/token
-      grant-type: client_credentials
-      scope: "SCOPE"
-      authentication:
-        client-id: "USER"
-        client-secret: "PWD"
-        client-auth-method: client_secret_basic
+
 
 integration:
   flex-bucket-uploader:
@@ -37,3 +29,4 @@ elector.path: dont_look_for_leader
 cronjob: "0 0/5 * * * ?"
 
 flex.fss.proxy.url: http://flex-fss-proxy
+flex.bucket.uploader.url: http://flex-bucket-uploader

@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.matching.AnythingPattern
 import no.nav.helse.flex.Application
 import no.nav.helse.flex.KafkaContainerWithProps
 import no.nav.helse.flex.PostgreSQLContainerWithProps
-import no.nav.helse.flex.bucketuploader.BucketUploaderService
+import no.nav.helse.flex.client.bucketuploader.BucketUploaderClient
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.amshove.kluent.shouldBe
 import org.apache.http.HttpHeaders
@@ -35,7 +35,7 @@ internal class BucketUploaderServiceTest {
     }
 
     @Autowired
-    lateinit var bucketUploaderService: BucketUploaderService
+    lateinit var bucketUploaderClient: BucketUploaderClient
 
     @Test
     fun test() {
@@ -58,6 +58,6 @@ internal class BucketUploaderServiceTest {
                 )
         )
 
-        bucketUploaderService.slettKvittering("test") shouldBe true
+        bucketUploaderClient.slettKvittering("test") shouldBe true
     }
 }

@@ -1,18 +1,19 @@
-package no.nav.helse.flex.bucketuploader
+package no.nav.helse.flex.client.bucketuploader
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-class BucketUploaderService(
-    @Value("\${integration.flex-bucket-uploader.url}")
+class BucketUploaderClient(
+    @Value("\${flex.bucket.uploader.url}")
     private val bucketUploderUrl: String,
-    private val azureAuthClient: RestTemplate,
+    private val flexBucketUploaderRestTemplate: RestTemplate,
 ) {
 
     fun slettKvittering(blobName: String): Boolean {
-        val response = azureAuthClient.getForEntity(
+        //TODO er dette faktisk en GET ?
+        val response = flexBucketUploaderRestTemplate.getForEntity(
             "$bucketUploderUrl/maskin/slett/$blobName",
             VedleggRespons::class.java)
         return response.statusCode.is2xxSuccessful

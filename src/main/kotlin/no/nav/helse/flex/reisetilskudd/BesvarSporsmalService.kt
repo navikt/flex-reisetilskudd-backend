@@ -1,6 +1,6 @@
 package no.nav.helse.flex.reisetilskudd
 
-import no.nav.helse.flex.bucketuploader.BucketUploaderService
+import no.nav.helse.flex.client.bucketuploader.BucketUploaderClient
 import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.*
 import no.nav.helse.flex.svarvalidering.validerSvarPaSporsmal
@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class BesvarSporsmalService(
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao,
-    private val bucketUploaderService: BucketUploaderService
+    private val bucketUploaderClient: BucketUploaderClient
 ) {
 
     fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
@@ -82,7 +82,7 @@ class BesvarSporsmalService(
         if (sporsmal.svar.map { it.id }.contains(svarId)) {
             reisetilskuddSoknadDao.slettSvar(svarId)
             if (sporsmal.svartype == Svartype.KVITTERING) {
-                bucketUploaderService.slettKvittering(svarId)
+                bucketUploaderClient.slettKvittering(svarId)
             }
         }
     }
