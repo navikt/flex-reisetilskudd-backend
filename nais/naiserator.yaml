@@ -66,6 +66,4 @@ spec:
      - name: {{@key}}
        value: {{this}}
   {{/each}}
-    - name: FLEX_BUCKET_UPLOADER_SCOPE
-      value: 37e6eb95-2bab-432a-93e4-0356667a724e/.default
 
