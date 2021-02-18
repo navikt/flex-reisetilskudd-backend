@@ -1,8 +1,6 @@
 package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.Application
-import no.nav.helse.flex.KafkaContainerWithProps
-import no.nav.helse.flex.PostgreSQLContainerWithProps
 import no.nav.helse.flex.client.bucketuploader.BucketUploaderClient
 import no.nav.helse.flex.client.bucketuploader.VedleggRespons
 import no.nav.helse.flex.utils.TestHelper
@@ -25,24 +23,13 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.*
 import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.web.client.RestTemplate
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.net.URI
 
 @SpringBootTest(classes = [Application::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 @DirtiesContext
 @EnableMockOAuth2Server
 @AutoConfigureMockMvc
 internal class BucketUploaderServiceTest : TestHelper {
-
-    companion object {
-        @Container
-        val postgreSQLContainer = PostgreSQLContainerWithProps()
-
-        @Container
-        val kafkaContainer = KafkaContainerWithProps()
-    }
 
     @Autowired
     lateinit var bucketUploaderClient: BucketUploaderClient
