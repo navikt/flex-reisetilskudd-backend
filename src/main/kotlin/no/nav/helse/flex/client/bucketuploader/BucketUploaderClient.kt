@@ -12,13 +12,12 @@ class BucketUploaderClient(
 ) {
 
     fun slettKvittering(blobName: String): Boolean {
-        //TODO er dette faktisk en GET ?
         val response = flexBucketUploaderRestTemplate.getForEntity(
             "$bucketUploderUrl/maskin/slett/$blobName",
-            VedleggRespons::class.java)
+            VedleggRespons::class.java
+        )
         return response.statusCode.is2xxSuccessful
     }
 }
-
 
 data class VedleggRespons(val id: String? = null, val melding: String)

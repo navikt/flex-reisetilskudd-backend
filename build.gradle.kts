@@ -25,7 +25,6 @@ ext["nimbus-jose-jwt.version"] = "8.20" // https://nav-it.slack.com/archives/C01
 ext["okhttp3.version"] = "4.9.0" // For at token support testen kjører (tror jeg)
 ext["springCloudVersion"] = "2020.0.1"
 
-
 val githubUser: String by project
 val githubPassword: String by project
 
