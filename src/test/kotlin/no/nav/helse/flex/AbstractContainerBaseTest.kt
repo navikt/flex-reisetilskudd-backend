@@ -10,6 +10,7 @@ import org.amshove.kluent.shouldBeEmpty
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.awaitility.Awaitility
+import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -60,13 +61,13 @@ abstract class AbstractContainerBaseTest {
         }
     }
 
-    fun hentPoduserteReisetilskuddRecords(duration: Duration = Duration.ofMillis(100)): ConsumerRecords<String, String> {
+    fun hentProduserteReisetilskuddRecords(duration: Duration = Duration.ofMillis(100)): ConsumerRecords<String, String> {
         val records = reistilskuddKafkaConsumer.poll(duration).also { reistilskuddKafkaConsumer.commitSync() }
         return records
     }
 
-    fun hentPoduserteReisetilskudd(duration: Duration = Duration.ofMillis(100)): List<ReisetilskuddSoknad> {
-        return hentPoduserteReisetilskuddRecords(duration)
+    fun hentProduserteReisetilskudd(duration: Duration = Duration.ofMillis(100)): List<ReisetilskuddSoknad> {
+        return hentProduserteReisetilskuddRecords(duration)
             .iterator()
             .asSequence()
             .map { it.value() }
@@ -76,8 +77,8 @@ abstract class AbstractContainerBaseTest {
 
     fun ventPåProduserterReisetilskudd(antall: Int = 1, sekunder: Long = 2): List<ReisetilskuddSoknad> {
         val alle = ArrayList<ReisetilskuddSoknad>()
-        Awaitility.await().atMost(sekunder, TimeUnit.SECONDS).until {
-            alle.addAll(hentPoduserteReisetilskudd())
+        await().atMost(sekunder, TimeUnit.SECONDS).until {
+            alle.addAll(hentProduserteReisetilskudd())
             alle.size == antall
         }
         return alle
@@ -85,13 +86,13 @@ abstract class AbstractContainerBaseTest {
 
     @AfterAll
     fun `Vi leser reisetilskudd kafka topicet og feil hvis noe finnes og slik at subklassetestene leser alt`() {
-        hentPoduserteReisetilskuddRecords().shouldBeEmpty()
+        hentProduserteReisetilskuddRecords().shouldBeEmpty()
     }
 
     @BeforeAll
     fun `Vi leser reisetilskudd kafka topicet og feiler om noe eksisterer`() {
         reistilskuddKafkaConsumer.subscribeHvisIkkeSubscribed()
-        hentPoduserteReisetilskuddRecords().shouldBeEmpty()
+        hentProduserteReisetilskuddRecords().shouldBeEmpty()
     }
 
     @AfterAll
