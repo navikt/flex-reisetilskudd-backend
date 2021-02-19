@@ -9,7 +9,6 @@ import no.nav.helse.flex.kafka.reisetilskuddTopic
 import org.amshove.kluent.shouldBeEmpty
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.awaitility.Awaitility
 import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
