@@ -11,6 +11,6 @@
     "KAFKA_BOOTSTRAP_SERVERS_URL": "SSL://b27apvl00045.preprod.local:8443,SSL://b27apvl00046.preprod.local:8443,SSL://b27apvl00047.preprod.local:8443",
     "FLEX_FSS_PROXY_AAD_CLIENT_ID": "f6c76da0-2ce2-4810-be34-fb0e7baf2556",
     "FLEX_FSS_PROXY_URL": "https://flex-fss-proxy.dev-fss-pub.nais.io",
-    "FLEX_BUCKET_UPLOADER_AAD_CLIENT_ID": "dev-gcp.flex.flex-bucket-uploader/.default"
+    "FLEX_BUCKET_UPLOADER_AAD_CLIENT_ID": "dev-gcp.flex.flex-bucket-uploader"
   }
 }
