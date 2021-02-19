@@ -23,3 +23,4 @@ elector.path: dont_look_for_leader
 cronjob: "0 0/5 * * * ?"
 
 flex.fss.proxy.url: http://flex-fss-proxy
+flex.bucket.uploader.url: http://flex-bucket-uploader

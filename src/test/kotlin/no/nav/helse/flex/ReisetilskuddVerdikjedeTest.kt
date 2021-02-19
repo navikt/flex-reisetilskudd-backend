@@ -1,5 +1,6 @@
 package no.nav.helse.flex
 
+import no.nav.helse.flex.client.bucketuploader.VedleggRespons
 import no.nav.helse.flex.client.pdl.*
 import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
 import no.nav.helse.flex.client.syketilfelle.PeriodeDTO
@@ -69,11 +70,17 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
     @Autowired
     lateinit var reisetilskuddService: ReisetilskuddService
 
+    @Autowired
+    private lateinit var flexBucketUploaderRestTemplate: RestTemplate
+
+    private lateinit var flexBucketUploader: MockRestServiceServer
+
     private lateinit var flexFssProxyMockServer: MockRestServiceServer
 
     @BeforeEach
     fun init() {
         flexFssProxyMockServer = MockRestServiceServer.createServer(flexFssProxyRestTemplate)
+        flexBucketUploader = MockRestServiceServer.createServer(flexBucketUploaderRestTemplate)
     }
 
     @Test
@@ -262,11 +269,29 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
     @Test
     @Order(8)
     fun `Vi kan slette en kvittering`() {
+
         val reisetilskuddSoknad = this.hentSoknader(fnr).first()
         val kvitteringSpm = reisetilskuddSoknad.sporsmal.filter { it.tag == KVITTERINGER }.first()
         kvitteringSpm.svar.size `should be equal to` 1
 
         val svaret = kvitteringSpm.svar.first()
+
+        flexBucketUploader.expect(
+            once(),
+            requestTo(URI("http://flex-bucket-uploader/maskin/slett/${svaret.id!!}"))
+        )
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(
+                        VedleggRespons(
+                            id = "123",
+                            melding = "test"
+                        ).serialisertTilString()
+                    )
+            )
+
         slettSvar(fnr, reisetilskuddSoknad.id, kvitteringSpm.id, svaret.id!!)
 
         val reisetilskuddSoknadEtter = this.hentSoknader(fnr).first()

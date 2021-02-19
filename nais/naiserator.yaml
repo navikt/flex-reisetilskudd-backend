@@ -52,6 +52,8 @@ spec:
       {{#each externalHosts as |url|}}
         - host: {{url}}
       {{/each}}
+      rules:
+        - application: flex-bucket-uploader
     inbound:
       rules:
         - application: flex-gateway
@@ -64,3 +66,4 @@ spec:
      - name: {{@key}}
        value: {{this}}
   {{/each}}
+

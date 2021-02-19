@@ -84,6 +84,7 @@ dependencies {
     testImplementation("org.awaitility:awaitility")
     testImplementation("org.hamcrest:hamcrest-library")
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
+    testImplementation("com.squareup.okhttp3:okhttp:4.9.0")
 }
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
