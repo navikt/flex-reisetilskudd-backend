@@ -56,7 +56,7 @@ class BesvarSporsmalService(
             enkelReisetilskuddSoknadRepository.save(påbegynt)
             reisetilskuddSoknadDao.lagreSvar(sporsmal)
             return reisetilskuddSoknadDao.hentSoknad(soknadId).also {
-                kafkaProducer.produserer(it)
+                kafkaProducer.send(it)
             }
         }
 

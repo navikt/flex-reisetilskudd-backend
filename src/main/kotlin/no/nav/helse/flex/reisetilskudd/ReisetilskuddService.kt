@@ -24,7 +24,7 @@ class ReisetilskuddService(
         val avbrutt = reisetilskuddSoknad.tilEnkel().copy(sendt = Instant.now(), status = ReisetilskuddStatus.SENDT)
         enkelReisetilskuddSoknadRepository.save(avbrutt)
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
-        kafkaProducer.produserer(reisetilskudd)
+        kafkaProducer.send(reisetilskudd)
         metrikk.SENDT_REISETILSKUDD.increment()
         log.info("Sendte reisetilskudd ${reisetilskudd.id}")
         return reisetilskudd
@@ -34,7 +34,7 @@ class ReisetilskuddService(
         val avbrutt = reisetilskuddSoknad.tilEnkel().copy(avbrutt = Instant.now(), status = ReisetilskuddStatus.AVBRUTT)
         enkelReisetilskuddSoknadRepository.save(avbrutt)
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
-        kafkaProducer.produserer(reisetilskudd)
+        kafkaProducer.send(reisetilskudd)
 
         metrikk.AVBRUTT_REISETILSKUDD.increment()
 
@@ -54,7 +54,7 @@ class ReisetilskuddService(
 
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
 
-        kafkaProducer.produserer(reisetilskudd)
+        kafkaProducer.send(reisetilskudd)
 
         metrikk.GJENÅPNET_REISETILSKUDD.increment()
         log.info("Gjenåpnet reisetilskudd ${reisetilskudd.id}")

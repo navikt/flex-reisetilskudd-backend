@@ -11,7 +11,7 @@ class ReisetilskuddKafkaProducer(
     private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>
 
 ) {
-    fun produserer(reisetilskuddSoknad: ReisetilskuddSoknad) {
+    fun send(reisetilskuddSoknad: ReisetilskuddSoknad) {
         kafkaProducer.send(
             ProducerRecord(
                 reisetilskuddTopic,

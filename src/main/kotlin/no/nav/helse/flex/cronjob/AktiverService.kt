@@ -2,13 +2,10 @@ package no.nav.helse.flex.cronjob
 
 import no.nav.helse.flex.db.EnkelReisetilskuddSoknadRepository
 import no.nav.helse.flex.db.ReisetilskuddSoknadDao
-import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
-import no.nav.helse.flex.kafka.reisetilskuddTopic
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
+import no.nav.helse.flex.reisetilskudd.ReisetilskuddKafkaProducer
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
@@ -16,7 +13,7 @@ import java.time.LocalDate
 class AktiverService(
     private val reisetilskuddSoknadRepository: ReisetilskuddSoknadDao,
     private val enkelReisetilskuddSoknadRepository: EnkelReisetilskuddSoknadRepository,
-    private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
+    private val kafkaProducer: ReisetilskuddKafkaProducer,
     private val metrikk: Metrikk
 ) {
     val log = logger()
@@ -34,13 +31,7 @@ class AktiverService(
                 enkelReisetilskuddSoknadRepository.save(reisetilskudd.copy(status = ReisetilskuddStatus.ÅPEN))
                 i++
                 val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
-                kafkaProducer.send(
-                    ProducerRecord(
-                        reisetilskuddTopic,
-                        id,
-                        oppdatertReisetilskudd
-                    )
-                ).get()
+                kafkaProducer.send(oppdatertReisetilskudd)
                 metrikk.ÅPNE_REISETILSKUDD.increment()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
@@ -65,13 +56,7 @@ class AktiverService(
                 enkelReisetilskuddSoknadRepository.save(reisetilskudd.copy(status = ReisetilskuddStatus.SENDBAR))
                 i++
                 val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
-                kafkaProducer.send(
-                    ProducerRecord(
-                        reisetilskuddTopic,
-                        id,
-                        oppdatertReisetilskudd
-                    )
-                ).get()
+                kafkaProducer.send(oppdatertReisetilskudd)
                 metrikk.SENDBARE_REISETILSKUDD.increment()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
