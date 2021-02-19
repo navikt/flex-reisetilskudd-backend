@@ -5,15 +5,9 @@ import no.nav.helse.flex.client.pdl.format
 import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
-import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.kafka.reisetilskuddPerioder
-import no.nav.helse.flex.kafka.splittLangeSykmeldingperioder
-import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
+import no.nav.helse.flex.kafka.*
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.soknadsoppsett.skapReisetilskuddsoknad
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -21,7 +15,7 @@ import java.time.LocalDate
 @Component
 @Transactional
 class OpprettReisetilskuddSoknaderService(
-    private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
+    private val kafkaProducer: ReisetilskuddKafkaProducer,
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao,
 ) {
     private val log = logger()
@@ -54,13 +48,7 @@ class OpprettReisetilskuddSoknaderService(
                 }
                 .forEach { reisetilskudd ->
                     reisetilskuddSoknadDao.lagreSoknad(reisetilskudd)
-                    kafkaProducer.send(
-                        ProducerRecord(
-                            AivenKafkaConfig.topic,
-                            reisetilskudd.id,
-                            reisetilskudd
-                        )
-                    ).get()
+                    kafkaProducer.send(reisetilskudd)
                     log.info("Opprettet reisetilskudd ${reisetilskudd.id}")
                 }
         }.onSuccess {

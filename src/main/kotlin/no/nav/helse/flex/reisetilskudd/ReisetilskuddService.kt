@@ -2,12 +2,9 @@ package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
-import no.nav.helse.flex.kafka.AivenKafkaConfig
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
 import no.nav.helse.flex.svarvalidering.validerSvarPaSoknad
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -16,7 +13,7 @@ import java.time.Instant
 @Transactional
 class ReisetilskuddService(
     private val enkelReisetilskuddSoknadRepository: EnkelReisetilskuddSoknadRepository,
-    private val kafkaProducer: KafkaProducer<String, ReisetilskuddSoknad>,
+    private val kafkaProducer: ReisetilskuddKafkaProducer,
     private val metrikk: Metrikk,
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao
 ) {
@@ -27,13 +24,7 @@ class ReisetilskuddService(
         val avbrutt = reisetilskuddSoknad.tilEnkel().copy(sendt = Instant.now(), status = ReisetilskuddStatus.SENDT)
         enkelReisetilskuddSoknadRepository.save(avbrutt)
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
-        kafkaProducer.send(
-            ProducerRecord(
-                AivenKafkaConfig.topic,
-                reisetilskudd.id,
-                reisetilskudd
-            )
-        ).get()
+        kafkaProducer.send(reisetilskudd)
         metrikk.SENDT_REISETILSKUDD.increment()
         log.info("Sendte reisetilskudd ${reisetilskudd.id}")
         return reisetilskudd
@@ -43,13 +34,8 @@ class ReisetilskuddService(
         val avbrutt = reisetilskuddSoknad.tilEnkel().copy(avbrutt = Instant.now(), status = ReisetilskuddStatus.AVBRUTT)
         enkelReisetilskuddSoknadRepository.save(avbrutt)
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
-        kafkaProducer.send(
-            ProducerRecord(
-                AivenKafkaConfig.topic,
-                reisetilskudd.id,
-                reisetilskudd
-            )
-        ).get()
+        kafkaProducer.send(reisetilskudd)
+
         metrikk.AVBRUTT_REISETILSKUDD.increment()
 
         log.info("Avbrøt reisetilskudd ${reisetilskudd.id}")
@@ -57,20 +43,19 @@ class ReisetilskuddService(
     }
 
     fun gjenapneReisetilskudd(reisetilskuddSoknad: ReisetilskuddSoknad): ReisetilskuddSoknad {
-        val status = reisetilskuddStatus(reisetilskuddSoknad.fom, reisetilskuddSoknad.tom)
-
+        var status = reisetilskuddStatus(reisetilskuddSoknad.fom, reisetilskuddSoknad.tom)
+        if (status == ReisetilskuddStatus.ÅPEN) {
+            if (reisetilskuddSoknad.sporsmal.filter { it.tag == Tag.ANSVARSERKLARING }.any { it.svar.isNotEmpty() }) {
+                status = ReisetilskuddStatus.PÅBEGYNT
+            }
+        }
         val gjenåpnet = reisetilskuddSoknad.tilEnkel().copy(avbrutt = null, status = status)
         enkelReisetilskuddSoknadRepository.save(gjenåpnet)
 
         val reisetilskudd = reisetilskuddSoknadDao.hentSoknad(reisetilskuddSoknad.id)
 
-        kafkaProducer.send(
-            ProducerRecord(
-                AivenKafkaConfig.topic,
-                reisetilskudd.id,
-                reisetilskudd
-            )
-        ).get()
+        kafkaProducer.send(reisetilskudd)
+
         metrikk.GJENÅPNET_REISETILSKUDD.increment()
         log.info("Gjenåpnet reisetilskudd ${reisetilskudd.id}")
         return reisetilskudd
