@@ -3,12 +3,6 @@ package no.nav.helse.flex.kafka
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
-import org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
-import org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG
-import org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG
-import org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
-import org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
@@ -16,7 +10,6 @@ import org.apache.kafka.clients.producer.ProducerConfig.RETRIES_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.RETRY_BACKOFF_MS_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
 import org.apache.kafka.common.config.SslConfigs
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -24,8 +17,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class AivenKafkaConfig(
-    @Value("\${NAIS_APP_NAME}") private val applicationName: String,
-    @Value("\${KAFKA_AUTO_OFFSET_RESET:none}") private val kafkaAutoOffsetReset: String,
     @Value("\${KAFKA_BROKERS}") private val bootstrapServers: String,
     @Value("\${KAFKA_SECURITY_PROTOCOL:SSL}") private val securityProtocol: String,
     @Value("\${KAFKA_TRUSTSTORE_PATH}") private val sslTruststoreLocation: String,
@@ -38,7 +29,6 @@ class AivenKafkaConfig(
 
     @Bean
     fun producer() = KafkaProducer<String, ReisetilskuddSoknad>(producerConfig())
-    fun consumer() = KafkaConsumer<String, ReisetilskuddSoknad>(consumerConfig())
 
     private fun producerConfig() = mapOf(
         KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
@@ -48,15 +38,7 @@ class AivenKafkaConfig(
         RETRY_BACKOFF_MS_CONFIG to 100
     ) + commonConfig()
 
-    private fun consumerConfig() = mapOf(
-        GROUP_ID_CONFIG to applicationName,
-        ENABLE_AUTO_COMMIT_CONFIG to false,
-        KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-        VALUE_DESERIALIZER_CLASS_CONFIG to JacksonKafkaDeserializer::class.java,
-        AUTO_OFFSET_RESET_CONFIG to kafkaAutoOffsetReset
-    ) + commonConfig()
-
-    private fun commonConfig() = mapOf(
+    fun commonConfig() = mapOf(
         BOOTSTRAP_SERVERS_CONFIG to bootstrapServers
     ) + securityConfig()
 
@@ -71,8 +53,6 @@ class AivenKafkaConfig(
         SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG to sslKeystorePassword,
         SslConfigs.SSL_KEY_PASSWORD_CONFIG to sslKeystorePassword,
     )
-
-    companion object Topics {
-        val topic = "flex." + "aapen-reisetilskudd"
-    }
 }
+
+const val reisetilskuddTopic = "flex." + "aapen-reisetilskudd"

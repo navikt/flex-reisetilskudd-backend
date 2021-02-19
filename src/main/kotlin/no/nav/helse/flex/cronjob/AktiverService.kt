@@ -4,7 +4,7 @@ import no.nav.helse.flex.db.EnkelReisetilskuddSoknadRepository
 import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.ReisetilskuddSoknad
 import no.nav.helse.flex.domain.ReisetilskuddStatus
-import no.nav.helse.flex.kafka.AivenKafkaConfig
+import no.nav.helse.flex.kafka.reisetilskuddTopic
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -36,7 +36,7 @@ class AktiverService(
                 val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
                 kafkaProducer.send(
                     ProducerRecord(
-                        AivenKafkaConfig.topic,
+                        reisetilskuddTopic,
                         id,
                         oppdatertReisetilskudd
                     )
@@ -67,7 +67,7 @@ class AktiverService(
                 val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
                 kafkaProducer.send(
                     ProducerRecord(
-                        AivenKafkaConfig.topic,
+                        reisetilskuddTopic,
                         id,
                         oppdatertReisetilskudd
                     )

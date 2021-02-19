@@ -1,8 +1,11 @@
 package no.nav.helse.flex.reisetilskudd
 
 import no.nav.helse.flex.client.bucketuploader.BucketUploaderClient
+import no.nav.helse.flex.db.*
 import no.nav.helse.flex.db.ReisetilskuddSoknadDao
 import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.domain.ReisetilskuddStatus.PÅBEGYNT
+import no.nav.helse.flex.domain.ReisetilskuddStatus.ÅPEN
 import no.nav.helse.flex.svarvalidering.validerSvarPaSporsmal
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class BesvarSporsmalService(
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao,
-    private val bucketUploaderClient: BucketUploaderClient
+    private val bucketUploaderClient: BucketUploaderClient,
+    private val enkelReisetilskuddSoknadRepository: EnkelReisetilskuddSoknadRepository,
+    private val kafkaProducer: ReisetilskuddKafkaProducer,
 ) {
 
     fun oppdaterSporsmal(soknadFraBasenFørOppdatering: ReisetilskuddSoknad, sporsmal: Sporsmal): ReisetilskuddSoknad {
@@ -45,6 +50,15 @@ class BesvarSporsmalService(
         }
 
         sporsmal.validerSvarPaSporsmal()
+
+        if (soknadFraBasenFørOppdatering.status == ÅPEN && sporsmal.tag == Tag.ANSVARSERKLARING) {
+            val påbegynt = soknadFraBasenFørOppdatering.tilEnkel().copy(status = PÅBEGYNT)
+            enkelReisetilskuddSoknadRepository.save(påbegynt)
+            reisetilskuddSoknadDao.lagreSvar(sporsmal)
+            return reisetilskuddSoknadDao.hentSoknad(soknadId).also {
+                kafkaProducer.produserer(it)
+            }
+        }
 
         reisetilskuddSoknadDao.lagreSvar(sporsmal)
         return reisetilskuddSoknadDao.hentSoknad(soknadId)

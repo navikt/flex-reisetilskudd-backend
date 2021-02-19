@@ -79,6 +79,8 @@ internal class CronjobKtTest : AbstractContainerBaseTest() {
         reisetilskuddeneEtter[1].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
         reisetilskuddeneEtter[2].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
         reisetilskuddeneEtter[3].status shouldBeEqualTo ReisetilskuddStatus.FREMTIDIG
+
+        ventPåProduserterReisetilskudd(2)
     }
 
     private fun reisetilskudd(

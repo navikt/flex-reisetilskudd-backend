@@ -5,11 +5,7 @@ import no.nav.helse.flex.client.pdl.format
 import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
-import no.nav.helse.flex.kafka.AivenKafkaConfig
-import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.kafka.reisetilskuddPerioder
-import no.nav.helse.flex.kafka.splittLangeSykmeldingperioder
-import no.nav.helse.flex.kafka.tidligstePeriodeFoerst
+import no.nav.helse.flex.kafka.*
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.soknadsoppsett.skapReisetilskuddsoknad
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -56,7 +52,7 @@ class OpprettReisetilskuddSoknaderService(
                     reisetilskuddSoknadDao.lagreSoknad(reisetilskudd)
                     kafkaProducer.send(
                         ProducerRecord(
-                            AivenKafkaConfig.topic,
+                            reisetilskuddTopic,
                             reisetilskudd.id,
                             reisetilskudd
                         )

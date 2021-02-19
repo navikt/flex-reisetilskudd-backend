@@ -44,7 +44,7 @@ class SoknadController(
         if (sporsmalId != sporsmal.id) {
             throw IllegalArgumentException("$sporsmalId != ${sporsmal.id} SporsmalId i body ikke lik sporsmalId i URL ")
         }
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre sporsmal")
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN, PÅBEGYNT), "lagre sporsmal")
 
         val oppdatertSoknad = besvarSporsmalService.oppdaterSporsmal(soknad, sporsmal)
         val sporsmalSomBleOppdatert = oppdatertSoknad.sporsmal.find { it.tag == sporsmal.tag }!!
@@ -66,7 +66,7 @@ class SoknadController(
     ): Sporsmal {
         val soknad = hentOgSjekkTilgangTilSoknad(soknadId)
 
-        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN), "lagre svar")
+        soknad.sjekkGyldigStatus(listOf(SENDBAR, ÅPEN, PÅBEGYNT), "lagre svar")
 
         return besvarSporsmalService.lagreNyttSvar(soknad, sporsmalId, svar)
     }
@@ -107,7 +107,7 @@ class SoknadController(
     @PostMapping(value = ["/reisetilskudd/{id}/avbryt"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun avbrytSoknad(@PathVariable("id") id: String): ReisetilskuddSoknad {
         val soknad = hentOgSjekkTilgangTilSoknad(id)
-        soknad.sjekkGyldigStatus(listOf(ÅPEN, FREMTIDIG, SENDBAR), "avbryt")
+        soknad.sjekkGyldigStatus(listOf(ÅPEN, PÅBEGYNT, FREMTIDIG, SENDBAR), "avbryt")
 
         return reisetilskuddService.avbrytReisetilskudd(soknad)
     }

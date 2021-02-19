@@ -10,7 +10,6 @@ import no.nav.helse.flex.domain.Svar
 import no.nav.helse.flex.domain.Tag.*
 import no.nav.helse.flex.domain.Utgiftstype.PARKERING
 import no.nav.helse.flex.kafka.SykmeldingMessage
-import no.nav.helse.flex.reisetilskudd.ReisetilskuddService
 import no.nav.helse.flex.utils.*
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -66,9 +65,6 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
 
     @Autowired
     lateinit var sykmeldingKafkaProducer: KafkaProducer<String, SykmeldingMessage>
-
-    @Autowired
-    lateinit var reisetilskuddService: ReisetilskuddService
 
     @Autowired
     private lateinit var flexBucketUploaderRestTemplate: RestTemplate
@@ -338,5 +334,11 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
             .sendSoknad()
         sendtSøknad.status shouldBeEqualTo ReisetilskuddStatus.SENDT
         sendtSøknad.sendt.shouldNotBeNull()
+    }
+
+    @Test
+    @Order(12)
+    fun `4 produsert`() {
+        ventPåProduserterReisetilskudd(4)
     }
 }

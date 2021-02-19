@@ -365,4 +365,10 @@ internal class SykmeldingKafkaServiceTest : TestHelper, AbstractContainerBaseTes
             it.sykmeldingId == flereGyldigePerioder.sykmelding.id
         }.size `should be equal to` 2
     }
+
+    @Test
+    @Order(10)
+    fun `3 reisetilskudd ble produsert`() {
+        ventPåProduserterReisetilskudd(3)
+    }
 }

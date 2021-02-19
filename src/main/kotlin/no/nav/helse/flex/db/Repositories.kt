@@ -19,7 +19,7 @@ interface EnkelReisetilskuddSoknadRepository : CrudRepository<EnkelReisetilskudd
     @Query(
         """
             select * FROM reisetilskudd_soknad
-            WHERE status = 'ÅPEN'
+            WHERE status = 'ÅPEN' or status = 'PÅBEGYNT' 
             AND tom < :now
         """
     )
