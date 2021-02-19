@@ -165,7 +165,7 @@ internal class PaabegyntReisetilskuddTest : TestHelper, AbstractContainerBaseTes
             UTBETALING
         )
 
-        val kafkaMeldinger = ventPåProduserterReisetilskudd(1)
+        val kafkaMeldinger = ventPåProduserteReisetilskudd(1)
         kafkaMeldinger[0].status shouldBeEqualTo ReisetilskuddStatus.ÅPEN
     }
 
@@ -187,7 +187,7 @@ internal class PaabegyntReisetilskuddTest : TestHelper, AbstractContainerBaseTes
         reisetilskudd.size `should be equal to` 1
         reisetilskudd[0].status shouldBeEqualTo ReisetilskuddStatus.PÅBEGYNT
 
-        val kafkaMeldinger = ventPåProduserterReisetilskudd(1)
+        val kafkaMeldinger = ventPåProduserteReisetilskudd(1)
         kafkaMeldinger[0].status shouldBeEqualTo ReisetilskuddStatus.PÅBEGYNT
         kafkaMeldinger[0].sporsmal.find { it.tag == ANSVARSERKLARING }!!.svar.first().verdi shouldBeEqualTo "CHECKED"
     }
@@ -201,7 +201,7 @@ internal class PaabegyntReisetilskuddTest : TestHelper, AbstractContainerBaseTes
         avbruttSøknad.status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
         avbruttSøknad.avbrutt.shouldNotBeNull()
 
-        val kafkaMeldinger = ventPåProduserterReisetilskudd(1)
+        val kafkaMeldinger = ventPåProduserteReisetilskudd(1)
         kafkaMeldinger[0].status shouldBeEqualTo ReisetilskuddStatus.AVBRUTT
     }
 
@@ -214,7 +214,7 @@ internal class PaabegyntReisetilskuddTest : TestHelper, AbstractContainerBaseTes
         gjenåpnet.status shouldBeEqualTo ReisetilskuddStatus.PÅBEGYNT
         gjenåpnet.avbrutt.shouldBeNull()
 
-        val kafkaMeldinger = ventPåProduserterReisetilskudd(1)
+        val kafkaMeldinger = ventPåProduserteReisetilskudd(1)
         kafkaMeldinger[0].status shouldBeEqualTo ReisetilskuddStatus.PÅBEGYNT
     }
 
@@ -225,7 +225,7 @@ internal class PaabegyntReisetilskuddTest : TestHelper, AbstractContainerBaseTes
         val antall = aktiverService.sendbareReisetilskudd(now = tom.plusDays(1))
         antall `should be equal to` 1
 
-        val kafkaMeldinger = ventPåProduserterReisetilskudd(1)
+        val kafkaMeldinger = ventPåProduserteReisetilskudd(1)
         kafkaMeldinger[0].status shouldBeEqualTo ReisetilskuddStatus.SENDBAR
     }
 }

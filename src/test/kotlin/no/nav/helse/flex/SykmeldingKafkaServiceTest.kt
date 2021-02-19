@@ -369,6 +369,6 @@ internal class SykmeldingKafkaServiceTest : TestHelper, AbstractContainerBaseTes
     @Test
     @Order(10)
     fun `3 reisetilskudd ble produsert`() {
-        ventPåProduserterReisetilskudd(3)
+        ventPåProduserteReisetilskudd(3)
     }
 }

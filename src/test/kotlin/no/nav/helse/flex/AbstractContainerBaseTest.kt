@@ -75,7 +75,7 @@ abstract class AbstractContainerBaseTest {
             .map { objectMapper.readValue(it) }
     }
 
-    fun ventPåProduserterReisetilskudd(antall: Int = 1, sekunder: Long = 2): List<ReisetilskuddSoknad> {
+    fun ventPåProduserteReisetilskudd(antall: Int = 1, sekunder: Long = 2): List<ReisetilskuddSoknad> {
         val alle = ArrayList<ReisetilskuddSoknad>()
         await().atMost(sekunder, TimeUnit.SECONDS).until {
             alle.addAll(hentProduserteReisetilskudd())

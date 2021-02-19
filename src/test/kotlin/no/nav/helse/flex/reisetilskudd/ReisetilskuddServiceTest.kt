@@ -78,7 +78,7 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
         reisetilskudd.size shouldBe 1
         reisetilskudd.first().status shouldBe ReisetilskuddStatus.ÅPEN
 
-        ventPåProduserterReisetilskudd(1)
+        ventPåProduserteReisetilskudd(1)
     }
 
     @Test
@@ -118,7 +118,7 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
         reisetilskudd[2].tom shouldBeEqualTo now.minusDays(25)
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
 
-        ventPåProduserterReisetilskudd(3)
+        ventPåProduserteReisetilskudd(3)
     }
 
     @Test
@@ -168,6 +168,6 @@ internal class ReisetilskuddServiceTest : AbstractContainerBaseTest() {
         reisetilskudd[2].tom shouldBeEqualTo now.minusDays(26)
         ChronoUnit.DAYS.between(reisetilskudd[2].fom, reisetilskudd[2].tom) + 1 shouldBe 25
 
-        ventPåProduserterReisetilskudd(3)
+        ventPåProduserteReisetilskudd(3)
     }
 }

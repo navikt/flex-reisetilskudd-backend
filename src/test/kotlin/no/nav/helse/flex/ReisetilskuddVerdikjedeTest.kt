@@ -339,6 +339,6 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
     @Test
     @Order(12)
     fun `4 produsert`() {
-        ventPåProduserterReisetilskudd(4)
+        ventPåProduserteReisetilskudd(4)
     }
 }
