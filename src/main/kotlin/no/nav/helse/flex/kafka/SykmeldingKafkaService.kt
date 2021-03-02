@@ -33,7 +33,7 @@ class SykmeldingKafkaService(
             log.info("Mottok sykmelding med gradert periode: ${sykmeldingMessage.sykmelding.id}")
         } else if (sykmeldingMessage.mismatchAvTypeOgReisetilskuddFlagg()) {
             log.warn("Mottok sykmelding der reisetilskudd flagg ikke stemmer overens med type: ${sykmeldingMessage.sykmelding.id}")
-        } else if (sykmeldingMessage.erIkkeArbeidstaker()) {
+        } else if (sykmeldingMessage.erIkkeArbeidstaker() && !sykmeldingMessage.erAnnetOgDev()) {
             log.info("Mottok sykmelding med reisetilskudd hvor arbeidssituasjon er ${sykmeldingMessage.hentArbeidssituasjon()}: ${sykmeldingMessage.sykmelding.id}")
         } else if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
             if (cluster == "prod-gcp") {
@@ -45,7 +45,12 @@ class SykmeldingKafkaService(
                 val oppfolgingstilfelle = syketilfelleClient.beregnOppfolgingstilfelle(sykmeldingMessage, aktorId)
 
                 log.info("Mottok sykmelding som vi bryr oss om ${sykmeldingMessage.sykmelding.id}")
-                reisetilskuddService.behandleSykmelding(sykmeldingMessage, person, oppfolgingstilfelle)
+                reisetilskuddService.behandleSykmelding(
+                    sykmeldingMessage = sykmeldingMessage,
+                    person = person,
+                    oppfolgingstilfelle = oppfolgingstilfelle,
+                    ignorerArbeidsgiverPeriode = sykmeldingMessage.erAnnetOgDev()
+                )
             }
         } else {
             log.warn("Mottok sykmelding ${sykmeldingMessage.sykmelding.id} med udefinert utfall, skal ikke skje!")
@@ -77,6 +82,10 @@ class SykmeldingKafkaService(
         return this.sykmelding.sykmeldingsperioder.all { periode ->
             periode.reisetilskudd && periode.type == PeriodetypeDTO.REISETILSKUDD
         }
+    }
+
+    private fun SykmeldingMessage.erAnnetOgDev(): Boolean {
+        return this.hentArbeidssituasjon() == Arbeidssituasjon.ANNET && cluster == "dev-gcp"
     }
 
     private fun SykmeldingMessage.erIkkeArbeidstaker(): Boolean {

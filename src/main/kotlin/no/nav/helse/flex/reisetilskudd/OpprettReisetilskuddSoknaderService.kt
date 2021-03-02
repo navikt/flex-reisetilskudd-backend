@@ -20,7 +20,12 @@ class OpprettReisetilskuddSoknaderService(
 ) {
     private val log = logger()
 
-    fun behandleSykmelding(sykmeldingMessage: SykmeldingMessage, person: ResponseData, oppfolgingstilfelle: OppfolgingstilfelleDTO?) {
+    fun behandleSykmelding(
+        sykmeldingMessage: SykmeldingMessage,
+        person: ResponseData,
+        oppfolgingstilfelle: OppfolgingstilfelleDTO?,
+        ignorerArbeidsgiverPeriode: Boolean = false
+    ) {
         val navn = person.hentPerson?.navn?.firstOrNull()?.format()
             ?: throw RuntimeException("Fant ikke navn for sykmelding ${sykmeldingMessage.sykmelding.id}")
 
@@ -40,6 +45,9 @@ class OpprettReisetilskuddSoknaderService(
                     val arbeidsgiverperiodeTom = oppfolgingstilfelle.arbeidsgiverperiode!!.tom
                     val oppbruktArbeidsgiverperiode = oppfolgingstilfelle.oppbruktArbeidsgvierperiode
 
+                    if (ignorerArbeidsgiverPeriode) {
+                        return@filter true
+                    }
                     if (!oppbruktArbeidsgiverperiode || reisetilskudd.tom.isBeforeOrEqual(arbeidsgiverperiodeTom)) {
                         log.info("Reisetilskudd fra ${reisetilskudd.fom} til ${reisetilskudd.tom} er innenfor arbeidsgiverperioden med sykmelding ${sykmeldingMessage.sykmelding.id}")
                         return@filter false
