@@ -85,7 +85,7 @@ class SykmeldingKafkaService(
     }
 
     private fun SykmeldingMessage.erAnnetOgDev(): Boolean {
-        return this.hentArbeidssituasjon() == Arbeidssituasjon.ANNET && cluster == "dev-gcp"
+        return this.hentArbeidssituasjon() == Arbeidssituasjon.ANNET && (cluster == "dev-gcp" || cluster == "flex")
     }
 
     private fun SykmeldingMessage.erIkkeArbeidstaker(): Boolean {
