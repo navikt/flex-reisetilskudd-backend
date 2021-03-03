@@ -93,10 +93,10 @@ class BesvarSporsmalService(
                 ?: throw IllegalArgumentException("$sporsmalId finnes ikke i søknad $soknadId")
             )
 
-        if (sporsmal.svar.map { it.id }.contains(svarId)) {
+        sporsmal.svar.find { it.id == svarId }?.apply {
             reisetilskuddSoknadDao.slettSvar(svarId)
             if (sporsmal.svartype == Svartype.KVITTERING) {
-                bucketUploaderClient.slettKvittering(svarId)
+                bucketUploaderClient.slettKvittering(this.kvittering!!.blobId)
             }
         }
     }
