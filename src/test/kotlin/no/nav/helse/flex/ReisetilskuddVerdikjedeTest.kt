@@ -274,7 +274,7 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
 
         flexBucketUploader.expect(
             once(),
-            requestTo(URI("http://flex-bucket-uploader/maskin/slett/${svaret.id!!}"))
+            requestTo(URI("http://flex-bucket-uploader/maskin/slett/${svaret.kvittering!!.blobId}"))
         )
             .andExpect(method(HttpMethod.GET))
             .andRespond(
