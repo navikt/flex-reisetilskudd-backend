@@ -4,7 +4,7 @@ import java.time.Instant
 import java.time.LocalDate
 
 enum class Utgiftstype {
-    OFFENTLIG_TRANSPORT, TAXI, PARKERING, BOMPENGER, ANNET
+    OFFENTLIG_TRANSPORT, TAXI, PARKERING, ANNET
 }
 
 data class Kvittering(

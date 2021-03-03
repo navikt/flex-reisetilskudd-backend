@@ -70,7 +70,7 @@ fun reiseMedBilSpørsmål(
     tag = REISE_MED_BIL,
     svartype = JA_NEI,
     overskrift = "Reise med bil",
-    sporsmalstekst = "Reiser du med bil til og fra jobben mellom $formattertPeriode?",
+    sporsmalstekst = "Reiste du med bil til og fra jobben mellom $formattertPeriode?",
     kriterieForVisningAvUndersporsmal = JA,
     undersporsmal = listOf(
         Sporsmal(
@@ -78,7 +78,21 @@ fun reiseMedBilSpørsmål(
             svartype = DATOER,
             min = fom.format(ISO_LOCAL_DATE),
             max = tom.format(ISO_LOCAL_DATE),
-            sporsmalstekst = "Hvilke dager reiste du med bil",
+            sporsmalstekst = "Hvilke dager reiste du med bil?",
+        ),
+        Sporsmal(
+            tag = BIL_BOMPENGER,
+            svartype = JA_NEI,
+            sporsmalstekst = "Hadde du utgifter til bompenger?",
+            kriterieForVisningAvUndersporsmal = JA,
+            undersporsmal = listOf(
+                Sporsmal(
+                    tag = BIL_BOMPENGER_BELOP,
+                    svartype = BELOP,
+                    min = "0",
+                    sporsmalstekst = "Hvor mye betalte du i bompenger mellom hjemmet ditt og jobben i perioden?",
+                )
+            )
         )
     )
 )
