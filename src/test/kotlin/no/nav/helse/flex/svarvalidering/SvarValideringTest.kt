@@ -110,6 +110,19 @@ internal class SvarValideringTest {
 
         spm.byttSvar(svar = "JA")
             .byttSvar(tag = BIL_DATOER, svar = LocalDate.now().toString())
+            .byttSvar(tag = BIL_BOMPENGER, svar = "NEI")
+            .validerSvarPaSporsmal()
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_DATOER, svar = LocalDate.now().toString())
+            .byttSvar(tag = BIL_BOMPENGER, svar = "JA")
+            .`valider svar og forvent feilmelding`("Spørsmål ${spm.idForTag(BIL_BOMPENGER_BELOP)} med tag $BIL_BOMPENGER_BELOP har feil antall svar 0")
+
+        spm.byttSvar(svar = "JA")
+            .byttSvar(tag = BIL_DATOER, svar = LocalDate.now().toString())
+            .byttSvar(tag = BIL_BOMPENGER, svar = "JA")
+            .byttSvar(tag = BIL_BOMPENGER_BELOP, svar = "1000")
+
             .validerSvarPaSporsmal()
 
         spm.byttSvar(svar = "JA")
