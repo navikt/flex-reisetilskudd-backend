@@ -5,6 +5,7 @@ import no.nav.helse.flex.client.pdl.format
 import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
 import no.nav.helse.flex.db.*
 import no.nav.helse.flex.domain.*
+import no.nav.helse.flex.environment.NaisEnvironment
 import no.nav.helse.flex.kafka.*
 import no.nav.helse.flex.logger
 import no.nav.helse.flex.soknadsoppsett.skapReisetilskuddsoknad
@@ -17,6 +18,7 @@ import java.time.LocalDate
 class OpprettReisetilskuddSoknaderService(
     private val kafkaProducer: ReisetilskuddKafkaProducer,
     private val reisetilskuddSoknadDao: ReisetilskuddSoknadDao,
+    private val naisEnvironment: NaisEnvironment,
 ) {
     private val log = logger()
 
@@ -29,6 +31,7 @@ class OpprettReisetilskuddSoknaderService(
         val navn = person.hentPerson?.navn?.firstOrNull()?.format()
             ?: throw RuntimeException("Fant ikke navn for sykmelding ${sykmeldingMessage.sykmelding.id}")
 
+        var opprettet = 0
         sykmeldingMessage.runCatching {
             this.reisetilskuddPerioder()
                 .splittLangeSykmeldingperioder()
@@ -55,6 +58,7 @@ class OpprettReisetilskuddSoknaderService(
                     return@filter true
                 }
                 .forEach { reisetilskudd ->
+                    opprettet++
                     reisetilskuddSoknadDao.lagreSoknad(reisetilskudd)
                     kafkaProducer.send(reisetilskudd)
                     log.info("Opprettet reisetilskudd ${reisetilskudd.id}")
