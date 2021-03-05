@@ -23,7 +23,7 @@ class SykmeldingListener(
 
         try {
 
-            sykmeldingKafkaService.run(sykmeldingMessage = cr.value(), topic = cr.topic(), key = cr.key())
+            sykmeldingKafkaService.prosseser(sykmeldingMessage = cr.value(), topic = cr.topic(), key = cr.key())
 
             acknowledgment.acknowledge()
         } catch (e: Exception) {

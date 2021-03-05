@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
+import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.KafkaContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
@@ -21,6 +22,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private class PostgreSQLContainer11 : PostgreSQLContainer<PostgreSQLContainer11>("postgres:11.4-alpine")
+private class RedisContainer : GenericContainer<RedisContainer>("redis:5.0.3-alpine")
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class AbstractContainerBaseTest {
@@ -50,6 +52,12 @@ abstract class AbstractContainerBaseTest {
                 it.start()
                 System.setProperty("KAFKA_BROKERS", it.bootstrapServers)
                 System.setProperty("KAFKA_BOOTSTRAP_SERVERS_URL", it.bootstrapServers)
+            }
+
+            RedisContainer().withExposedPorts(6379).also {
+                it.start()
+                System.setProperty("spring.redis.host", it.host)
+                System.setProperty("spring.redis.port", it.firstMappedPort.toString())
             }
         }
     }

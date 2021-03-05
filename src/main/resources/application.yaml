@@ -14,6 +14,10 @@ spring:
     hikari:
       minimum-idle: 1
       maximum-pool-size: 3
+  cache.type: redis
+  redis:
+    host: "${REDIS_HOST}"
+    port: ${REDIS_PORT}"
 
 management:
   endpoint.prometheus.enabled: true

@@ -1,6 +1,7 @@
 package no.nav.helse.flex.kafka
 
 import io.micrometer.core.instrument.Tag
+import no.nav.helse.flex.cache.SykmeldingBehandletCache
 import no.nav.helse.flex.client.pdl.AKTORID
 import no.nav.helse.flex.client.pdl.PdlClient
 import no.nav.helse.flex.client.syketilfelle.SyketilfelleClient
@@ -19,6 +20,7 @@ class SykmeldingKafkaService(
     private val pdlClient: PdlClient,
     private val syketilfelleClient: SyketilfelleClient,
     private val metrikk: Metrikk,
+    private val sykmeldingBehandletCache: SykmeldingBehandletCache
 ) {
     val log = logger()
 
@@ -123,5 +125,10 @@ class SykmeldingKafkaService(
             )
         }
         return null
+    }
+
+    fun prosseser(sykmeldingMessage: SykmeldingMessage?, topic: String, key: String) {
+        run(sykmeldingMessage, topic, key)
+        sykmeldingBehandletCache.merkSykmeldingSomBehandlet(key)
     }
 }

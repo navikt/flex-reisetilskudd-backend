@@ -3,7 +3,6 @@ package no.nav.helse.flex
 import no.nav.helse.flex.client.pdl.*
 import no.nav.helse.flex.client.syketilfelle.OppfolgingstilfelleDTO
 import no.nav.helse.flex.client.syketilfelle.PeriodeDTO
-import no.nav.helse.flex.domain.Tag.*
 import no.nav.helse.flex.kafka.SykmeldingMessage
 import no.nav.helse.flex.metrikk.Metrikk
 import no.nav.helse.flex.utils.*
@@ -130,6 +129,9 @@ internal class ProduksjonAvslattVerdikjedeTest : TestHelper, AbstractContainerBa
         val sykmeldingStatusKafkaMessageDTO =
             skapSykmeldingStatusKafkaMessageDTO(fnr = fnr, sykmeldingId = sykmeldingId)
         val sykmelding = getSykmeldingDto(sykmeldingId = sykmeldingId, fom = fom, tom = tom)
+
+        sykmeldingBehandlet(fnr = ReisetilskuddVerdikjedeTest.fnr, sykmeldingId = sykmeldingId) `should be equal to` false
+
         sykmeldingKafkaProducer.send(
             ProducerRecord(
                 "syfo-sendt-sykmelding",
@@ -145,6 +147,7 @@ internal class ProduksjonAvslattVerdikjedeTest : TestHelper, AbstractContainerBa
         await().atMost(3, TimeUnit.SECONDS).until { metrikk.sykmeldingHeltUtafor.count() == 1.0 }
         flexFssProxyMockServer.verify()
         metrikk.sykmeldingHeltUtafor.count() `should be equal to` 1.0
+        sykmeldingBehandlet(fnr = ReisetilskuddVerdikjedeTest.fnr, sykmeldingId = sykmeldingId) `should be equal to` true
     }
 
     @Test

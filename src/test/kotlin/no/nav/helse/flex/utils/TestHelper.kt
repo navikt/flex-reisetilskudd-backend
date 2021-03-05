@@ -25,6 +25,16 @@ fun TestHelper.hentSoknader(fnr: String): List<ReisetilskuddSoknad> {
     return objectMapper.readValue(json)
 }
 
+fun TestHelper.sykmeldingBehandlet(fnr: String, sykmeldingId: String): Boolean {
+    val json = this.mockMvc.perform(
+        get("/api/v1/sykmeldinger/$sykmeldingId/behandlet")
+            .header("Authorization", "Bearer ${server.token(fnr = fnr)}")
+            .contentType(MediaType.APPLICATION_JSON)
+    ).andExpect(status().isOk).andReturn().response.contentAsString
+
+    return objectMapper.readValue(json)
+}
+
 fun TestHelper.avbrytSøknad(fnr: String, reisetilskuddId: String): ReisetilskuddSoknad {
     val json = this.mockMvc.perform(
         post("/api/v1/reisetilskudd/$reisetilskuddId/avbryt")

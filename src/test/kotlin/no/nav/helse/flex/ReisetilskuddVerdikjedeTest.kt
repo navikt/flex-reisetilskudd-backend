@@ -152,6 +152,9 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
         val sykmeldingStatusKafkaMessageDTO =
             skapSykmeldingStatusKafkaMessageDTO(fnr = fnr, sykmeldingId = sykmeldingId)
         val sykmelding = getSykmeldingDto(sykmeldingId = sykmeldingId, fom = fom, tom = tom)
+
+        sykmeldingBehandlet(fnr = fnr, sykmeldingId = sykmeldingId) `should be equal to` false
+
         sykmeldingKafkaProducer.send(
             ProducerRecord(
                 "syfo-sendt-sykmelding",
@@ -165,6 +168,8 @@ internal class ReisetilskuddVerdikjedeTest : TestHelper, AbstractContainerBaseTe
         ).get()
 
         await().atMost(3, TimeUnit.SECONDS).until { this.hentSoknader(fnr).size == 1 }
+        sykmeldingBehandlet(fnr = fnr, sykmeldingId = sykmeldingId) `should be equal to` true
+
         flexFssProxyMockServer.verify()
     }
 
