@@ -9,6 +9,7 @@ import no.nav.helse.flex.logger
 import no.nav.helse.flex.metrikk.Metrikk
 import no.nav.helse.flex.reisetilskudd.OpprettReisetilskuddSoknaderService
 import no.nav.syfo.model.sykmelding.model.PeriodetypeDTO
+import no.nav.syfo.model.sykmelding.model.SykmeldingsperiodeDTO
 import no.nav.syfo.model.sykmeldingstatus.ShortNameDTO
 import org.springframework.stereotype.Component
 
@@ -77,12 +78,16 @@ class SykmeldingKafkaService(
         log.warn("Mottok sykmelding ${sykmeldingMessage.sykmelding.id} med udefinert utfall, skal ikke skje!")
     }
 
+    private fun SykmeldingsperiodeDTO.periodeHarFormForReisetilskudd(): Boolean {
+        return this.reisetilskudd || this.type == PeriodetypeDTO.REISETILSKUDD
+    }
+
     private fun SykmeldingMessage.ikkeInneholdeReisetilskudd(): Boolean {
-        return this.sykmelding.sykmeldingsperioder.none { periode -> periode.reisetilskudd }
+        return this.sykmelding.sykmeldingsperioder.none { it.periodeHarFormForReisetilskudd() }
     }
 
     private fun SykmeldingMessage.ikkeAllePerioderErReisetilskudd(): Boolean {
-        return !this.sykmelding.sykmeldingsperioder.all { periode -> periode.reisetilskudd }
+        return !this.sykmelding.sykmeldingsperioder.all { it.periodeHarFormForReisetilskudd() }
     }
 
     private fun SykmeldingMessage.inneholderGradertPeriode(): Boolean {
