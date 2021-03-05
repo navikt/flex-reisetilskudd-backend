@@ -52,7 +52,7 @@ class SykmeldingKafkaService(
             val arbeidssituasjon: String = sykmeldingMessage.hentArbeidssituasjon()?.navn?.toLowerCase() ?: "ukjent"
             metrikk.utelattSykmeldingFraSoknadOpprettelse(
                 "utelatt_arbeidssituasjon",
-                listOf(Tag.of("arbeidssituasjon", arbeidssituasjon))
+                setOf(Tag.of("arbeidssituasjon", arbeidssituasjon))
             )
             return
         }

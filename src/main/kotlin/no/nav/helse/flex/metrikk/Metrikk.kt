@@ -7,8 +7,11 @@ import org.springframework.stereotype.Component
 @Component
 class Metrikk(val registry: MeterRegistry) {
 
-    fun utelattSykmeldingFraSoknadOpprettelse(grunn: String, tags: Iterable<Tag> = emptySet()) {
-        registry.counter("sykmelding_utelatt_opprettelse", tags).increment()
+    fun utelattSykmeldingFraSoknadOpprettelse(grunn: String, tags: Set<Tag> = emptySet()) {
+        val tagsListe = ArrayList<Tag>()
+        tagsListe.addAll(tags)
+        tagsListe.add(Tag.of("grunn", grunn))
+        registry.counter("sykmelding_utelatt_opprettelse_counter", tagsListe).increment()
     }
 
     val mottattSykmelding = registry.counter("mottatt_sykmelding_counter")
