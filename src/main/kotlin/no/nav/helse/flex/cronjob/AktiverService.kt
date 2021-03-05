@@ -32,7 +32,7 @@ class AktiverService(
                 i++
                 val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
                 kafkaProducer.send(oppdatertReisetilskudd)
-                metrikk.ÅPNE_REISETILSKUDD.increment()
+                metrikk.apneReisetilskudd.increment()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av åpnet reisetilskudd med id $id", e)
             }
@@ -57,7 +57,7 @@ class AktiverService(
                 i++
                 val oppdatertReisetilskudd = reisetilskuddSoknadRepository.hentSoknad(id)
                 kafkaProducer.send(oppdatertReisetilskudd)
-                metrikk.SENDBARE_REISETILSKUDD.increment()
+                metrikk.sendbartReisetilskudd.increment()
             } catch (e: Exception) {
                 log.error("Feilet ved aktivering av sendbart reisetilskudd med id $id", e)
             }
