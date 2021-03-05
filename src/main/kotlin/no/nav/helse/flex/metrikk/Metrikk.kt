@@ -1,13 +1,14 @@
 package no.nav.helse.flex.metrikk
 
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tag
 import org.springframework.stereotype.Component
 
 @Component
 class Metrikk(val registry: MeterRegistry) {
 
-    fun utelattSykmeldingFraSoknadOpprettelse(grunn: String) {
-        registry.counter("sykmelding_utelatt_opprettelse").increment()
+    fun utelattSykmeldingFraSoknadOpprettelse(grunn: String, tags: Iterable<Tag> = emptySet()) {
+        registry.counter("sykmelding_utelatt_opprettelse", tags).increment()
     }
 
     val mottattSykmelding = registry.counter("mottatt_sykmelding_counter")

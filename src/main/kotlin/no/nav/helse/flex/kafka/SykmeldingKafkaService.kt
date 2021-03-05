@@ -1,5 +1,6 @@
 package no.nav.helse.flex.kafka
 
+import io.micrometer.core.instrument.Tag
 import no.nav.helse.flex.client.pdl.AKTORID
 import no.nav.helse.flex.client.pdl.PdlClient
 import no.nav.helse.flex.client.syketilfelle.SyketilfelleClient
@@ -49,7 +50,10 @@ class SykmeldingKafkaService(
         if (sykmeldingMessage.erIkkeArbeidstaker() && !sykmeldingMessage.erAnnetOgDev()) {
             log.info("Mottok sykmelding med reisetilskudd hvor arbeidssituasjon er ${sykmeldingMessage.hentArbeidssituasjon()}: ${sykmeldingMessage.sykmelding.id}")
             val arbeidssituasjon: String = sykmeldingMessage.hentArbeidssituasjon()?.navn?.toLowerCase() ?: "ukjent"
-            metrikk.utelattSykmeldingFraSoknadOpprettelse("utelatt_arbeidssituasjon_$arbeidssituasjon")
+            metrikk.utelattSykmeldingFraSoknadOpprettelse(
+                "utelatt_arbeidssituasjon",
+                listOf(Tag.of("arbeidssituasjon", arbeidssituasjon))
+            )
             return
         }
         if (sykmeldingMessage.erDefinitivtReisetilskudd()) {
