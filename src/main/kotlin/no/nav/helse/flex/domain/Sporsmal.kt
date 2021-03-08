@@ -8,6 +8,7 @@ data class Sporsmal(
     val overskrift: String? = null,
     val sporsmalstekst: String? = null,
     val undertekst: String? = null,
+    val hjelpetekst: Hjelpetekst? = null,
     val svartype: Svartype,
     val min: String? = null,
     val max: String? = null,
