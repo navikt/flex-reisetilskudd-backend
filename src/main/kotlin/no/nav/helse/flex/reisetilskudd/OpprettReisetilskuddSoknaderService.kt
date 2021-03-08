@@ -33,7 +33,7 @@ class OpprettReisetilskuddSoknaderService(
         val navn = person.hentPerson?.navn?.firstOrNull()?.format()
             ?: throw RuntimeException("Fant ikke navn for sykmelding ${sykmeldingMessage.sykmelding.id}")
 
-        var utelattUtaforArbeidsgiverperiode = false
+        var utelattInnaforArbeidsgiverperiode = false
         var villeOpprettetSoknad = false
         sykmeldingMessage.runCatching {
             this.reisetilskuddPerioder()
@@ -44,7 +44,7 @@ class OpprettReisetilskuddSoknaderService(
                 }
                 .filter { reisetilskudd ->
                     if (oppfolgingstilfelle == null) {
-                        utelattUtaforArbeidsgiverperiode = true
+                        utelattInnaforArbeidsgiverperiode = true
                         log.info("Mottok sykmelding med reisetilskudd der det ikke finnes oppfolgingstilfelle ${sykmeldingMessage.sykmelding.id}")
                         return@filter false
                     }
@@ -56,7 +56,7 @@ class OpprettReisetilskuddSoknaderService(
                         return@filter true
                     }
                     if (!oppbruktArbeidsgiverperiode || reisetilskudd.tom.isBeforeOrEqual(arbeidsgiverperiodeTom)) {
-                        utelattUtaforArbeidsgiverperiode = true
+                        utelattInnaforArbeidsgiverperiode = true
                         log.info("Reisetilskudd fra ${reisetilskudd.fom} til ${reisetilskudd.tom} er innenfor arbeidsgiverperioden med sykmelding ${sykmeldingMessage.sykmelding.id}")
                         return@filter false
                     }
@@ -79,16 +79,16 @@ class OpprettReisetilskuddSoknaderService(
             throw ex
         }
 
-        if (villeOpprettetSoknad && !utelattUtaforArbeidsgiverperiode) {
+        if (villeOpprettetSoknad && !utelattInnaforArbeidsgiverperiode) {
             metrikk.sykmeldingHeltUtafor.increment()
         }
 
-        if (villeOpprettetSoknad && utelattUtaforArbeidsgiverperiode) {
+        if (villeOpprettetSoknad && utelattInnaforArbeidsgiverperiode) {
             metrikk.sykmeldingDelvisUtafor.increment()
         }
 
-        if (!villeOpprettetSoknad && utelattUtaforArbeidsgiverperiode) {
-            metrikk.utelattSykmeldingFraSoknadOpprettelse("helt_utafor_arbeidsgiverperiode")
+        if (!villeOpprettetSoknad && utelattInnaforArbeidsgiverperiode) {
+            metrikk.utelattSykmeldingFraSoknadOpprettelse("helt_innenfor_arbeidsgiverperiode")
         }
     }
 
