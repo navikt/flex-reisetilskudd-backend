@@ -69,6 +69,8 @@ data class SporsmalDbRecord(
     val overskrift: String? = null,
     val sporsmalstekst: String? = null,
     val undertekst: String? = null,
+    val hjelpetekstTittel: String? = null,
+    val hjelpetekstBrodtekst: String? = null,
     val svartype: Svartype,
     val min: String? = null,
     val max: String? = null,
@@ -145,6 +147,11 @@ fun SporsmalDbRecord.tilSporsmal(undersporsmal: List<Sporsmal>, svar: List<Svar>
         overskrift = overskrift,
         sporsmalstekst = sporsmalstekst,
         undertekst = undertekst,
+        hjelpetekst = if (hjelpetekstTittel != null)
+            Hjelpetekst(
+                tittel = hjelpetekstTittel,
+                brodtekst = hjelpetekstBrodtekst
+            ) else null,
         svartype = svartype,
         min = min,
         max = max,
@@ -184,6 +191,8 @@ fun Sporsmal.tilSporsmalDbRecord(
         overskrift = this.overskrift,
         sporsmalstekst = this.sporsmalstekst,
         undertekst = this.undertekst,
+        hjelpetekstTittel = this.hjelpetekst?.tittel,
+        hjelpetekstBrodtekst = this.hjelpetekst?.brodtekst,
         svartype = this.svartype,
         min = this.min,
         max = this.max,

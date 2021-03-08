@@ -102,6 +102,10 @@ fun transportTilDagligSpørsmål() = Sporsmal(
     svartype = JA_NEI,
     overskrift = "Transport til daglig",
     sporsmalstekst = "bruker du vanligvis bil eller offentlig transport til og fra arbeidsplassen?",
+    hjelpetekst = Hjelpetekst(
+        tittel = "Hva regnes som offentlig transport?",
+        brodtekst = "Eksempler på offentlig transport: Buss, tog, t-bane, bysykkel, el-sparkesykkel."
+    ),
     kriterieForVisningAvUndersporsmal = JA,
     undersporsmal = listOf(
         Sporsmal(
